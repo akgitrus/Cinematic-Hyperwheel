@@ -87,7 +87,7 @@ For 1000 channels:
 
 ## Cinematic representation
 
-The initial target dataset is the `tag_genome.csv` file from the **Serendipity-SAC 2018** dataset.
+The project uses the **Tag Genome Dataset** as the source of the movie representations. Each movie is described by its relevance to a common set of 1,128 semantic tags.
 
 Each movie contains approximately 1000 tag relevance values:
 
@@ -461,6 +461,31 @@ Python 3.10+.
 The core mathematical implementation is intended to use only the Python standard library initially.
 
 Additional numerical libraries may be introduced during experimentation if they provide a clear benefit.
+
+---
+
+## Data sources
+
+### Tag Genome
+
+Cinematic-Hyperwheel uses the **Tag Genome Dataset** released by the GroupLens Research Group at the University of Minnesota.
+
+The Tag Genome represents each movie by its relevance to a common set of semantic tags. The dataset contains relevance values for **9,734 movies and 1,128 tags**, with each relevance value represented on a continuous scale from 0 to 1.
+
+This makes the dataset a natural starting point for representing movies as points in a high-dimensional semantic space.
+
+* **Dataset:** [Tag Genome — GroupLens](https://grouplens.org/datasets/tag-genome/)
+* **Download and usage terms:** [Tag Genome README](https://files.grouplens.org/datasets/tag-genome/)
+* **Original paper:** Jesse Vig, Shilad Sen, John Riedl. *The Tag Genome: Encoding Community Knowledge to Support Novel Interaction*. ACM Transactions on Interactive Intelligent Systems, 2012.
+* **DOI:** 10.1145/2362394.2362395
+
+The dataset is used in accordance with the usage terms specified by GroupLens. The dataset itself is not redistributed with this repository; users should obtain it directly from the official GroupLens source.
+
+### Citation
+
+If you use this project with the Tag Genome dataset, please also cite the original Tag Genome work:
+
+> Vig, Jesse; Sen, Shilad; Riedl, John. (2012). The Tag Genome: Encoding Community Knowledge to Support Novel Interaction. ACM Transactions on Interactive Intelligent Systems, 2(3), 13:1–13:44. https://doi.org/10.1145/2362394.2362395
 
 ---
 

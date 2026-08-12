@@ -1,494 +1,764 @@
 # Cinematic-Hyperwheel
 
-Experimental high-dimensional generalization of the RGB → HSL color model for representing cinematic characteristics and exploring **harmony beyond similarity**.
+Experimental open-source project exploring **harmony beyond similarity** in movie recommendations.
 
-## Goal
+Cinematic-Hyperwheel investigates whether principles behind harmonious color schemes — such as complementary, analogous, and triadic relationships — can be applied to a high-dimensional semantic representation of movies.
 
-Cinematic-Hyperwheel is a prototype for testing the hypothesis that the principles behind harmonious color combinations on a color wheel can be applied to movie recommendations.
-
-A color wheel allows us to find colors that are different from a given color while remaining harmonious with it. The project explores whether the same principle can be used to find movies that are **different from a given film, yet meaningfully "resonate" with it**.
-
-The focus is therefore not similarity, but **harmony beyond similarity**.
-
-## Concept
-
-A conventional RGB color model can be viewed geometrically as a 2-dimensional simplex — a triangle with three vertices:
-
-```text
-        R
-       / \
-      /   \
-     /     \
-    G───────B
-```
-
-Every vertex is directly connected to every other vertex.
-
-The same principle generalizes to an arbitrary number of dimensions.
-
-An (N)-dimensional simplex has (N+1) vertices, with every vertex connected to every other vertex.
-
-Therefore:
-
-| Space | Vertices |   Edges |
-| ----: | -------: | ------: |
-|    1D |        2 |       1 |
-|    2D |        3 |       3 |
-|    3D |        4 |       6 |
-|  999D |     1000 | 499,500 |
-
-Cinematic-Hyperwheel explores the idea of treating approximately 1000 semantic movie characteristics as the vertices of such a high-dimensional system.
-
-The ordered vertices form a conceptual **hyperwheel**: a cyclically ordered set of fundamental cinematic dimensions.
+The project uses the **MovieLens Tag Genome** to represent movies as points in a high-dimensional feature space, extracts the structure of that space using PCA, and applies controlled rotations in selected semantic planes to generate movies that are deliberately different from a reference while remaining structurally related to it.
 
 ---
 
-## From RGB to X channels
+## The idea
 
-The conventional RGB → HSL transformation can be viewed as:
+Traditional movie recommendation is largely based on **similarity**:
 
-```text
-3 channels
-    ↓
-2-dimensional simplex
-    ↓
-1 angular coordinate
-    ↓
-H + S + L
-```
+> "You liked this movie. Here is another movie that is similar to it."
 
-For `X` channels, the proposed generalization is:
+Cinematic-Hyperwheel explores a different question:
 
-```text
-X channels
-    ↓
-(X - 1)-dimensional simplex
-    ↓
-(X - 2) angular coordinates
-    ↓
-H + S + L
-```
+> **"You liked this movie. What other movie could continue the experience while being genuinely different?"**
 
-Thus:
+This distinction is important.
 
-[
-X \rightarrow (X-2) + 1 + 1
-]
+A viewer can highly appreciate two completely different movies without those movies being similar or otherwise related.
 
-The representation preserves the total number of independent dimensions.
-
-For 1000 channels:
-
-[
-1000 \rightarrow 998H + S + L
-]
-
----
-
-## Cinematic representation
-
-The project uses the **Tag Genome Dataset** as the source of the movie representations. Each movie is described by its relevance to a common set of 1,128 semantic tags.
-
-Each movie contains approximately 1000 tag relevance values:
+For example:
 
 ```text
-movieId, tag, relevance
-
-1, autism, 0.048
-1, aviation, 0.0195
-1, awesome, 0.3835
-...
+Blade Runner       ★★★★★
+Mimino             ★★★★★
 ```
 
-Each tag is treated as a normalized channel:
+A high rating for both films does not imply that they are "harmonious" with each other.
 
-```text
-tag₁       → channel₁
-tag₂       → channel₂
-...
-tag₁₀₀₀   → channel₁₀₀₀
-```
+The project is interested in a different relationship:
 
-The `relevance` value becomes the normalized channel value.
+reference movie
+       │
+       │  deliberate change of direction
+       ▼
+different movie
+       │
+       └── preserves some structural relationship
+           with the original experience
 
-A movie is therefore represented as a point in a 999-dimensional simplex.
-
----
-
-## Generalized HSL
-
-For `X` normalized channels:
-
-### Maximum and minimum
-
-[
-C_{\max}=\max_i(C_i)
-]
-
-[
-C_{\min}=\min_i(C_i)
-]
-
-[
-\Delta=C_{\max}-C_{\min}
-]
-
-### Lightness
-
-[
-L=\frac{C_{\max}+C_{\min}}2
-]
-
-### Saturation
-
-[
-S=
-\begin{cases}
-0,&\Delta=0[4pt]
-\dfrac{\Delta}{1-|2L-1|},&\Delta\neq0
-\end{cases}
-]
-
-### Chromatic component
-
-The neutral component is removed using the mean:
-
-[
-\bar C=\frac1X\sum_{i=1}^{X}C_i
-]
-
-[
-q_i=C_i-\bar C
-]
-
-Since:
-
-[
-\sum_i q_i=0
-]
-
-the chromatic vector lies in an (X-1)-dimensional space.
-
-A direction in that space requires:
-
-[
-X-2
-]
-
-angular coordinates.
-
-Therefore:
-
-[
-H=(H_1,H_2,\ldots,H_{X-2})
-]
-
-For 1000 channels:
-
-[
-H=(H_1,\ldots,H_{998})
-]
-
----
-
-# Why "Hyperwheel"?
-
-The term combines two ideas.
-
-**Hyper-**
-
-The system operates in a very high-dimensional space. With approximately 1000 semantic channels, the corresponding simplex has 999 dimensions.
-
-**Wheel**
-
-The base channels are deliberately ordered. Their order defines the orientation of the system and provides a cyclic structure analogous to the ordering of primary colors around a color wheel.
-
-The project therefore investigates whether a high-dimensional cyclic structure can provide a useful coordinate system for cinematic experience.
-
----
-
-# Similarity vs. harmony
-
-The central motivation is not to find movies that are simply similar.
-
-Consider:
-
-```text
-Blade Runner
-Mimino
-```
-
-A viewer may rate both films very highly without the two films being particularly similar or harmonious.
-
-High preference for two movies does not establish a movie-to-movie relationship.
-
-Cinematic-Hyperwheel instead investigates a different question:
-
-> Given a movie I enjoyed, what other movie can continue the experience while being genuinely different?
-
-In other words:
-
-```text
-A
-│
-│  "continue the experience"
-│
-▼
-B
-```
-
-rather than:
-
-```text
-A
-│
-│  "find something similar"
-│
-▼
-A'
-```
-
-The desired relationship can be described informally as:
+Informally:
 
 > **different, but consonant**
 
 or:
 
-> **another point in the cinematic space that preserves something about the experience of the original point.**
+> **another point in cinematic space that resonates with the original point.**
 
 ---
 
-# Important distinction
+## From color harmony to cinematic harmony
 
-Three different relationships must not be confused.
+Color theory provides an interesting analogy.
 
-### Similarity
+Given a color, a color wheel can be used to select another color that is deliberately different while maintaining a particular geometric relationship with the original.
+
+For example:
 
 ```text
-A ───────── A'
+        complementary
+
+             ●
+             │
+             │
+             │
+             ●
+          reference
 ```
 
-The two movies share many characteristics.
+The complementary color is not a similar color. It is almost the opposite direction on the color wheel.
 
-### Preference
+Likewise, analogous and triadic schemes produce different colors while preserving specific angular relationships.
 
-```text
-User
- ├── A ★★★★★
- └── B ★★★★★
+Cinematic-Hyperwheel asks:
+
+> Can a similar operation be performed in the multidimensional space of movie characteristics?
+
+The analogy is not intended to claim that movies literally have "colors". Instead, the project investigates whether **geometric relationships used to construct harmonious colors can be transferred to another domain.**
+
+
+
+# Movie representation
+
+The current experimental representation is based on the **MovieLens Tag Genome 2021** dataset.
+
+Each movie is represented by its relevance to a common set of semantic tags.
+
+Conceptually:
+
+```
+movie
+  │
+  ├── tag₁       → relevance
+  ├── tag₂       → relevance
+  ├── tag₃       → relevance
+  │      ...
+  └── tagₙ       → relevance
 ```
 
-The user likes both movies.
+The relevance value is treated as a continuous feature value in `[0, 1]`.
 
-This does **not** establish a relationship between A and B.
+A movie therefore becomes an N-dimensional vector:
 
-### Harmony
-
-```text
-A ───────── B
-      ↘
-       different
-       experience
+```
+movie = (x₁, x₂, ..., xₙ)
 ```
 
-B is deliberately different from A while preserving some deeper relationship.
+where each dimension corresponds to a semantic characteristic.
 
-Cinematic-Hyperwheel is primarily interested in the third relationship.
+The current Tag Genome 2021 data contains:
+
+- 9,734 movies
+- 1,084 unique tags
+- 10,551,656 tag-movie scores
+
+This provides a common high-dimensional representation in which movies can be compared geometrically.
 
 ---
 
-# Channel ordering
+# Why not simply use the tag order as the geometry?
 
-The ordering of base channels is part of the coordinate system.
+An early version of the project attempted to generalize the RGB → HSL transformation directly to an arbitrary number of channels.
 
-For RGB:
+That approach treated the channel order as part of the geometry:
 
-```python
-BASE_CHANNELS = (
-    "R",
-    "G",
-    "B",
-)
+```
+tag₁ → tag₂ → tag₃ → ... → tagₙ
 ```
 
-For the cinematic model, the approximately 1000 tags must be assigned a stable order.
+This is reasonable for RGB because the three channels have a physically meaningful relationship.
 
-The initial approach is to use deterministic alphabetical ordering unless the source dataset provides a demonstrably meaningful and stable ordering.
+There is no equivalent physical ordering for arbitrary semantic movie tags.
 
-Changing the ordering changes the coordinate system and therefore must be treated as a meaningful transformation rather than an implementation detail.
+For example:
+
+```
+romance
+airplane
+noir
+aardman
+...
+```
+
+There is no objective reason why one of these dimensions should be adjacent to another.
+
+Changing the arbitrary ordering of the tags should not change the underlying cinematic representation.
+
+Therefore the current model does **not** derive its geometry from tag ordering.
+
+Instead:
+
+> **The basis is extracted from the data itself.**
 
 ---
 
-# API
+# From movie vectors to cinematic shape
 
-The core converter accepts a mapping of normalized channels:
+For a movie represented by vector `c`:
 
-```python
-from generalized_hsl import to_hsl
+## 1. Mean level
 
-result = to_hsl({
-    "R": 1.0,
-    "G": 0.5,
-    "B": 0.0,
-})
+The mean of the movie's criteria is calculated:
 
-print(result.H)
-print(result.S)
-print(result.L)
+```
+L = mean(c)
 ```
 
-The result is:
+This captures the overall level of the movie's tag profile.
 
-```python
-HSL(
-    H=(...,),
-    S=...,
-    L=...
-)
+It is analogous to the lightness component in HSL, although it is not semantically identical to color lightness.
+
+---
+
+## 2. Movie shape
+
+The movie's individual profile is separated from its overall level:
+
+```
+Q = c - L
 ```
 
-For `X` channels:
+The components of `Q` always sum to zero:
 
-```text
-H → X - 2 angular coordinates
-S → 1 scalar
-L → 1 scalar
+```
+sum(Q) = 0
+```
+
+Therefore `Q` lies in the subspace orthogonal to:
+
+```
+(1, 1, ..., 1)
+```
+
+This is analogous to separating the neutral component from the chromatic component in RGB.
+
+---
+
+## 3. Typical category profile
+
+The shape of a movie is not meaningful only in isolation.
+
+A category may have a characteristic profile shared by most of its movies.
+
+Therefore the mean shape across the entire category is calculated:
+
+```
+M = mean(Q across all movies)
+```
+
+and removed:
+
+```
+Q' = Q - M
+```
+
+This step is important.
+
+Without it, PCA can identify the structure shared by essentially all movies as the dominant direction, instead of identifying meaningful differences between movies.
+
+---
+
+# PCA: learning the cinematic coordinate system
+
+After centering and standardization, PCA is applied to the movie shape vectors.
+
+Conceptually:
+
+```
+Tag Genome
+    │
+    ▼
+movie vectors
+    │
+    ▼
+movie-level centering
+    │
+    ▼
+category-profile centering
+    │
+    ▼
+feature standardization
+    │
+    ▼
+PCA / SVD
+    │
+    ▼
+data-driven coordinate system
+```
+
+The resulting principal components describe the major directions of variation actually present in the category.
+
+Unlike an arbitrary tag ordering, these directions are determined by the statistical structure of the data.
+
+Each component can be inspected through:
+
+- explained variance;
+- feature weights;
+- movies at the positive pole;
+- movies at the negative pole.
+
+This allows a component to be given a tentative semantic interpretation.
+
+For example:
+
+```
+PC2
+
+positive:
+    noir
+    crime
+    detective
+    urban
+
+negative:
+    comedy
+    family
+    romance
+```
+
+might suggest an interpretation such as:
+
+> dark/noir ↔ light/family-oriented
+
+The interpretation is empirical rather than predefined.
+
+---
+
+# Not every PCA component is a Hue axis
+
+A principal component is not automatically suitable for cinematic rotation.
+
+One important failure mode is a general **quality axis**.
+
+For example, a component may represent a halo effect:
+
+```
+positive pole:
+    many positively associated characteristics
+
+negative pole:
+    many negatively associated characteristics
+```
+
+Such an axis may primarily represent:
+
+```
+better ↔ worse
+```
+
+rather than:
+
+```
+one kind of movie ↔ another kind of movie
+```
+
+Rotating a reference movie along such an axis would tend to produce a better or worse version of the same type of movie.
+
+That is not the goal.
+
+Therefore Cinematic-Hyperwheel currently uses an explicit component selection mechanism:
+
+```
+--hue-components
+```
+
+The candidate components are first examined using diagnostic tools, including their feature weights and the movies located at their poles.
+
+Only components that appear to represent meaningful differences in **character, style, or cinematic direction** are selected for rotation.
+
+---
+
+# Hue as a 2D semantic plane
+
+The current model defines Hue not as a collection of hyperspherical angles, but as an angular position inside a selected two-dimensional PCA plane.
+
+For selected components `i` and `j`:
+
+```
+             y
+             ↑
+             │
+             │       ●
+             │    /
+             │  /
+             │/
+─────────────●────────────→ x
+         reference
+```
+
+The coordinates in the selected plane can be represented in polar form:
+
+```
+r = distance from the origin
+θ = angular position
+```
+
+The angular coordinate `θ` plays the role of Hue.
+
+This is important because classical color schemes require a genuine circular coordinate:
+
+```
+analogous      → small angular displacement
+triadic        → ±120°
+complementary  → 180°
+```
+
+The selected PCA plane therefore provides the geometric equivalent of a color wheel.
+
+---
+
+# Whitening
+
+PCA components generally have different amounts of variance.
+
+For example:
+
+```
+PC2 → 50% of variance
+PC3 → 7% of variance
+```
+
+A direct rotation of the raw coordinates would therefore treat unequal scales as though they were equivalent.
+
+Before rotation, the selected coordinates are therefore whitened:
+
+```
+x' = x / σx
+y' = y / σy
+```
+
+This transforms the local geometry from an ellipse-like scale into an approximately isotropic one.
+
+The rotation can then be interpreted as an actual angular operation.
+
+---
+
+# Cinematic color schemes
+
+Once a reference movie has been projected into the selected Hue plane, the system can apply an angular transformation.
+
+For example:
+
+### Analogous
+
+```
+θ' = θ ± 30°
+```
+
+A relatively small change of direction.
+
+### Triadic
+
+```
+θ' = θ ± 120°
+```
+
+A substantially different direction with a fixed angular relationship.
+
+### Complementary
+
+```
+θ' = θ + 180°
+```
+
+An opposite direction in the selected cinematic plane.
+
+The important point is that these operations do **not** search for the nearest movie.
+
+They deliberately move away from the reference along a chosen geometric direction.
+
+---
+
+# Delta reconstruction
+
+The target movie is not reconstructed from scratch.
+
+Instead, only the change introduced by the rotation is applied to the reference.
+
+Conceptually:
+
+```
+reference
+    │
+    ▼
+project into PCA space
+    │
+    ▼
+rotate selected plane
+    │
+    ▼
+calculate Δ
+    │
+    ▼
+reference + Δ
+    │
+    ▼
+target point
+```
+
+The non-rotated components remain unchanged.
+
+This preserves as much of the original movie's structure as possible while changing its direction in the selected Hue plane.
+
+The result is a target point in the continuous feature space.
+
+It will generally not correspond exactly to an existing movie.
+
+---
+
+# Finding a real movie
+
+The final step is therefore a nearest-neighbor search.
+
+Given a target point `t`, the system searches the movie catalog for:
+
+```
+movie* = argmin distance(movie, t)
+```
+
+The result is a real movie whose feature representation is closest to the geometrically generated target.
+
+Thus the overall process is:
+
+```
+reference movie
+       │
+       ▼
+high-dimensional representation
+       │
+       ▼
+PCA coordinate system
+       │
+       ▼
+selected Hue plane
+       │
+       ▼
+whitening
+       │
+       ▼
+color-scheme rotation
+       │
+       ▼
+delta reconstruction
+       │
+       ▼
+target point
+       │
+       ▼
+nearest real movie
 ```
 
 ---
 
-# Current mathematical status
+# Empirical analysis
 
-Cinematic-Hyperwheel is an **experimental mathematical model**.
+A major part of the project is the empirical examination of the PCA space.
 
-The direct generalization of `L` and `S` from RGB is straightforward.
+For each experimental movie category, the principal components are examined individually:
 
-The generalization of `H` is more subtle.
+```
+PC1
+PC2
+PC3
+PC4
+...
+```
 
-For an arbitrary number of channels, a mathematically correct implementation requires an appropriate coordinate system for a **regular simplex**.
+For each component, the analysis considers:
 
-Simply removing one dependent coordinate from the zero-sum chromatic vector does not preserve the Euclidean symmetry of the simplex.
+- explained variance;
+- strongest positive feature weights;
+- strongest negative feature weights;
+- movies at both poles;
+- possible semantic interpretation;
+- suitability for Hue rotation.
 
-Therefore an important part of the research is constructing an orthonormal basis in which all base channels remain geometrically equivalent.
+The objective is not simply to select the components with the largest explained variance.
 
-The intended transformation is:
+A component explaining 40% of the variance is not necessarily a better Hue axis than one explaining 8%.
 
-[
-(C_1,\ldots,C_X)
-\rightarrow
-\text{regular simplex coordinates}
-\rightarrow
-(H_1,\ldots,H_{X-2})
-]
+The important question is:
 
----
+> **What kind of difference does this component represent?**
 
-# Research roadmap
+This analysis is intentionally partly manual.
 
-## Phase 1 — Mathematical model
-
-* [ ] Construct an orthonormal basis for a regular (X)-vertex simplex.
-* [ ] Implement the generalized chromatic coordinate system.
-* [ ] Implement hyperspherical angular coordinates.
-* [ ] Verify the (X=3) case against conventional RGB → HSL.
-* [ ] Verify symmetry under channel permutations.
-* [ ] Define behaviour for zero-chroma points.
-
-## Phase 2 — Cinematic data
-
-* [ ] Load `tag_genome.csv`.
-* [ ] Identify the complete stable set of tags.
-* [ ] Establish deterministic tag ordering.
-* [ ] Build movie → 1000-channel vectors.
-* [ ] Convert movies to generalized HSL.
-* [ ] Explore the resulting geometry.
-
-## Phase 3 — Geometry
-
-Investigate:
-
-* angular distance;
-* similarity distance;
-* relationships between H, S and L;
-* clusters;
-* neighbourhoods;
-* trajectories between movies;
-* effects of channel ordering;
-* invariance under transformations.
-
-## Phase 4 — Harmony
-
-Compare the geometric model against independent sources:
-
-* curated movie lists;
-* explicit movie-to-movie recommendations;
-* sequential viewing data;
-* conventional similarity algorithms;
-* MovieLens data;
-* manually collected examples of "different but harmonious" films.
-
-The central hypothesis is:
-
-> **A useful recommendation does not necessarily lie close to the source movie. It may occupy a different region of the cinematic space while preserving a meaningful structural relationship with it.**
+It is used both to validate the hypothesis and to understand what the learned cinematic space actually contains.
 
 ---
 
-# Project structure
+# Experimental recommendation schemes
 
-```text
+For a selected reference movie, the system can generate recommendations using different angular transformations:
+
+```
+                         analogous
+                         +30°
+                           ●
+
+                           │
+
+complementary 180°  ●──────●──────●  reference
+
+                           │
+
+                           ●
+                         -30°
+                         analogous
+```
+
+The exact interpretation of each scheme is an experimental question.
+
+The project investigates whether different angular relationships consistently produce recommendations that are:
+
+1. different from the reference;
+2. structurally related to the reference;
+3. qualitatively distinguishable from ordinary similarity recommendations.
+
+---
+
+# Web application
+
+The project also includes a web application intended as a practical interface for the experimental model.
+
+The basic interaction is:
+
+```
+Select a reference movie
+          │
+          ▼
+Select a harmony scheme
+          │
+          ▼
+Generate recommendations
+          │
+          ▼
+Explore the resulting collection
+```
+
+The web application is not intended to replace the mathematical experiments.
+
+Its purpose is to make the model tangible and allow the generated recommendations to be explored as actual movie collections.
+
+---
+
+# Research questions
+
+The project currently investigates several related questions:
+
+### RQ1
+
+Can a high-dimensional semantic representation of movies provide a meaningful geometric space for recommendation?
+
+### RQ2
+
+Can PCA components of such a space be interpreted as meaningful cinematic dimensions?
+
+### RQ3
+
+Can suitable PCA planes be used as data-driven analogues of a color wheel?
+
+### RQ4
+
+Does angular rotation in such a plane produce recommendations that are meaningfully different from the reference?
+
+### RQ5
+
+Can different color-inspired angular schemes produce qualitatively different types of recommendations?
+
+### RQ6
+
+Do these recommendations exhibit the intended property of **harmony beyond similarity**?
+
+---
+
+# Current limitations
+
+The project is experimental and several questions remain open.
+
+## Manual Hue-component selection
+
+The selection of suitable PCA components currently requires manual interpretation.
+
+Automatic identification of quality-related components may be possible using independent ratings or other external signals.
+
+## Category dependence
+
+The PCA basis is learned from a particular movie category.
+
+Changing the category or dataset can therefore change the resulting coordinate system.
+
+This may be a limitation, or it may be an important property of the model.
+
+## Two-dimensional rotation
+
+The current implementation rotates exactly one pair of PCA components.
+
+If cinematic taste requires several independent dimensions simultaneously, a more general multi-plane rotation scheme may be necessary.
+
+## Nearest-neighbor discretization
+
+The geometric target is continuous, but the movie catalog is discrete.
+
+The final recommendation therefore depends on the distribution of actual movies around the generated target.
+
+## Harmony is still a hypothesis
+
+The mathematical transformation can be defined precisely.
+
+Whether the resulting movies are actually perceived by humans as "harmonious" or "resonant" with the reference is an empirical question.
+
+This project therefore treats **harmony beyond similarity as a hypothesis to be tested**, not as an established property of the model.
+
+---
+
+# Project status
+
+The project is currently in the experimental research and prototype stage.
+
+The repository contains:
+
+- the mathematical implementation;
+- Tag Genome data preparation utilities;
+- experimental channel sets;
+- PCA and diagnostic experiments;
+- tests;
+- documentation of the mathematical model;
+- the web application prototype.
+
+The project is being developed with reproducibility and experimentation in mind.
+
+---
+
+# Repository structure
+
+```
 Cinematic-Hyperwheel/
 │
-├── README.md
-├── generalized_hsl.py
+├── packages/
+│   └── cinematic-hyperwheel/   ← reusable research / recommendation engine
+│       ├── src/
+│       └── tests/
 │
-├── tests/
-│   ├── test_hsl.py
-│   └── ...
+├── apps/                       
+│   └── web/                    ← reccomendation app
+│       ├── backend/
+│       ├── frontend/
+│       └── tests/
 │
-├── data/
-│   └── ...
+├── tools/                      ← data / development utilities
 │
-└── experiments/
-    └── ...
+├── experiments/                ← research experiments
+│
+├── data/                       ← local datasets
+│
+└── docs/                       ← project documentation
 ```
 
----
-
-# Requirements
-
-Python 3.10+.
-
-The core mathematical implementation is intended to use only the Python standard library initially.
-
-Additional numerical libraries may be introduced during experimentation if they provide a clear benefit.
+The exact structure may evolve as the research progresses.
 
 ---
 
-## Data sources
+# Data
 
-### Tag Genome
+## MovieLens Tag Genome Dataset 2021
 
-Cinematic-Hyperwheel uses the **Tag Genome Dataset** released by the GroupLens Research Group at the University of Minnesota.
+Cinematic-Hyperwheel uses the **MovieLens Tag Genome Dataset 2021** released by the GroupLens Research Group at the University of Minnesota.
 
-The Tag Genome represents each movie by its relevance to a common set of semantic tags. The dataset contains relevance values for **9,734 movies and 1,128 tags**, with each relevance value represented on a continuous scale from 0 to 1.
+The Tag Genome represents each movie by its relevance to a common set of semantic tags. The dataset contains relevance values for **9,734 movies and 1,084 tags**, with each relevance value represented on a continuous scale from 0 to 1.
 
 This makes the dataset a natural starting point for representing movies as points in a high-dimensional semantic space.
 
-* **Dataset:** [Tag Genome — GroupLens](https://grouplens.org/datasets/tag-genome/)
-* **Download and usage terms:** [Tag Genome README](https://files.grouplens.org/datasets/tag-genome/)
-* **Original paper:** Jesse Vig, Shilad Sen, John Riedl. *The Tag Genome: Encoding Community Knowledge to Support Novel Interaction*. ACM Transactions on Interactive Intelligent Systems, 2012.
-* **DOI:** 10.1145/2362394.2362395
+* **Dataset:** [Tag Genome — GroupLens](https://grouplens.org/datasets/movielens/tag-genome-2021/)
+* **Download and usage terms:** [Tag Genome README](https://files.grouplens.org/datasets/tag-genome-2021/genome_2021_readme.txt)
+* **Original papers:**
+    [Kotkov et al., 2021] Kotkov, D., Maslov, A., and Neovius, M. (2021). Revisiting the tag relevance prediction problem. In Proceedings of the 44th International ACM SIGIR conference on Research and Development in Information Retrieval. https://doi.org/10.1145/3404835.3463019
+    [Vig et al., 2012] Vig, J., Sen, S., and Riedl, J. (2012). The tag genome: Encoding community knowledge to support novel interaction. ACM Trans. Interact. Intell. Syst., 2(3):13:1–13:44. https://doi.org/10.1145/2362394.2362395
 
 The dataset is used in accordance with the usage terms specified by GroupLens. The dataset itself is not redistributed with this repository; users should obtain it directly from the official GroupLens source.
 
-### Citation
-
-If you use this project with the Tag Genome dataset, please also cite the original Tag Genome work:
-
-> Vig, Jesse; Sen, Shilad; Riedl, John. (2012). The Tag Genome: Encoding Community Knowledge to Support Novel Interaction. ACM Transactions on Interactive Intelligent Systems, 2(3), 13:1–13:44. https://doi.org/10.1145/2362394.2362395
-
 ---
 
-# License
+## License
 
-TBD.
+The Cinematic-Hyperwheel source code is licensed under the
+**GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**.
+
+See [LICENSE.md](LICENSE.md) for the full license text.
+
+This license applies to the source code developed as part of this
+repository. Third-party datasets, libraries, models, and other external
+materials are **not covered by this license** and remain subject to their
+respective licenses and terms of use.
+
+In particular, the Tag Genome dataset used in the experiments is
+provided by the GroupLens Research Group and is subject to its own
+terms of use. The dataset is not redistributed with this repository.
+
+See [Data](#Data) for information about datasets and other
+external resources used by the project.

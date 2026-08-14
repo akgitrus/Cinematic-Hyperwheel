@@ -1,80 +1,150 @@
-# Hue-Based Movie Recommendation: Mathematics and Rationale
+# Hyperwheel: math and design rationale
 
 ## 1. Problem
 
-Given a category of movies, where each movie is described by values across **N criteria** (0..1), and where the criteria themselves have no notion of direction such as "better/worse" (just as no RGB channel is inherently "better" than another), we want to take a reference movie and find real movies "inspired by" it, following the principles of classical color schemes (complementary, triadic, analogous, etc.).
-
-The goal is to preserve the overall character of the reference while deliberately shifting its "hue".
+Given a category of items, each described by values across N criteria
+(0..1), with no inherent "better/worse" direction on the criteria
+themselves (like the R,G,B channels — no channel is "better" than
+another). Given a reference item, we want to suggest real items "in the
+spirit of" classic color-wheel schemes (complementary, triadic, analogous,
+etc.), preserving the reference's overall character while meaningfully
+shifting its "hue".
 
 ## 2. Analogy with HSL
 
-| HSL (color, 3 channels)                     | This approach (N criteria)                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------------------------- |
-| L = mean of R, G, B for a single pixel      | L = mean of the criteria for a single movie                                           |
-| Hue = angle in a fixed 120° basis (R, G, B) | Hue = direction in a data-driven plane (PCA)                                          |
-| S = saturation                              | S = degree of "shape" expression (the norm of the deviation from the typical profile) |
+| HSL (color, 3 channels) | This approach (N criteria) |
+|---|---|
+| L = mean of R,G,B for one pixel | L = mean of criteria for one item |
+| Hue = angle in a fixed 120°-apart basis (R,G,B) | Hue = direction in a data-driven plane (PCA) |
+| S = saturation | S = degree to which the "shape" is pronounced (norm of deviation from the typical profile) |
 
-The key difference from classical HSL is that the basis for hue in HSL is fixed by the physiology of human vision (R, G, B are equally spaced around the circle). Arbitrary criteria have no such physically meaningful basis — it must be **extracted from the data**, rather than postulated from the column order.
+Key difference from classic HSL: in HSL the hue basis is fixed by the
+physiology of human vision (R,G,B are equally spaced on the wheel). For
+arbitrary criteria, no such physical basis exists — it must be **extracted
+from the data**, not postulated by column order.
 
-## 3. Building the Basis
+## 3. Basis-building pipeline
 
-For a movie `c` (a vector of length N):
+For an item `c` (a vector of length N):
 
-1. **L (lightness)** — the movie's own mean across all criteria:
+1. **L (lightness)** — the item's own mean across criteria:
    `L = mean(c)`
 
-2. **Q (shape)** — deviation from the movie's own mean:
+2. **Q (shape)** — deviation from its own mean:
    `Q = c - L`
-   (the components of Q always sum to zero, so Q lies in a hyperplane perpendicular to `(1,...,1)`, directly analogous to the chromatic plane in HSL)
+   (the components of Q always sum to 0 — this is the hyperplane
+   perpendicular to (1,...,1), the direct analog of the chromatic plane
+   in HSL)
 
-3. **M (typical profile)** — the mean of Q **across all movies** in the category (critical!):
-   `M = mean(Q across all movies)`
-   Without this step, PCA captures the structure common to all movies as the "main difference", rather than the actual variation between movies
-   (a bug discovered and fixed during development — see Section 6).
+3. **M (category-typical profile)** — the mean of Q **across all items**
+   in the category (critical!):
+   `M = mean(Q over items)`
+   Without this step, PCA picks up the shape structure common to all
+   items as the "main difference", rather than the real variation between
+   items (a bug found and fixed during development — see section 6).
 
-4. **Standardization** — criteria are divided by their std (after subtracting M), so that criteria with greater random variation do not dominate PCA simply because of scale rather than genuine correlation with other criteria.
+4. **Standardization** — criteria are divided by their std (after
+   subtracting M), so that criteria with a larger random spread don't
+   dominate PCA purely due to scale rather than real correlation with
+   other criteria.
 
-5. **PCA / SVD** on the normalized shape vectors of all movies → an orthonormal basis U (the principal axes of actual differences within the category), together with the explained-variance ratio for each component.
+5. **PCA / SVD** on the normalized shape vectors of all items → an
+   orthonormal basis U (the real principal axes of variation in the
+   category), together with the fraction of variance explained per
+   component.
 
-## 4. Choosing the Hue Plane
+## 4. Choosing the hue plane
 
-Not all components are equally suitable for rotation. In practice, some components may turn out to represent a general "quality" axis (the halo effect: good movies tend to be praised across many criteria simultaneously, while bad movies tend to be criticized across many criteria), rather than an axis of taste or character.
+Not all components are equally suitable for rotation. In practice, some
+components turn out to be a general-"quality" axis (a halo effect: good
+items get praised on many criteria at once, bad items get criticized on
+many criteria at once), rather than a taste/character axis. Rotating
+along such an axis doesn't give a "different in spirit" item — it gives
+an objectively better/worse one, which defeats the purpose.
 
-Rotating along such an axis produces a movie that is not "different in spirit", but objectively better or worse — which contradicts the purpose of the method.
+**Solution**: the components used for rotation are chosen explicitly
+(`--hue-components`), after manually inspecting them via `diagnose`
+(criteria weights + the list of items at each pole — what the component
+physically represents). Non-rotated components aren't ignored entirely —
+they're kept close to the reference via the delta mechanism (section 5).
 
-**Solution:** components used for rotation are selected explicitly (`--hue-components`), after manual inspection using `diagnose` (criterion weights + lists of movies at each pole, showing what the component actually represents).
+## 5. Rotation and reconstruction
 
-Non-rotating components are not discarded completely — they are kept close to the reference through the delta mechanism described in Section 5.
+For a chosen pair of components (i, j):
 
-## 5. Rotation and Reconstruction
+1. Whitening — normalize each axis by its actual std across items
+   (otherwise, when the explained-variance share differs strongly between
+   components, a 90-120° rotation pushes the target into a region where
+   hardly any real items exist).
+2. Rotate by the scheme's angle (180° complementary, ±120° triadic, ±30°
+   analogous, etc.) in whitened coordinates.
+3. **Delta, not rebuild**: only the change introduced by the rotation
+   within the chosen plane is added to the reference vector; everything
+   else (including non-rotated components) stays as in the reference.
+4. The target vector almost never matches a real item exactly — the
+   final step is a nearest-neighbor search for the closest real item to
+   that target.
 
-For a selected pair of components `(i, j)`:
+## 6. Known limitations / open questions
 
-1. **Whitening** — normalize each axis by its actual std across movies (otherwise, when the explained-variance shares of the components are strongly asymmetric, a 90–120° rotation in raw coordinates can move the target into a region containing almost no real movies).
+- Rotation currently works strictly within one 2D plane. For >2
+  significant axes, two extensions were identified:
+  - **Adaptive per-reference plane selection (implemented, section 7a
+    below)**: instead of one globally-fixed pair, pick the two components
+    on which each specific reference item is most expressive.
+  - **Complementary via full-dimensional inversion (not yet implemented)**:
+    a 180° rotation in any 2D plane containing the reference vector itself
+    is equivalent to **inverting** that vector (y → −y) — well-defined in
+    **any** dimensionality, not just 2D. Complementary could use the full
+    "taste" vector (all components except excluded quality axes), using
+    100% of the real taste variation instead of just one plane.
+- Choosing which components represent "quality" (to exclude from
+  rotation) is currently manual, based on visually reviewing `diagnose`.
+  Automatically detecting such axes (e.g. by correlating a component with
+  an independent rating, if one exists in the data) could remove this
+  manual step.
+- The PCA basis is fit on the whole category at once; if criteria become
+  genuinely unequal in the future (not just in scale, but in physical
+  meaning/weight), a separate weighting scheme will be needed — see the
+  discussion at the start of work on this approach.
 
-2. **Rotation** by the scheme angle (180° for complementary, ±120° for triadic, ±30° for analogous, etc.) in whitened coordinates.
+### 6a. Adaptive per-reference hue-plane selection
 
-3. **Delta, not reconstruction** — only the change introduced by the rotation in the selected plane is added to the reference vector; everything else (including non-rotating components) remains as in the reference.
+On real data the variance spectrum can be strongly diffuse - no dominant
+pair beyond a "quality" axis (PC1), just a long thin tail (e.g. PC2=6.3%,
+PC3=5.3%, ..., PC100=0.1%, cumulative ~73% only after 255 components).
+Fixing one global (i, j) pair for every reference item has a real cost in
+this regime: a given item's distinguishing character might live almost
+entirely in, say, PC8 and PC12, while a globally-fixed PC2/PC3 stays
+close to the category-typical value for that specific item - rotating it
+would barely change anything, or would rotate axes that say nothing about
+what actually makes this item distinctive.
 
-4. The target vector almost never corresponds exactly to a real movie. The final step is therefore to find the nearest real movie (nearest neighbor) to the target.
+`hue_components="auto"` (the CLI default) instead computes, for the given
+reference, its **z-score** along every candidate component:
 
-## 6. What Changed Compared to the Original Code
+```
+z_k = score_k / pc_std_k
+```
 
-The original implementation (`to_hsl` + `_simplex_coordinates` + `_hyperspherical_angles`) was mathematically correct as an independent construction (numerically verified for basis orthonormality, isometry, and agreement with classical HSL on RGB), but it was not suitable for this particular problem:
+i.e. how many typical standard deviations this item sits from the
+category norm on axis k - and picks the two axes with the largest |z_k|.
+Using the raw score instead of the z-score would systematically favor
+components with a larger population variance (PC2/PC3 again) regardless
+of whether this particular item stands out there; the z-score corrects
+for that (verified empirically: raw-score and z-score ranking disagree on
+which components rank highest for the same reference item).
 
-| Original                                                       | Current                                                               | Why                                                                                                                                                                                                                                      |
-| -------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Basis fixed by the order of `base_channels`                    | Basis extracted from the data (PCA)                                   | With 100+ criteria, there is no physically meaningful cyclic order comparable to R, G, B — a fixed order made the result dependent on arbitrary criterion numbering                                                                      |
-| Hue = hyperspherical angles (nested; not all are full circles) | Hue = 2D plane with genuine angular rotation                          | Color schemes (complementary/triadic/...) require a true circle (S¹); hyperspherical polar angles (except the final one) are not cyclic, so a "180° rotation" is not properly defined for them                                           |
-| S, L computed using max/min across criteria                    | S, L computed using the mean (L) and the norm of the shape vector (S) | A strictly invertible transformation (forward → rotate → inverse) was required without loss of precision; the max/min formula is not suitable for this                                                                                   |
-| No criterion standardization                                   | Z-score standardization of criteria before PCA                        | Without standardization, criteria with greater variance artificially dominate regardless of their actual correlations                                                                                                                    |
-| —                                                              | Double centering (L + M)                                              | Without subtracting the mean profile across the entire category (M), the first PCA component captures the shape common to all movies rather than differences between movies (a bug found on real data: all PC1 values had the same sign) |
-| —                                                              | Whitening before rotation                                             | When explained-variance shares between components are strongly unequal (e.g. 50% vs. 7%), rotating by a fixed angle in raw coordinates can move the target into a region containing almost no real movies                                |
-| —                                                              | Explicit hue-component selection (`--hue-components`)                 | Not all components are suitable for rotation — some represent general quality rather than taste; the axes to rotate must be selected deliberately                                                                                        |
-| No inverse transformation                                      | Delta reconstruction + nearest-neighbor search                        | The goal is not an abstract vector, but a concrete movie from the catalog                                                                                                                                                                |
+Two safeguards:
+- `exclude_components` (default: PC1 only) - components that must never
+  be selected, e.g. a known "quality" axis.
+- `candidate_components` - caps how far into the long tail the selection
+  is allowed to look. Without a cap, a component explaining almost no
+  variance overall (e.g. PC200 at 0.1%) could still get picked just
+  because one item happens to spike there by chance, essentially fitting
+  to noise rather than a real taste dimension.
 
-## 7. Known Limitations / Open Questions
-
-* Rotation currently operates strictly in a single 2D plane (`--hue-components` accepts exactly 2 indices). For scenarios where taste is effectively multidimensional (>2 significant axes), a separate approach is needed for applying the scheme across multiple planes simultaneously.
-* Hue-component selection is currently manual, based on visual inspection with `diagnose`. Automatic detection of "quality axes" (for example, by correlating a component with an independent rating/score, if such data is available) could eliminate this manual step.
-* The PCA basis is estimated across the entire category at once. If explicit differences in criterion importance emerge in the future (not merely different scale, but different physical meaning/weight), a separate weighting scheme will be required.
+Verified on synthetic data reproducing the diffuse spectrum: different
+reference items reliably resolve to different, non-overlapping component
+pairs (e.g. PC8/PC12, PC3/PC5, PC6/PC17, PC9/PC18 across four different
+references in one test run).

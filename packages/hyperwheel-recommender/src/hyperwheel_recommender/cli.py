@@ -3,12 +3,31 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import time
 
 from .data import load_input, load_matrix, save_artifact
 from .diagnose import diagnose
 from .recommend import recommend
 from .rotation import SCHEMES
+
+
+def _print_effective_args(args: argparse.Namespace) -> None:
+    """
+    Prints every resolved argument for this run - including ones the user
+    didn't pass, so their default is visible too. With this many flags,
+    most having non-obvious defaults (e.g. --hue-components defaulting to
+    'auto', --n-components to 20), silently running on an unstated default
+    is easy to miss; this makes the actual configuration explicit on every
+    run.
+    """
+    values = vars(args)
+    width = max(len(k) for k in values if k != "command")
+    print(f"[info] {args.command} — effective arguments:", file=sys.stderr)
+    for key, value in values.items():
+        if key == "command":
+            continue
+        print(f"  {key:<{width}} = {value!r}", file=sys.stderr)
 
 
 def main() -> None:
@@ -50,21 +69,35 @@ def main() -> None:
 
     p_rec = sub.add_parser("recommend", help="Find items matching a color-wheel scheme")
     p_rec.add_argument("input_path", help="CSV or .npz (from build)")
-    p_rec.add_argument("--item", required=True, help="Name of the reference item")
+    p_rec.add_argument("--item", required=True, help="Name of the reference item", type=int)
     p_rec.add_argument(
         "--scheme", required=True, choices=list(SCHEMES),
         help="complementary / triadic / analogous / split-complementary / tetradic",
     )
-    p_rec.add_argument("--n-components", type=int, default=3)
+    p_rec.add_argument("--n-components", type=int, default=20)
     p_rec.add_argument("--top-k", type=int, default=5)
     p_rec.add_argument("--out", default=None, help="Save the result to a CSV")
     p_rec.add_argument(
-        "--hue-components", default="2,3",
-        help="Which 2 components (1-based, comma-separated) to rotate. "
-             "Defaults to '2,3' - PC1 is skipped since it often turns out "
-             "to be a general-quality axis rather than taste/character. "
-             "Check diagnose --items-top to decide which components are "
-             "meaningful to rotate.",
+        "--hue-components", default="auto",
+        help="Either 'auto' (default) to pick, per reference item, the two "
+             "components on which THAT item is most expressive (recommended "
+             "when the variance spectrum is diffuse - no clearly dominant "
+             "pair), or an explicit 1-based pair 'i,j' fixed across all "
+             "items, e.g. '2,3'.",
+    )
+    p_rec.add_argument(
+        "--exclude-components", default="1",
+        help="Comma-separated 1-based components never eligible for "
+             "--hue-components auto, e.g. a known 'quality' axis. Default "
+             "'1' (PC1). Ignored when --hue-components is an explicit pair.",
+    )
+    p_rec.add_argument(
+        "--candidate-components", type=int, default=None,
+        help="Only consider the first N components (1-based) as candidates "
+             "for --hue-components auto. Defaults to --n-components. Caps "
+             "how far into the long tail auto-selection is allowed to reach, "
+             "to avoid picking a component that explains almost no variance "
+             "overall just because one item happens to spike there.",
     )
     p_rec.add_argument(
         "--no-standardize", action="store_true",
@@ -72,6 +105,7 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    _print_effective_args(args)
 
     if args.command == "build":
         t0 = time.time()
@@ -95,9 +129,13 @@ def main() -> None:
             standardize=not args.no_standardize,
         )
     elif args.command == "recommend":
-        hue_components = tuple(int(x) for x in args.hue_components.split(","))
-        if len(hue_components) != 2:
-            parser.error("--hue-components must contain exactly 2 numbers, e.g. '2,3'")
+        if args.hue_components == "auto":
+            hue_components = "auto"
+        else:
+            hue_components = tuple(int(x) for x in args.hue_components.split(","))
+            if len(hue_components) != 2:
+                parser.error("--hue-components must be 'auto' or exactly 2 numbers, e.g. '2,3'")
+        exclude_components = tuple(int(x) for x in args.exclude_components.split(","))
         result = recommend(
             wide,
             reference_item=args.item,
@@ -106,6 +144,8 @@ def main() -> None:
             top_k=args.top_k,
             standardize=not args.no_standardize,
             hue_components=hue_components,
+            exclude_components=exclude_components,
+            candidate_components=args.candidate_components,
         )
         print(result.to_string(index=False))
         if args.out:

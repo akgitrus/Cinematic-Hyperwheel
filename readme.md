@@ -33,6 +33,7 @@ A high rating for both films does not imply that they are "harmonious" with each
 
 The project is interested in a different relationship:
 
+```text
 reference movie
        │
        │  deliberate change of direction
@@ -41,6 +42,7 @@ different movie
        │
        └── preserves some structural relationship
            with the original experience
+```
 
 Informally:
 
@@ -83,7 +85,7 @@ The analogy is not intended to claim that movies literally have "colors". Instea
 
 
 
-# Movie representation
+## Movie representation
 
 The current experimental representation is based on the **MovieLens Tag Genome 2021** dataset.
 
@@ -121,7 +123,7 @@ This provides a common high-dimensional representation in which movies can be co
 
 ---
 
-# Why not simply use the tag order as the geometry?
+## Why not simply use the tag order as the geometry?
 
 An early version of the project attempted to generalize the RGB → HSL transformation directly to an arbitrary number of channels.
 
@@ -157,11 +159,11 @@ Instead:
 
 ---
 
-# From movie vectors to cinematic shape
+## From movie vectors to cinematic shape
 
 For a movie represented by vector `c`:
 
-## 1. Mean level
+### 1. Mean level
 
 The mean of the movie's criteria is calculated:
 
@@ -175,7 +177,7 @@ It is analogous to the lightness component in HSL, although it is not semantical
 
 ---
 
-## 2. Movie shape
+### 2. Movie shape
 
 The movie's individual profile is separated from its overall level:
 
@@ -199,7 +201,7 @@ This is analogous to separating the neutral component from the chromatic compone
 
 ---
 
-## 3. Typical category profile
+### 3. Typical category profile
 
 The shape of a movie is not meaningful only in isolation.
 
@@ -223,7 +225,7 @@ Without it, PCA can identify the structure shared by essentially all movies as t
 
 ---
 
-# PCA: learning the cinematic coordinate system
+## PCA: learning the cinematic coordinate system
 
 After centering and standardization, PCA is applied to the movie shape vectors.
 
@@ -289,7 +291,7 @@ The interpretation is empirical rather than predefined.
 
 ---
 
-# Not every PCA component is a Hue axis
+## Not every PCA component is a Hue axis
 
 A principal component is not automatically suitable for cinematic rotation.
 
@@ -333,7 +335,7 @@ Only components that appear to represent meaningful differences in **character, 
 
 ---
 
-# Hue as a 2D semantic plane
+## Hue as a 2D semantic plane
 
 The current model defines Hue not as a collection of hyperspherical angles, but as an angular position inside a selected two-dimensional PCA plane.
 
@@ -372,7 +374,7 @@ The selected PCA plane therefore provides the geometric equivalent of a color wh
 
 ---
 
-# Whitening
+## Whitening
 
 PCA components generally have different amounts of variance.
 
@@ -398,7 +400,7 @@ The rotation can then be interpreted as an actual angular operation.
 
 ---
 
-# Cinematic color schemes
+## Cinematic color schemes
 
 Once a reference movie has been projected into the selected Hue plane, the system can apply an angular transformation.
 
@@ -434,7 +436,7 @@ They deliberately move away from the reference along a chosen geometric directio
 
 ---
 
-# Delta reconstruction
+## Delta reconstruction
 
 The target movie is not reconstructed from scratch.
 
@@ -471,7 +473,7 @@ It will generally not correspond exactly to an existing movie.
 
 ---
 
-# Finding a real movie
+## Finding a real movie
 
 The final step is therefore a nearest-neighbor search.
 
@@ -515,7 +517,7 @@ nearest real movie
 
 ---
 
-# Empirical analysis
+## Empirical analysis
 
 A major part of the project is the empirical examination of the PCA space.
 
@@ -552,7 +554,7 @@ It is used both to validate the hypothesis and to understand what the learned ci
 
 ---
 
-# Experimental recommendation schemes
+## Experimental recommendation schemes
 
 For a selected reference movie, the system can generate recommendations using different angular transformations:
 
@@ -582,7 +584,7 @@ The project investigates whether different angular relationships consistently pr
 
 ---
 
-# Web application
+## Web application
 
 The project also includes a web application intended as a practical interface for the experimental model.
 
@@ -607,7 +609,7 @@ Its purpose is to make the model tangible and allow the generated recommendation
 
 ---
 
-# Research questions
+## Research questions
 
 The project currently investigates several related questions:
 
@@ -637,17 +639,17 @@ Do these recommendations exhibit the intended property of **harmony beyond simil
 
 ---
 
-# Current limitations
+## Current limitations
 
 The project is experimental and several questions remain open.
 
-## Manual Hue-component selection
+### Manual Hue-component selection
 
 The selection of suitable PCA components currently requires manual interpretation.
 
 Automatic identification of quality-related components may be possible using independent ratings or other external signals.
 
-## Category dependence
+### Category dependence
 
 The PCA basis is learned from a particular movie category.
 
@@ -655,19 +657,19 @@ Changing the category or dataset can therefore change the resulting coordinate s
 
 This may be a limitation, or it may be an important property of the model.
 
-## Two-dimensional rotation
+### Two-dimensional rotation
 
 The current implementation rotates exactly one pair of PCA components.
 
 If cinematic taste requires several independent dimensions simultaneously, a more general multi-plane rotation scheme may be necessary.
 
-## Nearest-neighbor discretization
+### Nearest-neighbor discretization
 
 The geometric target is continuous, but the movie catalog is discrete.
 
 The final recommendation therefore depends on the distribution of actual movies around the generated target.
 
-## Harmony is still a hypothesis
+### Harmony is still a hypothesis
 
 The mathematical transformation can be defined precisely.
 
@@ -677,7 +679,7 @@ This project therefore treats **harmony beyond similarity as a hypothesis to be 
 
 ---
 
-# Project status
+## Project status
 
 The project is currently in the experimental research and prototype stage.
 
@@ -695,7 +697,7 @@ The project is being developed with reproducibility and experimentation in mind.
 
 ---
 
-# Repository structure
+## Repository structure
 
 ```
 Cinematic-Hyperwheel/
@@ -724,9 +726,9 @@ The exact structure may evolve as the research progresses.
 
 ---
 
-# Data
+## Data
 
-## MovieLens Tag Genome Dataset 2021
+### MovieLens Tag Genome Dataset 2021
 
 Cinematic-Hyperwheel uses the **MovieLens Tag Genome Dataset 2021** released by the GroupLens Research Group at the University of Minnesota.
 

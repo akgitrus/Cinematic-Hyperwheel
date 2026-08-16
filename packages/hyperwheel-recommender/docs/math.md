@@ -41,7 +41,7 @@ For an item `c` (a vector of length N):
    `M = mean(Q over items)`
    Without this step, PCA picks up the shape structure common to all
    items as the "main difference", rather than the real variation between
-   items (a bug found and fixed during development — see section 6).
+   items.
 
 4. **Standardization** — criteria are divided by their std (after
    subtracting M), so that criteria with a larger random spread don't
@@ -89,7 +89,7 @@ For a chosen pair of components (i, j):
 
 - Rotation currently works strictly within one 2D plane. For >2
   significant axes, two extensions were identified:
-  - **Adaptive per-reference plane selection (implemented, section 7a
+  - **Adaptive per-reference plane selection (implemented, section 6a
     below)**: instead of one globally-fixed pair, pick the two components
     on which each specific reference item is most expressive.
   - **Complementary via full-dimensional inversion (not yet implemented)**:

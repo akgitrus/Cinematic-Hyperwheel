@@ -1,0 +1,153 @@
+:root {
+  --bg: #0a0d14;
+  --panel: #12161f;
+  --border: #232838;
+  --text: #e8ecf4;
+  --muted: #8891a7;
+  --accent: #6ee7ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% -10%, #131a29, var(--bg) 60%);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.lang-switch {
+  align-self: flex-end;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+.lang-switch__btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.lang-switch__btn--active {
+  background: rgba(110, 231, 255, 0.12);
+  color: var(--accent);
+}
+
+.app__header { text-align: center; }
+.app__header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #6ee7ff, #b46bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.app__header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.app__error { color: #ff7a7a; font-size: 13px; }
+
+.search { position: relative; width: 100%; max-width: 480px; }
+.search__input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.search__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.15);
+}
+
+.search__results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  list-style: none;
+  margin: 0; padding: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.search__result {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+}
+.search__result:hover { background: #1a2130; }
+.search__title { font-size: 13px; }
+.search__meta { font-size: 12px; color: var(--muted); }
+
+.wheel { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 8px; }
+.wheel__disc {
+  position: relative;
+  border-radius: 50%;
+  /* decorative "mood" gradient - matches the axis labels below, not a
+     literal encoding of PCA values (that's the point + readout text) */
+  background: conic-gradient(
+    from 0deg,
+    #ffd88a 0deg,   /* top: свет */
+    #a78bfa 90deg,  /* right: авторское */
+    #ef4444 180deg, /* bottom: мрак */
+    #38bdf8 270deg, /* left: блокбастер */
+    #ffd88a 360deg
+  );
+  box-shadow: 0 0 40px rgba(110, 231, 255, 0.08), inset 0 0 60px rgba(0,0,0,0.55);
+}
+.wheel__ring { fill: rgba(6,8,14,0.55); stroke: rgba(255,255,255,0.15); stroke-width: 1; }
+.wheel__axis { stroke: rgba(255,255,255,0.25); stroke-width: 1; stroke-dasharray: 3 4; }
+.wheel__vector { stroke: #fff; stroke-width: 1.5; opacity: 0.85; }
+.wheel__point { fill: #fff; stroke: var(--accent); stroke-width: 3; }
+
+.wheel__label {
+  position: absolute;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.wheel__label--top { top: -22px; left: 50%; transform: translateX(-50%); }
+.wheel__label--bottom { bottom: -22px; left: 50%; transform: translateX(-50%); }
+.wheel__label--left { left: -78px; top: 50%; transform: translateY(-50%); }
+.wheel__label--right { right: -78px; top: 50%; transform: translateY(-50%); }
+
+.wheel__readout { text-align: center; font-size: 12px; color: var(--muted); }
+.wheel__readout-title { color: var(--text); font-size: 14px; margin-bottom: 4px; }
+
+.card {
+  width: 100%; max-width: 480px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px;
+}
+.card__title { font-size: 15px; margin-bottom: 8px; }
+.card__row { font-size: 13px; color: var(--muted); margin-bottom: 4px; }

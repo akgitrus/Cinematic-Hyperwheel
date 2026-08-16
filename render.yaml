@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: cinematic-hyperwheel
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r apps/web/backend/requirements.txt
+      pip install -e packages/hyperwheel-recommender
+      cd apps/web/frontend && npm install && npm run build
+    startCommand: cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

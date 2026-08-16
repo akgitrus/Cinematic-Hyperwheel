@@ -704,6 +704,7 @@ Cinematic-Hyperwheel/
 │
 ├── packages/
 │   └── cinematic-hyperwheel/   ← reusable research / recommendation engine
+│       ├── docs/               ← packlage documentation
 │       ├── src/
 │       └── tests/
 │

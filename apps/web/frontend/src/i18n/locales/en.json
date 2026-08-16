@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Cinematic Hyperwheel",
+    "tagline": "harmony beyond similarity"
+  },
+  "search": {
+    "placeholder": "Title, year, director... e.g. \"The Matrix 1999\""
+  },
+  "wheel": {
+    "axisLight": "light",
+    "axisDark": "dark",
+    "axisBlockbuster": "blockbuster",
+    "axisArthouse": "arthouse",
+    "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
+    "readoutAngle": "angle {{angle}}° · length {{radius}}"
+  },
+  "card": {
+    "director": "Director",
+    "starring": "Starring",
+    "rating": "Rating",
+    "unknown": "—"
+  },
+  "errors": {
+    "wheelLookup": "Could not fetch the movie's coordinates in PCA space."
+  }
+}

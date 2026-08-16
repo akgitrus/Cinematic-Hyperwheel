@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Cinematic Hyperwheel",
+    "tagline": "гармония за пределами схожести"
+  },
+  "search": {
+    "placeholder": "Название, год, режиссёр... например «Матрица 1999»"
+  },
+  "wheel": {
+    "axisLight": "свет",
+    "axisDark": "мрак",
+    "axisBlockbuster": "блокбастер",
+    "axisArthouse": "авторское",
+    "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
+    "readoutAngle": "угол {{angle}}° · длина {{radius}}"
+  },
+  "card": {
+    "director": "Режиссёр",
+    "starring": "В ролях",
+    "rating": "Рейтинг",
+    "unknown": "—"
+  },
+  "errors": {
+    "wheelLookup": "Не удалось получить координаты фильма в PCA-пространстве."
+  }
+}

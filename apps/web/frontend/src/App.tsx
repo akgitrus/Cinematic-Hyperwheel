@@ -96,9 +96,55 @@ export default function App() {
       {error && <div className="app__error">{error}</div>}
       {recError && <div className="app__error">{recError}</div>}
 
-      {primary && (
-        <div className="wheel-row">
-          <Wheel circle={primary} size={320} title={selected?.title} overlays={recs?.angles} />
+      <div className="layout3">
+        <aside className="layout3__left">
+          {recs && (
+            <div className="recommendations">
+              <h2 className="recommendations__title">{t("recommendations.title")}</h2>
+              {recs.angles.map((a, gi) => (
+                <div key={gi} className="recommendations__angle">
+                  <div className="recommendations__angle-head">
+                    {t("recommendations.angle", { angle: a.angle_deg })}
+                  </div>
+                  <ol className="recommendations__list">
+                    {a.items.map((it) => (
+                      <li key={it.item_id} className="recommendations__item">
+                        {it.title}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <main className="layout3__center">
+          {primary && (
+            <Wheel
+              circle={primary}
+              size={320}
+              title={selected?.title}
+              overlays={recs?.angles}
+            />
+          )}
+          {selected && (
+            <div className="card">
+              <div className="card__title">{selected.title}</div>
+              <div className="card__row">
+                {t("card.director")}: {selected.directedBy || t("card.unknown")}
+              </div>
+              <div className="card__row">
+                {t("card.starring")}: {selected.starring || t("card.unknown")}
+              </div>
+              <div className="card__row">
+                {t("card.rating")}: {selected.avgRating ?? t("card.unknown")}
+              </div>
+            </div>
+          )}
+        </main>
+
+        <aside className="layout3__right">
           {secondary.length > 0 && (
             <div className="wheel-row__secondary">
               {secondary.map((c) => (
@@ -106,43 +152,8 @@ export default function App() {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {recs && (
-        <div className="recommendations">
-          <h2 className="recommendations__title">{t("recommendations.title")}</h2>
-          {recs.angles.map((a, gi) => (
-            <div key={gi} className="recommendations__angle">
-              <div className="recommendations__angle-head">
-                {t("recommendations.angle", { angle: a.angle_deg })}
-              </div>
-              <ol className="recommendations__list">
-                {a.items.map((it) => (
-                  <li key={it.item_id} className="recommendations__item">
-                    {it.title}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selected && (
-        <div className="card">
-          <div className="card__title">{selected.title}</div>
-          <div className="card__row">
-            {t("card.director")}: {selected.directedBy || t("card.unknown")}
-          </div>
-          <div className="card__row">
-            {t("card.starring")}: {selected.starring || t("card.unknown")}
-          </div>
-          <div className="card__row">
-            {t("card.rating")}: {selected.avgRating ?? t("card.unknown")}
-          </div>
-        </div>
-      )}
+        </aside>
+      </div>
     </div>
   );
 }

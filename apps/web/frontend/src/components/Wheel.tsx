@@ -125,7 +125,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   const dXPos = ringArcPath(center, ringR, -hRight, hRight, 1);
   // Top (negative) reads left->right, bottom (positive) left->right.
   const dYNeg = ringArcPath(center, ringR, -HALF_PI - hTop, -HALF_PI + hTop, 1);
-  const dYPos = ringArcPath(center, ringR, HALF_PI + hBottom, HALF_PI - hBottom, 0);
+  const dYPos = ringArcPath(center, ringR+8, HALF_PI + hBottom, HALF_PI - hBottom, 0);
 
   // Clamp by VECTOR MAGNITUDE, not per-axis - clamping z_x and z_y
   // independently would let a point near the diagonal (both axes close
@@ -305,7 +305,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
             style={{ left: recPoints[activeOverlay].cx + 12, top: recPoints[activeOverlay].cy }}
           >
             <div className="wheel__rec-popup-title">
-              Angle {recPoints[activeOverlay].angle}? ? #{recPoints[activeOverlay].item.rank}
+              Angle {recPoints[activeOverlay].angle}&deg; &middot; #{recPoints[activeOverlay].item.rank}
             </div>
             <div className="wheel__rec-popup-row">{recPoints[activeOverlay].item.title}</div>
           </div>

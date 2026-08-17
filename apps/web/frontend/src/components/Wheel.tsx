@@ -169,15 +169,34 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   // Recommendation overlay points - one per recommendation item (all top-k
   // per scheme angle), drawn on the same disc with the same vector-magnitude
   // clamp as the reference point.
+  // Reference hue in the plane, converted to the disc's "compass" bearing
+  // (0 = top/north, clockwise). angle_deg used by the backend is a RELATIVE
+  // rotation of this hue, so the scheme target bearing =
+  // refCompassBearing + angle_deg - feeding angle_deg straight into
+  // colorOnWheel (which expects an absolute compass bearing) gives wrong hues.
+  const refCompassBearing =
+    ((Math.atan2(circle.z_y, circle.z_x) * 180) / Math.PI + 90 + 360) % 360;
+
+  // Each recommendation point is coloured by the disc's hue at ITS GROUP's
+  // scheme target angle (refCompassBearing + scheme angle), so all points of
+  // one scheme angle share the same colour.
   const recPoints = overlays.flatMap((o) =>
     o.items.map((it) => {
       const rr = Math.hypot(it.z_x, it.z_y);
       const rs = rr > Z_CLAMP ? Z_CLAMP / rr : 1;
+      const color = colorOnWheel(
+        refCompassBearing + o.angle_deg,
+        circle.axis_x.colors.positive,
+        circle.axis_x.colors.negative,
+        circle.axis_y.colors.positive,
+        circle.axis_y.colors.negative
+      );
       return {
         cx: center + ((it.z_x * rs) / Z_CLAMP) * maxR,
         cy: center + ((it.z_y * rs) / Z_CLAMP) * maxR,
         angle: o.angle_deg,
         item: it,
+        color,
       };
     })
   );
@@ -218,7 +237,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
           <line x1={center} y1={center} x2={x} y2={y} className="wheel__vector" />
           <circle
             cx={x} cy={y}
-            r={compact ? 4 : 7}
+            r={compact ? 6 : 10.5}
             className="wheel__point"
             fill={pointColor}
             style={{ filter: `drop-shadow(0 0 ${glowPx}px ${pointColor})` }}
@@ -272,8 +291,9 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
               key={`${p.item.item_id}-${i}`}
               cx={p.cx}
               cy={p.cy}
-              r={compact ? 5 : 8}
+              r={compact ? 3.75 : 6}
               className="wheel__rec-point"
+              style={{ fill: p.color, filter: `drop-shadow(0 0 5px ${p.color})` }}
               onMouseEnter={() => setActiveOverlay(i)}
               onMouseLeave={() => setActiveOverlay(null)}
             />

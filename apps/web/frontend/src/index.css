@@ -217,10 +217,8 @@ body {
   font-weight: 700;
 }
 .wheel__rec-point {
-  fill: #fff;
-  stroke: var(--accent);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 6px var(--accent));
+  stroke: #fff;
+  stroke-width: 2;
   cursor: help;
   pointer-events: all;
 }

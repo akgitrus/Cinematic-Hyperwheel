@@ -137,7 +137,7 @@ body {
 .wheel__ring { fill: rgba(6,8,14,0.55); stroke: rgba(255,255,255,0.15); stroke-width: 1; }
 .wheel__axis { stroke: rgba(255,255,255,0.25); stroke-width: 1; stroke-dasharray: 3 4; }
 .wheel__vector { stroke: #fff; stroke-width: 1.5; opacity: 0.85; }
-.wheel__point { fill: #fff; stroke: var(--accent); stroke-width: 3; }
+.wheel__point { stroke: #fff; stroke-width: 2.5; }
 
 .wheel__label {
   position: absolute;

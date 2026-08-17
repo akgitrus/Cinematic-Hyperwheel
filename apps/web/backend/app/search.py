@@ -116,7 +116,15 @@ class MovieIndex:
 
         scored: list[tuple[float, int]] = []
         for i in range(len(self.records)):
-            title_score = fuzz.WRatio(query_norm, self._title_norm[i])
+            # token_set_ratio, not WRatio: WRatio blends in
+            # partial_token_set_ratio, which saturates to ~100 whenever
+            # query and title share even one short common word (e.g.
+            # "of") once the two strings differ enough in length - i.e.
+            # almost always, regardless of real relevance. Plain
+            # token_set_ratio doesn't have that escape hatch and still
+            # handles reordered/missing tokens fine (which is what we
+            # actually need after _reorder_article + stopword-stripping).
+            title_score = fuzz.token_set_ratio(query_norm, self._title_norm[i])
             people_text = self._people_norm[i]
             people_score = fuzz.token_set_ratio(query_norm, people_text) if people_text else 0.0
             weighted = _TITLE_WEIGHT * title_score + _PEOPLE_WEIGHT * people_score

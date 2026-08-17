@@ -166,20 +166,21 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   const glowScale = compact ? 3 : 6;
   const glowPx = glowBase + Math.min(rawR, 5) * glowScale;
 
-  // Recommendation overlay points (rank-1 per scheme angle), drawn on the same
-  // disc with the same vector-magnitude clamp as the reference point.
-  const recPoints = overlays.map((o) => {
-    const zi = o.items[0];
-    const rzx = zi?.z_x ?? 0;
-    const rzy = zi?.z_y ?? 0;
-    const rr = Math.hypot(rzx, rzy);
-    const rs = rr > Z_CLAMP ? Z_CLAMP / rr : 1;
-    return {
-      cx: center + ((rzx * rs) / Z_CLAMP) * maxR,
-      cy: center + ((rzy * rs) / Z_CLAMP) * maxR,
-      rec: o,
-    };
-  });
+  // Recommendation overlay points - one per recommendation item (all top-k
+  // per scheme angle), drawn on the same disc with the same vector-magnitude
+  // clamp as the reference point.
+  const recPoints = overlays.flatMap((o) =>
+    o.items.map((it) => {
+      const rr = Math.hypot(it.z_x, it.z_y);
+      const rs = rr > Z_CLAMP ? Z_CLAMP / rr : 1;
+      return {
+        cx: center + ((it.z_x * rs) / Z_CLAMP) * maxR,
+        cy: center + ((it.z_y * rs) / Z_CLAMP) * maxR,
+        angle: o.angle_deg,
+        item: it,
+      };
+    })
+  );
 
   const gradient =
     `conic-gradient(from 0deg,` +
@@ -268,7 +269,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
           </g>
           {recPoints.map((p, i) => (
             <circle
-              key={`rec-${i}`}
+              key={`${p.item.item_id}-${i}`}
               cx={p.cx}
               cy={p.cy}
               r={compact ? 5 : 8}
@@ -284,13 +285,9 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
             style={{ left: recPoints[activeOverlay].cx + 12, top: recPoints[activeOverlay].cy }}
           >
             <div className="wheel__rec-popup-title">
-              Angle {recPoints[activeOverlay].rec.angle_deg}?
+              Angle {recPoints[activeOverlay].angle}? ? #{recPoints[activeOverlay].item.rank}
             </div>
-            {recPoints[activeOverlay].rec.items.map((it) => (
-              <div key={it.item_id} className="wheel__rec-popup-row">
-                {it.rank}. {it.title}
-              </div>
-            ))}
+            <div className="wheel__rec-popup-row">{recPoints[activeOverlay].item.title}</div>
           </div>
         )}
       </div>

@@ -123,8 +123,17 @@ body {
 
 .wheel { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: help; }
 .wheel--compact { gap: 6px; }
-.wheel__disc {
+.wheel__stage {
   position: relative;
+}
+.wheel__stage svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+.wheel__disc {
+  position: absolute;
   border-radius: 50%;
   /* background is set inline per-circle (from axis colors) - decorative
      "mood" gradient, not a literal encoding of the values; the point's
@@ -139,23 +148,42 @@ body {
 .wheel__vector { stroke: #fff; stroke-width: 1.5; opacity: 0.85; }
 .wheel__point { stroke: #fff; stroke-width: 2.5; }
 
-.wheel__label {
-  position: absolute;
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-.wheel__label--top { top: -22px; left: 50%; transform: translateX(-50%); }
-.wheel__label--bottom { bottom: -22px; left: 50%; transform: translateX(-50%); }
-.wheel__label--left { left: -78px; top: 50%; transform: translateY(-50%); }
-.wheel__label--right { right: -78px; top: 50%; transform: translateY(-50%); }
-
 .wheel__readout { text-align: center; font-size: 12px; color: var(--muted); }
 .wheel__readout-title { color: var(--text); font-size: 14px; margin-bottom: 4px; }
 .wheel__readout-axis { font-size: 10px; letter-spacing: 0.06em; opacity: 0.8; }
 .wheel--compact .wheel__readout { font-size: 10px; }
+.wheel__ring-text {
+  fill: var(--muted);
+  font-family: inherit;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.wheel__readout-legend {
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.wheel__readout-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 5px;
+  row-gap: 1px;
+}
+.wheel__readout-axis-name {
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.92;
+}
+.wheel__readout-pole {
+  opacity: 0.85;
+}
+.wheel__readout-arrow {
+  opacity: 0.6;
+}
 
 .card {
   width: 100%; max-width: 480px;

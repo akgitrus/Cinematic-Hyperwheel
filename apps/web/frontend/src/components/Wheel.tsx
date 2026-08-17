@@ -14,16 +14,95 @@ const Z_CLAMP = 3;
 // (no room to render them legibly) - full labels are still available as
 // a native tooltip on hover
 const COMPACT_BELOW = 220;
+// Extra page-background margin around the non-compact wheel, so the two
+// pole-label rings sit OUTSIDE the disc's coloured gradient (radius =
+// size/2). Otherwise the curved labels would overlap the "mood" conic
+// gradient and blend with it. Compact wheels have no rings and no margin.
+const RING_PAD = 36;
+
+// Ring geometry for the main (non-compact) wheel: all four pole labels
+// (axis X negative/positive, axis Y negative/positive) sit on a single ring
+// curving around the circle, so the text follows a radius around it instead
+// of sitting on straight lines. SVG uses a down-right (+y down) coordinate
+// space; angles are measured clockwise from the +x (right).
+const HALF_PI = Math.PI / 2;
+// Labels sit on arcs of the two rings; each arc is sized from the label's
+// measured pixel width so the text is never clipped at the arc ends. The
+// half-angular sweep is capped so a label can't stray toward the adjacent pole.
+const MAX_HALF_ANGLE = (45 * Math.PI) / 180;
+
+// Approximate the on-screen pixel width of a label (uppercase, with the
+// rings' 0.06em letter-spacing) so we can size the host arc correctly.
+function measureTextWidth(text: string, fontPx: number): number {
+  const spaced = (text.length - 1) * fontPx * 0.06;
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.font = `${fontPx}px Inter, system-ui, sans-serif`;
+      return ctx.measureText(text.toUpperCase()).width + spaced;
+    }
+  }
+  return text.length * fontPx * 0.72 + spaced;
+}
+
+// Half-angular sweep that guarantees the full label fits on a ring of
+// radius r (with a 25% safety margin), capped by MAX_HALF_ANGLE.
+function labelArcHalf(r: number, text: string, fontPx: number): number {
+  const width = measureTextWidth(text, fontPx);
+  return Math.min((width * 1.25) / 2 / r, MAX_HALF_ANGLE);
+}
+
+function ringArcPath(
+  center: number,
+  r: number,
+  a0: number,
+  a1: number,
+  sweep: 0 | 1
+): string {
+  const s = `${center + r * Math.cos(a0)},${center + r * Math.sin(a0)}`;
+  const e = `${center + r * Math.cos(a1)},${center + r * Math.sin(a1)}`;
+  return `M ${s} A ${r} ${r} 0 0 ${sweep} ${e}`;
+}
 
 export default function Wheel({ circle, size = 320, title }: Props) {
   const { t, i18n } = useTranslation();
   const compact = size < COMPACT_BELOW;
-  const center = size / 2;
-  const maxR = size / 2 - (compact ? 10 : 28);
+  const halfBox = size / 2;
+  const pad = compact ? 0 : RING_PAD;
+  const wrap = size + pad * 2;
+  const center = wrap / 2;
+  const discOffset = pad;
+  const maxR = halfBox - (compact ? 10 : 28);
 
+  // Main wheel only: a single label ring curving around and OUTSIDE the disc
+  // (radius > halfBox, on the page background, so it never sits over the
+  // coloured gradient). All four pole labels share this one radius: axis X
+  // negative left / positive right, axis Y negative top / positive bottom.
+  // Compact wheels skip the ring and rely on the readout legend + tooltip.
+  const ringR = halfBox + 16;
+  const pid = `${circle.axis_x.pc}-${circle.axis_y.pc}`;
+  const idXNeg = `ring-${pid}-xneg`;
+  const idXPos = `ring-${pid}-xpos`;
+  const idYNeg = `ring-${pid}-yneg`;
+  const idYPos = `ring-${pid}-ypos`;
   const lang = i18n.resolvedLanguage ?? "en";
   const labelsX = circle.axis_x.labels[lang] ?? circle.axis_x.labels.en;
   const labelsY = circle.axis_y.labels[lang] ?? circle.axis_y.labels.en;
+
+  // Size each label's host arc from its measured width so long labels are
+  // never clipped at the arc ends (fixed tiny arcs used to cut text off).
+  const fontPx = 9;
+  const hTop = labelArcHalf(ringR, labelsY.negative, fontPx);
+  const hBottom = labelArcHalf(ringR, labelsY.positive, fontPx);
+  const hRight = labelArcHalf(ringR, labelsX.positive, fontPx);
+  const hLeft = labelArcHalf(ringR, labelsX.negative, fontPx);
+  // Left (negative) reads bottom->top, right (positive) top->bottom.
+  const dXNeg = ringArcPath(center, ringR, Math.PI - hLeft, Math.PI + hLeft, 1);
+  const dXPos = ringArcPath(center, ringR, -hRight, hRight, 1);
+  // Top (negative) reads left->right, bottom (positive) left->right.
+  const dYNeg = ringArcPath(center, ringR, -HALF_PI - hTop, -HALF_PI + hTop, 1);
+  const dYPos = ringArcPath(center, ringR, HALF_PI + hBottom, HALF_PI - hBottom, 0);
 
   // Clamp by VECTOR MAGNITUDE, not per-axis - clamping z_x and z_y
   // independently would let a point near the diagonal (both axes close
@@ -78,8 +157,18 @@ export default function Wheel({ circle, size = 320, title }: Props) {
 
   return (
     <div className={"wheel" + (compact ? " wheel--compact" : "")} title={hint}>
-      <div className="wheel__disc" style={{ width: size, height: size, background: gradient }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <div className="wheel__stage" style={{ width: wrap, height: wrap }}>
+        <div
+          className="wheel__disc"
+          style={{
+            width: size,
+            height: size,
+            left: discOffset,
+            top: discOffset,
+            background: gradient,
+          }}
+        />
+        <svg width={wrap} height={wrap} viewBox={`0 0 ${wrap} ${wrap}`}>
           <circle cx={center} cy={center} r={maxR} className="wheel__ring" />
           <line
             x1={center} y1={center - maxR + 4}
@@ -99,22 +188,59 @@ export default function Wheel({ circle, size = 320, title }: Props) {
             fill={pointColor}
             style={{ filter: `drop-shadow(0 0 ${glowPx}px ${pointColor})` }}
           />
+          {!compact && (
+            <g className="wheel__rings">
+              <defs>
+                <path id={idYNeg} d={dYNeg} />
+                <path id={idYPos} d={dYPos} />
+                <path id={idXNeg} d={dXNeg} />
+                <path id={idXPos} d={dXPos} />
+              </defs>
+              <text className="wheel__ring-text">
+                <textPath href={`#${idYNeg}`} startOffset="50%" textAnchor="middle">
+                  {labelsY.negative}
+                </textPath>
+              </text>
+              <text className="wheel__ring-text">
+                <textPath href={`#${idYPos}`} startOffset="50%" textAnchor="middle">
+                  {labelsY.positive}
+                </textPath>
+              </text>
+              <text className="wheel__ring-text">
+                <textPath href={`#${idXNeg}`} startOffset="50%" textAnchor="middle">
+                  {labelsX.negative}
+                </textPath>
+              </text>
+              <text className="wheel__ring-text">
+                <textPath href={`#${idXPos}`} startOffset="50%" textAnchor="middle">
+                  {labelsX.positive}
+                </textPath>
+              </text>
+            </g>
+          )}
         </svg>
-        {!compact && (
-          <>
-            <span className="wheel__label wheel__label--top">{labelsY.negative}</span>
-            <span className="wheel__label wheel__label--bottom">{labelsY.positive}</span>
-            <span className="wheel__label wheel__label--left">{labelsX.negative}</span>
-            <span className="wheel__label wheel__label--right">{labelsX.positive}</span>
-          </>
-        )}
       </div>
       <div className="wheel__readout">
         {!compact && title && <div className="wheel__readout-title">{title}</div>}
         <div className="wheel__readout-axis">
           PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
         </div>
-        {!compact && (
+        {compact ? (
+          <div className="wheel__readout-legend">
+            <div className="wheel__readout-legend-row">
+              <span className="wheel__readout-axis-name">{labelsX.axis}</span>
+              <span className="wheel__readout-pole">{labelsX.negative}</span>
+              <span className="wheel__readout-arrow">\u2194</span>
+              <span className="wheel__readout-pole">{labelsX.positive}</span>
+            </div>
+            <div className="wheel__readout-legend-row">
+              <span className="wheel__readout-axis-name">{labelsY.axis}</span>
+              <span className="wheel__readout-pole">{labelsY.negative}</span>
+              <span className="wheel__readout-arrow">\u2194</span>
+              <span className="wheel__readout-pole">{labelsY.positive}</span>
+            </div>
+          </div>
+        ) : (
           <>
             <div>
               {t("wheel.readout", {

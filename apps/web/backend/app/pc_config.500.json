@@ -1,0 +1,4566 @@
+{
+  "1": {
+    "excluded_from_hue": true,
+    "note": "General quality / halo axis (docs/math.md section 4) - good items get praised broadly, bad ones criticized broadly. Always excluded from hue-plane selection; never rendered as a circle.",
+    "colors": {
+      "negative": "#4b5563",
+      "positive": "#9ca3af"
+    },
+    "labels": {
+      "en": {
+        "axis": "Overall reception",
+        "negative": "Weaker reception",
+        "positive": "Stronger reception"
+      },
+      "ru": {
+        "axis": "Общее восприятие",
+        "negative": "Принят слабее",
+        "positive": "Принят сильнее"
+      }
+    }
+  },
+  "2": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "negative": "Popcorn Entertainment",
+        "positive": "Auteur Cinema"
+      },
+      "ru": {
+        "negative": "Динамичный мейнстрим",
+        "positive": "Авторский артхаус"
+      }
+    }
+  },
+  "3": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "negative": "Heartwarming Drama",
+        "positive": "Transgressive Horror"
+      },
+      "ru": {
+        "negative": "Трогательная драма",
+        "positive": "Трансгрессивный хоррор"
+      }
+    }
+  },
+  "4": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "negative": "Quirky Dramedy",
+        "positive": "Visual Epic"
+      },
+      "ru": {
+        "negative": "Жизненная комедия",
+        "positive": "Визуальный эпос"
+      }
+    }
+  },
+  "5": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "negative": "Political Thriller",
+        "positive": "Family Fantasy"
+      },
+      "ru": {
+        "negative": "Политический триллер",
+        "positive": "Семейное фэнтези"
+      }
+    }
+  },
+  "6": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "negative": "Existential Drama",
+        "positive": "Slapstick Comedy"
+      },
+      "ru": {
+        "negative": "Экзистенциальная драма",
+        "positive": "Эксцентричная комедия"
+      }
+    }
+  },
+  "7": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "negative": "Art-SciFi / Philosophical Fiction",
+        "positive": "Pure Horror"
+      },
+      "ru": {
+        "negative": "Арт-фикшн / Философская фантастика",
+        "positive": "Чистый хоррор"
+      }
+    }
+  },
+  "8": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "negative": "Blunt Grotesque / Historical Fact",
+        "positive": "Psychological Thriller / Neo-noir"
+      },
+      "ru": {
+        "negative": "Прямолинейный гротеск / Исторический факт",
+        "positive": "Психологический детектив / Неонуар"
+      }
+    }
+  },
+  "9": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "negative": "Science fiction",
+        "positive": "Superhero / comic-book"
+      },
+      "ru": {
+        "negative": "Научная фантастика",
+        "positive": "Супергерои / комиксы"
+      }
+    }
+  },
+  "10": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "negative": "Noir / romantic",
+        "positive": "Brutal / political action"
+      },
+      "ru": {
+        "negative": "Нуар / романтика",
+        "positive": "Брутальный / политический экшен"
+      }
+    }
+  },
+  "11": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "British absurdism vs. scenic epic cinema",
+        "negative": "British comedy / absurdism",
+        "positive": "Scenic / western / epic"
+      },
+      "ru": {
+        "axis": "Британская комедия / абсурд vs. Пейзажное / вестерн / эпическое",
+        "negative": "Британская комедия / абсурд",
+        "positive": "Пейзажное / вестерн / эпическое"
+      }
+    }
+  },
+  "12": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Animation / animals vs. live-action drama",
+        "negative": "Animation / talking animals",
+        "positive": "Romance / costume drama"
+      },
+      "ru": {
+        "axis": "Анимация / говорящие животные vs. Романтика / костюмная драма",
+        "negative": "Анимация / говорящие животные",
+        "positive": "Романтика / костюмная драма"
+      }
+    }
+  },
+  "13": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Espionage vs. superhero dialogue",
+        "negative": "Espionage",
+        "positive": "Superhero / dialogue-driven"
+      },
+      "ru": {
+        "axis": "Шпионаж vs. Супергерои / диалоговое кино",
+        "negative": "Шпионаж",
+        "positive": "Супергерои / диалоговое кино"
+      }
+    }
+  },
+  "14": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Literary / sci-fi adaptation vs. martial-arts gore",
+        "negative": "Book / fantasy / sci-fi adaptation",
+        "positive": "Gore / wuxia / martial arts"
+      },
+      "ru": {
+        "axis": "Книга / фэнтези / sci-fi vs. Кровь / ушу / боевые искусства",
+        "negative": "Книга / фэнтези / sci-fi",
+        "positive": "Кровь / ушу / боевые искусства"
+      }
+    }
+  },
+  "15": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Coming-of-age suburbia vs. epic historical war",
+        "negative": "Teen / suburbia",
+        "positive": "Epic / historical / war"
+      },
+      "ru": {
+        "axis": "Подростки / пригород vs. Эпическое / историческое / военное",
+        "negative": "Подростки / пригород",
+        "positive": "Эпическое / историческое / военное"
+      }
+    }
+  },
+  "16": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Dystopian sci-fi vs. erotic spy adventure",
+        "negative": "Dystopia / alternate reality",
+        "positive": "Sexual / Bond-style adventure"
+      },
+      "ru": {
+        "axis": "Антиутопия / альтернативная реальность vs. Сексуальность / бондиана",
+        "negative": "Антиутопия / альтернативная реальность",
+        "positive": "Сексуальность / бондиана"
+      }
+    }
+  },
+  "17": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Wilderness / travel vs. high-school teen film",
+        "negative": "Travel / wilderness",
+        "positive": "High school / teen"
+      },
+      "ru": {
+        "axis": "Путешествия / дикая природа vs. Школа / подростки",
+        "negative": "Путешествия / дикая природа",
+        "positive": "Школа / подростки"
+      }
+    }
+  },
+  "18": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Post-apocalyptic solitude vs. space / alien sci-fi",
+        "negative": "Post-apocalyptic",
+        "positive": "Space / alien"
+      },
+      "ru": {
+        "axis": "Постапокалипсис vs. Космос / пришельцы",
+        "negative": "Постапокалипсис",
+        "positive": "Космос / пришельцы"
+      }
+    }
+  },
+  "19": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Unexpected / catastrophe cinema vs. Bond espionage",
+        "negative": "Unexpected / catastrophe",
+        "positive": "Bond / espionage"
+      },
+      "ru": {
+        "axis": "Неожиданное / катастрофа vs. Бонд / шпионаж",
+        "negative": "Неожиданное / катастрофа",
+        "positive": "Бонд / шпионаж"
+      }
+    }
+  },
+  "20": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "War / surreal alienation vs. queer sexuality",
+        "negative": "War / surreal",
+        "positive": "Queer / sexuality"
+      },
+      "ru": {
+        "axis": "Война / сюрреализм vs. Квир / сексуальность",
+        "negative": "Война / сюрреализм",
+        "positive": "Квир / сексуальность"
+      }
+    }
+  },
+  "21": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Social issues vs. WWII / Holocaust",
+        "negative": "Social issues / politics",
+        "positive": "WWII / Holocaust"
+      },
+      "ru": {
+        "axis": "Социальные темы / политика vs. Вторая мировая / Холокост",
+        "negative": "Социальные темы / политика",
+        "positive": "Вторая мировая / Холокост"
+      }
+    }
+  },
+  "22": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "negative": "The Sacred / Reverence",
+        "positive": "Cynicism / Irony"
+      },
+      "ru": {
+        "negative": "Сакральность и трепет",
+        "positive": "Цинизм и ирония"
+      }
+    }
+  },
+  "23": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy family drama vs. music biopic",
+        "negative": "Fantasy / family",
+        "positive": "Music / biography"
+      },
+      "ru": {
+        "axis": "Фэнтези / семья vs. Музыка / биография",
+        "negative": "Фэнтези / семья",
+        "positive": "Музыка / биография"
+      }
+    }
+  },
+  "24": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "War / music / modern fantasy vs. Christian religion",
+        "negative": "War / music / fantasy",
+        "positive": "Christian / biblical"
+      },
+      "ru": {
+        "axis": "Война / музыка / фэнтези vs. Христианство / библейские темы",
+        "negative": "Война / музыка / фэнтези",
+        "positive": "Христианство / библейские темы"
+      }
+    }
+  },
+  "25": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Teen / scenic music cinema vs. Chinese martial arts",
+        "negative": "Teen / music",
+        "positive": "Kung fu / wuxia"
+      },
+      "ru": {
+        "axis": "Подростки / музыка vs. Кунг-фу / уся",
+        "negative": "Подростки / музыка",
+        "positive": "Кунг-фу / уся"
+      }
+    }
+  },
+  "26": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Video-game / guns / music vs. Japanese slow cinema",
+        "negative": "Video-game / action",
+        "positive": "Japan / samurai / slow"
+      },
+      "ru": {
+        "axis": "Игры / экшен vs. Япония / самураи / медленное кино",
+        "negative": "Игры / экшен",
+        "positive": "Япония / самураи / медленное кино"
+      }
+    }
+  },
+  "27": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romantic comedy vs. detective / martial-arts mystery",
+        "negative": "Romantic comedy",
+        "positive": "Mystery / detective / martial arts"
+      },
+      "ru": {
+        "axis": "Романтическая комедия vs. Тайна / детектив / боевые искусства",
+        "negative": "Романтическая комедия",
+        "positive": "Тайна / детектив / боевые искусства"
+      }
+    }
+  },
+  "28": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy / Holocaust vs. religious war themes",
+        "negative": "Fantasy / WWII",
+        "positive": "Religion / war"
+      },
+      "ru": {
+        "axis": "Фэнтези / WWII vs. Религия / война",
+        "negative": "Фэнтези / WWII",
+        "positive": "Религия / война"
+      }
+    }
+  },
+  "29": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Social drama / crime vs. religion / faith",
+        "negative": "Crime / social drama",
+        "positive": "Religion / faith"
+      },
+      "ru": {
+        "axis": "Криминал / социальная драма vs. Религия / вера",
+        "negative": "Криминал / социальная драма",
+        "positive": "Религия / вера"
+      }
+    }
+  },
+  "30": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drug / addiction drama vs. Australian / quirky cinema",
+        "negative": "Drugs / addiction",
+        "positive": "Australia / quirky"
+      },
+      "ru": {
+        "axis": "Наркотики / зависимость vs. Австралия / причудливое кино",
+        "negative": "Наркотики / зависимость",
+        "positive": "Австралия / причудливое кино"
+      }
+    }
+  },
+  "31": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Western / frontier vs. Comedy / irony",
+        "negative": "Western / frontier",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Вестерн / фронтир vs. Комедия / ирония",
+        "negative": "Вестерн / фронтир",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "32": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Work / institutions",
+        "negative": "Music / performance",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Работа / институты",
+        "negative": "Музыка / выступления",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "33": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Romance / sexuality",
+        "negative": "Romance / sexuality",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Романтика / сексуальность",
+        "negative": "Романтика / сексуальность",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "34": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Chinese martial arts",
+        "negative": "Romance / sexuality",
+        "positive": "Chinese martial arts"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Китайские боевые искусства",
+        "negative": "Романтика / сексуальность",
+        "positive": "Китайские боевые искусства"
+      }
+    }
+  },
+  "35": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Music / performance",
+        "negative": "Romance / sexuality",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Музыка / выступления",
+        "negative": "Романтика / сексуальность",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "36": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Adaptation / source material vs. Work / institutions",
+        "negative": "Adaptation / source material",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Экранизация / первоисточник vs. Работа / институты",
+        "negative": "Экранизация / первоисточник",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "37": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Action / intensity",
+        "negative": "Science fiction / futurism",
+        "positive": "Action / intensity"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Экшен / интенсивность",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Экшен / интенсивность"
+      }
+    }
+  },
+  "38": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Drugs / vice",
+        "negative": "Music / performance",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Наркотики / пороки",
+        "negative": "Музыка / выступления",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "39": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Crime / investigation",
+        "negative": "Drugs / vice",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Криминал / расследование",
+        "negative": "Наркотики / пороки",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "40": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Work / institutions",
+        "negative": "Politics / society",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Работа / институты",
+        "negative": "Политика / общество",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "41": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Science fiction / futurism",
+        "negative": "Crime / investigation",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Научная фантастика / футуризм",
+        "negative": "Криминал / расследование",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "42": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Adaptation / source material vs. Animation / family",
+        "negative": "Adaptation / source material",
+        "positive": "Animation / family"
+      },
+      "ru": {
+        "axis": "Экранизация / первоисточник vs. Анимация / семейное кино",
+        "negative": "Экранизация / первоисточник",
+        "positive": "Анимация / семейное кино"
+      }
+    }
+  },
+  "43": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Place / cultural setting",
+        "negative": "Work / institutions",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Место / культурный контекст",
+        "negative": "Работа / институты",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "44": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Adaptation / source material",
+        "negative": "Drugs / vice",
+        "positive": "Adaptation / source material"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Экранизация / первоисточник",
+        "negative": "Наркотики / пороки",
+        "positive": "Экранизация / первоисточник"
+      }
+    }
+  },
+  "45": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Work / institutions",
+        "negative": "Crime / investigation",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Работа / институты",
+        "negative": "Криминал / расследование",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "46": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Adaptation / source material",
+        "negative": "Romance / sexuality",
+        "positive": "Adaptation / source material"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Экранизация / первоисточник",
+        "negative": "Романтика / сексуальность",
+        "positive": "Экранизация / первоисточник"
+      }
+    }
+  },
+  "47": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Reception / quality",
+        "negative": "Crime / investigation",
+        "positive": "Reception / quality"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Восприятие / качество",
+        "negative": "Криминал / расследование",
+        "positive": "Восприятие / качество"
+      }
+    }
+  },
+  "48": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Crime / investigation",
+        "negative": "Drugs / vice",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Криминал / расследование",
+        "negative": "Наркотики / пороки",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "49": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Psychology / identity vs. Place / cultural setting",
+        "negative": "Psychology / identity",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Психология / идентичность vs. Место / культурный контекст",
+        "negative": "Психология / идентичность",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "50": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Music / performance",
+        "negative": "Drugs / vice",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Музыка / выступления",
+        "negative": "Наркотики / пороки",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "51": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Western / frontier vs. Romance / sexuality",
+        "negative": "Western / frontier",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Вестерн / фронтир vs. Романтика / сексуальность",
+        "negative": "Вестерн / фронтир",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "52": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Drugs / vice",
+        "negative": "Horror / supernatural",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Наркотики / пороки",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "53": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Place / cultural setting",
+        "negative": "Work / institutions",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Место / культурный контекст",
+        "negative": "Работа / институты",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "54": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Animation / family",
+        "negative": "Crime / investigation",
+        "positive": "Animation / family"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Анимация / семейное кино",
+        "negative": "Криминал / расследование",
+        "positive": "Анимация / семейное кино"
+      }
+    }
+  },
+  "55": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Reception / quality vs. Place / cultural setting",
+        "negative": "Reception / quality",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Восприятие / качество vs. Место / культурный контекст",
+        "negative": "Восприятие / качество",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "56": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Adaptation / source material",
+        "negative": "Place / cultural setting",
+        "positive": "Adaptation / source material"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Экранизация / первоисточник",
+        "negative": "Место / культурный контекст",
+        "positive": "Экранизация / первоисточник"
+      }
+    }
+  },
+  "57": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Western / frontier vs. Place / cultural setting",
+        "negative": "Western / frontier",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Вестерн / фронтир vs. Место / культурный контекст",
+        "negative": "Вестерн / фронтир",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "58": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Work / institutions",
+        "negative": "Drugs / vice",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Работа / институты",
+        "negative": "Наркотики / пороки",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "59": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Romance / sexuality",
+        "negative": "Work / institutions",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Романтика / сексуальность",
+        "negative": "Работа / институты",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "60": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Drama / mortality",
+        "negative": "Horror / supernatural",
+        "positive": "Drama / mortality"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Драма / смертность",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Драма / смертность"
+      }
+    }
+  },
+  "61": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Animation / family",
+        "negative": "Horror / supernatural",
+        "positive": "Animation / family"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Анимация / семейное кино",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Анимация / семейное кино"
+      }
+    }
+  },
+  "62": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "negative": "High-concept action / Sci-fi thriller",
+        "positive": "Slice of life / Dramedy / Mainstream genre blend"
+      },
+      "ru": {
+        "negative": "Высококонцептуальное экшен-кино",
+        "positive": "Бытовая трагикомедия / Зрительское жанровое кино"
+      }
+    }
+  },
+  "63": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Place / cultural setting",
+        "negative": "Romance / sexuality",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Место / культурный контекст",
+        "negative": "Романтика / сексуальность",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "64": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Religion / faith",
+        "negative": "Horror / supernatural",
+        "positive": "Religion / faith"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Религия / вера",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Религия / вера"
+      }
+    }
+  },
+  "65": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Biography / true story",
+        "negative": "Horror / supernatural",
+        "positive": "Biography / true story"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Биография / реальная история",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Биография / реальная история"
+      }
+    }
+  },
+  "66": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Place / cultural setting",
+        "negative": "Family / coming of age",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Место / культурный контекст",
+        "negative": "Семья / взросление",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "67": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Animation / family vs. Horror / supernatural",
+        "negative": "Animation / family",
+        "positive": "Horror / supernatural"
+      },
+      "ru": {
+        "axis": "Анимация / семейное кино vs. Хоррор / сверхъестественное",
+        "negative": "Анимация / семейное кино",
+        "positive": "Хоррор / сверхъестественное"
+      }
+    }
+  },
+  "68": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Work / institutions",
+        "negative": "Crime / investigation",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Работа / институты",
+        "negative": "Криминал / расследование",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "69": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Horror / supernatural",
+        "negative": "Place / cultural setting",
+        "positive": "Horror / supernatural"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Хоррор / сверхъестественное",
+        "negative": "Место / культурный контекст",
+        "positive": "Хоррор / сверхъестественное"
+      }
+    }
+  },
+  "70": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Transgression / violence",
+        "negative": "Horror / supernatural",
+        "positive": "Transgression / violence"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Трансгрессия / насилие",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Трансгрессия / насилие"
+      }
+    }
+  },
+  "71": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Work / institutions",
+        "negative": "Place / cultural setting",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Работа / институты",
+        "negative": "Место / культурный контекст",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "72": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / holiday vs. Reception / quality",
+        "negative": "Family / holiday",
+        "positive": "Reception / quality"
+      },
+      "ru": {
+        "axis": "Семья / праздничное кино vs. Восприятие / качество",
+        "negative": "Семья / праздничное кино",
+        "positive": "Восприятие / качество"
+      }
+    }
+  },
+  "73": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Western / frontier",
+        "negative": "Drama / mortality",
+        "positive": "Western / frontier"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Вестерн / фронтир",
+        "negative": "Драма / смертность",
+        "positive": "Вестерн / фронтир"
+      }
+    }
+  },
+  "74": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Place / cultural setting",
+        "negative": "Travel / setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Место / культурный контекст",
+        "negative": "Путешествия / пространство",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "75": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Travel / setting",
+        "negative": "Horror / supernatural",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Путешествия / пространство",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "76": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Work / institutions",
+        "negative": "Place / cultural setting",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Работа / институты",
+        "negative": "Место / культурный контекст",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "77": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Crime / investigation",
+        "negative": "Horror / supernatural",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Криминал / расследование",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "78": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Western / frontier vs. Crime / investigation",
+        "negative": "Western / frontier",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Вестерн / фронтир vs. Криминал / расследование",
+        "negative": "Вестерн / фронтир",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "79": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Drugs / vice",
+        "negative": "Music / performance",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Наркотики / пороки",
+        "negative": "Музыка / выступления",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "80": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Horror / supernatural",
+        "negative": "Drugs / vice",
+        "positive": "Horror / supernatural"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Хоррор / сверхъестественное",
+        "negative": "Наркотики / пороки",
+        "positive": "Хоррор / сверхъестественное"
+      }
+    }
+  },
+  "81": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Sports / competition",
+        "negative": "Crime / investigation",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Спорт / соревнование",
+        "negative": "Криминал / расследование",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "82": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Romance / sexuality",
+        "negative": "Crime / investigation",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Романтика / сексуальность",
+        "negative": "Криминал / расследование",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "83": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Travel / setting",
+        "negative": "Drama / mortality",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Путешествия / пространство",
+        "negative": "Драма / смертность",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "84": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Plot / narrative structure",
+        "negative": "Sports / competition",
+        "positive": "Plot / narrative structure"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Сюжет / структура повествования",
+        "negative": "Спорт / соревнование",
+        "positive": "Сюжет / структура повествования"
+      }
+    }
+  },
+  "85": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Science fiction / futurism",
+        "negative": "Horror / supernatural",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Научная фантастика / футуризм",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "86": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy / mythology vs. Romance / sexuality",
+        "negative": "Fantasy / mythology",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Фэнтези / мифология vs. Романтика / сексуальность",
+        "negative": "Фэнтези / мифология",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "87": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Plot / narrative structure",
+        "negative": "Sports / competition",
+        "positive": "Plot / narrative structure"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Сюжет / структура повествования",
+        "negative": "Спорт / соревнование",
+        "positive": "Сюжет / структура повествования"
+      }
+    }
+  },
+  "88": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Science fiction / futurism",
+        "negative": "Horror / supernatural",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Научная фантастика / футуризм",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "89": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Work / institutions",
+        "negative": "Politics / society",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Работа / институты",
+        "negative": "Политика / общество",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "90": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Romance / sexuality",
+        "negative": "Travel / setting",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Романтика / сексуальность",
+        "negative": "Путешествия / пространство",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "91": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Music / performance",
+        "negative": "Travel / setting",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Музыка / выступления",
+        "negative": "Путешествия / пространство",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "92": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Politics / society",
+        "negative": "Work / institutions",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Политика / общество",
+        "negative": "Работа / институты",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "93": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "negative": "Historical epic / Prestige film",
+        "positive": "Existential drama"
+      },
+      "ru": {
+        "negative": "Исторический эпик / Академическое кино",
+        "positive": "Экзистенциальная драма"
+      }
+    }
+  },
+  "94": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Plot / narrative structure",
+        "negative": "Drama / mortality",
+        "positive": "Plot / narrative structure"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Сюжет / структура повествования",
+        "negative": "Драма / смертность",
+        "positive": "Сюжет / структура повествования"
+      }
+    }
+  },
+  "95": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Science fiction / futurism",
+        "negative": "Politics / society",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Научная фантастика / футуризм",
+        "negative": "Политика / общество",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "96": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Crime / investigation",
+        "negative": "Horror / supernatural",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Криминал / расследование",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "97": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Nostalgia / age vs. Family / coming of age",
+        "negative": "Nostalgia / age",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Ностальгия / возраст vs. Семья / взросление",
+        "negative": "Ностальгия / возраст",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "98": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Action / intensity",
+        "negative": "Work / institutions",
+        "positive": "Action / intensity"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Экшен / интенсивность",
+        "negative": "Работа / институты",
+        "positive": "Экшен / интенсивность"
+      }
+    }
+  },
+  "99": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Place / cultural setting",
+        "negative": "Science fiction / futurism",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Место / культурный контекст",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "100": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Sports / competition",
+        "negative": "Place / cultural setting",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Спорт / соревнование",
+        "negative": "Место / культурный контекст",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "101": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Nostalgia / age vs. Place / cultural setting",
+        "negative": "Nostalgia / age",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Ностальгия / возраст vs. Место / культурный контекст",
+        "negative": "Ностальгия / возраст",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "102": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Animation / family",
+        "negative": "Crime / investigation",
+        "positive": "Animation / family"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Анимация / семейное кино",
+        "negative": "Криминал / расследование",
+        "positive": "Анимация / семейное кино"
+      }
+    }
+  },
+  "103": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Travel / setting",
+        "negative": "Romance / sexuality",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Путешествия / пространство",
+        "negative": "Романтика / сексуальность",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "104": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. History / period setting",
+        "negative": "Crime / investigation",
+        "positive": "History / period setting"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. История / историческая эпоха",
+        "negative": "Криминал / расследование",
+        "positive": "История / историческая эпоха"
+      }
+    }
+  },
+  "105": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Travel / setting",
+        "negative": "Music / performance",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Путешествия / пространство",
+        "negative": "Музыка / выступления",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "106": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Nostalgia / age vs. Travel / setting",
+        "negative": "Nostalgia / age",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Ностальгия / возраст vs. Путешествия / пространство",
+        "negative": "Ностальгия / возраст",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "107": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Travel / setting",
+        "negative": "Place / cultural setting",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Путешествия / пространство",
+        "negative": "Место / культурный контекст",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "108": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Drama / mortality",
+        "negative": "Place / cultural setting",
+        "positive": "Drama / mortality"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Драма / смертность",
+        "negative": "Место / культурный контекст",
+        "positive": "Драма / смертность"
+      }
+    }
+  },
+  "109": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "History / period setting vs. Horror / supernatural",
+        "negative": "History / period setting",
+        "positive": "Horror / supernatural"
+      },
+      "ru": {
+        "axis": "История / историческая эпоха vs. Хоррор / сверхъестественное",
+        "negative": "История / историческая эпоха",
+        "positive": "Хоррор / сверхъестественное"
+      }
+    }
+  },
+  "110": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Place / cultural setting",
+        "negative": "Travel / setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Место / культурный контекст",
+        "negative": "Путешествия / пространство",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "111": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Nostalgia / age",
+        "negative": "Sports / competition",
+        "positive": "Nostalgia / age"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Ностальгия / возраст",
+        "negative": "Спорт / соревнование",
+        "positive": "Ностальгия / возраст"
+      }
+    }
+  },
+  "112": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Place / cultural setting",
+        "negative": "Family / coming of age",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Место / культурный контекст",
+        "negative": "Семья / взросление",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "113": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Travel / setting",
+        "negative": "Sports / competition",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Путешествия / пространство",
+        "negative": "Спорт / соревнование",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "114": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Transgression / violence vs. Family / coming of age",
+        "negative": "Transgression / violence",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Трансгрессия / насилие vs. Семья / взросление",
+        "negative": "Трансгрессия / насилие",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "115": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Drugs / vice",
+        "negative": "Work / institutions",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Наркотики / пороки",
+        "negative": "Работа / институты",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "116": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Animation / family",
+        "negative": "Sports / competition",
+        "positive": "Animation / family"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Анимация / семейное кино",
+        "negative": "Спорт / соревнование",
+        "positive": "Анимация / семейное кино"
+      }
+    }
+  },
+  "117": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Reception / quality",
+        "negative": "Family / coming of age",
+        "positive": "Reception / quality"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Восприятие / качество",
+        "negative": "Семья / взросление",
+        "positive": "Восприятие / качество"
+      }
+    }
+  },
+  "118": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Japan / samurai",
+        "negative": "Science fiction / futurism",
+        "positive": "Japan / samurai"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Япония / самураи",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Япония / самураи"
+      }
+    }
+  },
+  "119": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Travel / setting",
+        "negative": "Place / cultural setting",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Путешествия / пространство",
+        "negative": "Место / культурный контекст",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "120": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Family / coming of age",
+        "negative": "Crime / investigation",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Семья / взросление",
+        "negative": "Криминал / расследование",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "121": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Travel / setting",
+        "negative": "Drugs / vice",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Путешествия / пространство",
+        "negative": "Наркотики / пороки",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "122": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Travel / setting",
+        "negative": "Sports / competition",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Путешествия / пространство",
+        "negative": "Спорт / соревнование",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "123": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Reception / quality",
+        "negative": "Travel / setting",
+        "positive": "Reception / quality"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Восприятие / качество",
+        "negative": "Путешествия / пространство",
+        "positive": "Восприятие / качество"
+      }
+    }
+  },
+  "124": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "History / period setting vs. Politics / society",
+        "negative": "History / period setting",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "История / историческая эпоха vs. Политика / общество",
+        "negative": "История / историческая эпоха",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "125": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Transgression / violence",
+        "negative": "Work / institutions",
+        "positive": "Transgression / violence"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Трансгрессия / насилие",
+        "negative": "Работа / институты",
+        "positive": "Трансгрессия / насилие"
+      }
+    }
+  },
+  "126": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Travel / setting",
+        "negative": "Place / cultural setting",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Путешествия / пространство",
+        "negative": "Место / культурный контекст",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "127": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Psychology / identity",
+        "negative": "Place / cultural setting",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Психология / идентичность",
+        "negative": "Место / культурный контекст",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "128": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Comedy / irony",
+        "negative": "Travel / setting",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Комедия / ирония",
+        "negative": "Путешествия / пространство",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "129": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Chinese martial arts",
+        "negative": "Sports / competition",
+        "positive": "Chinese martial arts"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Китайские боевые искусства",
+        "negative": "Спорт / соревнование",
+        "positive": "Китайские боевые искусства"
+      }
+    }
+  },
+  "130": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Work / institutions",
+        "negative": "Family / coming of age",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Работа / институты",
+        "negative": "Семья / взросление",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "131": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Work / institutions",
+        "negative": "Sports / competition",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Работа / институты",
+        "negative": "Спорт / соревнование",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "132": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Travel / setting",
+        "negative": "Horror / supernatural",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Путешествия / пространство",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "133": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Travel / setting",
+        "negative": "Place / cultural setting",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Путешествия / пространство",
+        "negative": "Место / культурный контекст",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "134": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Place / cultural setting",
+        "negative": "Drugs / vice",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Место / культурный контекст",
+        "negative": "Наркотики / пороки",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "135": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Psychology / identity vs. Travel / setting",
+        "negative": "Psychology / identity",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Психология / идентичность vs. Путешествия / пространство",
+        "negative": "Психология / идентичность",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "136": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. History / period setting",
+        "negative": "Work / institutions",
+        "positive": "History / period setting"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. История / историческая эпоха",
+        "negative": "Работа / институты",
+        "positive": "История / историческая эпоха"
+      }
+    }
+  },
+  "137": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Travel / setting",
+        "negative": "Drugs / vice",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Путешествия / пространство",
+        "negative": "Наркотики / пороки",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "138": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Family / coming of age",
+        "negative": "Sports / competition",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Семья / взросление",
+        "negative": "Спорт / соревнование",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "139": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Plot / narrative structure vs. Travel / setting",
+        "negative": "Plot / narrative structure",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Сюжет / структура повествования vs. Путешествия / пространство",
+        "negative": "Сюжет / структура повествования",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "140": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Religion / faith",
+        "negative": "Travel / setting",
+        "positive": "Religion / faith"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Религия / вера",
+        "negative": "Путешествия / пространство",
+        "positive": "Религия / вера"
+      }
+    }
+  },
+  "141": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Horror / supernatural vs. Place / cultural setting",
+        "negative": "Horror / supernatural",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Хоррор / сверхъестественное vs. Место / культурный контекст",
+        "negative": "Хоррор / сверхъестественное",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "142": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Work / institutions",
+        "negative": "Family / coming of age",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Работа / институты",
+        "negative": "Семья / взросление",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "143": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Transgression / violence vs. Place / cultural setting",
+        "negative": "Transgression / violence",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Трансгрессия / насилие vs. Место / культурный контекст",
+        "negative": "Трансгрессия / насилие",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "144": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Family / coming of age",
+        "negative": "Travel / setting",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Семья / взросление",
+        "negative": "Путешествия / пространство",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "145": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Place / cultural setting",
+        "negative": "Drama / mortality",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Место / культурный контекст",
+        "negative": "Драма / смертность",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "146": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Family / coming of age",
+        "negative": "Sports / competition",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Семья / взросление",
+        "negative": "Спорт / соревнование",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "147": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. History / period setting",
+        "negative": "Arthouse / reflective",
+        "positive": "History / period setting"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. История / историческая эпоха",
+        "negative": "Авторское / рефлексивное",
+        "positive": "История / историческая эпоха"
+      }
+    }
+  },
+  "148": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Place / cultural setting",
+        "negative": "Politics / society",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Место / культурный контекст",
+        "negative": "Политика / общество",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "149": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Nostalgia / age vs. Sports / competition",
+        "negative": "Nostalgia / age",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Ностальгия / возраст vs. Спорт / соревнование",
+        "negative": "Ностальгия / возраст",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "150": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Travel / setting",
+        "negative": "Work / institutions",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Путешествия / пространство",
+        "negative": "Работа / институты",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "151": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Travel / setting",
+        "negative": "Sports / competition",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Путешествия / пространство",
+        "negative": "Спорт / соревнование",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "152": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Action / intensity vs. Science fiction / futurism",
+        "negative": "Action / intensity",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Экшен / интенсивность vs. Научная фантастика / футуризм",
+        "negative": "Экшен / интенсивность",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "153": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Plot / narrative structure",
+        "negative": "Work / institutions",
+        "positive": "Plot / narrative structure"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Сюжет / структура повествования",
+        "negative": "Работа / институты",
+        "positive": "Сюжет / структура повествования"
+      }
+    }
+  },
+  "154": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Sports / competition",
+        "negative": "Drugs / vice",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Спорт / соревнование",
+        "negative": "Наркотики / пороки",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "155": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Nostalgia / age",
+        "negative": "Work / institutions",
+        "positive": "Nostalgia / age"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Ностальгия / возраст",
+        "negative": "Работа / институты",
+        "positive": "Ностальгия / возраст"
+      }
+    }
+  },
+  "156": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Transgression / violence",
+        "negative": "Place / cultural setting",
+        "positive": "Transgression / violence"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Трансгрессия / насилие",
+        "negative": "Место / культурный контекст",
+        "positive": "Трансгрессия / насилие"
+      }
+    }
+  },
+  "157": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Sports / competition",
+        "negative": "Arthouse / reflective",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Спорт / соревнование",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "158": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Science fiction / futurism",
+        "negative": "Arthouse / reflective",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Научная фантастика / футуризм",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "159": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Place / cultural setting",
+        "negative": "Family / coming of age",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Место / культурный контекст",
+        "negative": "Семья / взросление",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "160": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Reception / quality",
+        "negative": "Sports / competition",
+        "positive": "Reception / quality"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Восприятие / качество",
+        "negative": "Спорт / соревнование",
+        "positive": "Восприятие / качество"
+      }
+    }
+  },
+  "161": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Psychology / identity",
+        "negative": "Place / cultural setting",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Психология / идентичность",
+        "negative": "Место / культурный контекст",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "162": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Comedy / irony",
+        "negative": "Sports / competition",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Комедия / ирония",
+        "negative": "Спорт / соревнование",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "163": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / holiday vs. Sports / competition",
+        "negative": "Family / holiday",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Семья / праздничное кино vs. Спорт / соревнование",
+        "negative": "Семья / праздничное кино",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "164": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Crime / investigation vs. Place / cultural setting",
+        "negative": "Crime / investigation",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Криминал / расследование vs. Место / культурный контекст",
+        "negative": "Криминал / расследование",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "165": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Work / institutions",
+        "negative": "Place / cultural setting",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Работа / институты",
+        "negative": "Место / культурный контекст",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "166": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Comedy / irony",
+        "negative": "Family / coming of age",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Комедия / ирония",
+        "negative": "Семья / взросление",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "167": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Comedy / irony",
+        "negative": "Place / cultural setting",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Комедия / ирония",
+        "negative": "Место / культурный контекст",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "168": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Sports / competition",
+        "negative": "Work / institutions",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Спорт / соревнование",
+        "negative": "Работа / институты",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "169": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Place / cultural setting",
+        "negative": "Drugs / vice",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Место / культурный контекст",
+        "negative": "Наркотики / пороки",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "170": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Arthouse / reflective",
+        "negative": "Family / coming of age",
+        "positive": "Arthouse / reflective"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Авторское / рефлексивное",
+        "negative": "Семья / взросление",
+        "positive": "Авторское / рефлексивное"
+      }
+    }
+  },
+  "171": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Work / institutions",
+        "negative": "Politics / society",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Работа / институты",
+        "negative": "Политика / общество",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "172": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Plot / narrative structure vs. Transgression / violence",
+        "negative": "Plot / narrative structure",
+        "positive": "Transgression / violence"
+      },
+      "ru": {
+        "axis": "Сюжет / структура повествования vs. Трансгрессия / насилие",
+        "negative": "Сюжет / структура повествования",
+        "positive": "Трансгрессия / насилие"
+      }
+    }
+  },
+  "173": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Family / holiday",
+        "negative": "Drama / mortality",
+        "positive": "Family / holiday"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Семья / праздничное кино",
+        "negative": "Драма / смертность",
+        "positive": "Семья / праздничное кино"
+      }
+    }
+  },
+  "174": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Transgression / violence",
+        "negative": "Place / cultural setting",
+        "positive": "Transgression / violence"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Трансгрессия / насилие",
+        "negative": "Место / культурный контекст",
+        "positive": "Трансгрессия / насилие"
+      }
+    }
+  },
+  "175": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Plot / narrative structure",
+        "negative": "Place / cultural setting",
+        "positive": "Plot / narrative structure"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Сюжет / структура повествования",
+        "negative": "Место / культурный контекст",
+        "positive": "Сюжет / структура повествования"
+      }
+    }
+  },
+  "176": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Family / coming of age",
+        "negative": "Music / performance",
+        "positive": "Family / coming of age"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Семья / взросление",
+        "negative": "Музыка / выступления",
+        "positive": "Семья / взросление"
+      }
+    }
+  },
+  "177": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Comedy / irony vs. Work / institutions",
+        "negative": "Comedy / irony",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Комедия / ирония vs. Работа / институты",
+        "negative": "Комедия / ирония",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "178": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Transgression / violence vs. Place / cultural setting",
+        "negative": "Transgression / violence",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Трансгрессия / насилие vs. Место / культурный контекст",
+        "negative": "Трансгрессия / насилие",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "179": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Work / institutions",
+        "negative": "Music / performance",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Работа / институты",
+        "negative": "Музыка / выступления",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "180": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Plot / narrative structure vs. Romance / sexuality",
+        "negative": "Plot / narrative structure",
+        "positive": "Romance / sexuality"
+      },
+      "ru": {
+        "axis": "Сюжет / структура повествования vs. Романтика / сексуальность",
+        "negative": "Сюжет / структура повествования",
+        "positive": "Романтика / сексуальность"
+      }
+    }
+  },
+  "181": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / holiday vs. Travel / setting",
+        "negative": "Family / holiday",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Семья / праздничное кино vs. Путешествия / пространство",
+        "negative": "Семья / праздничное кино",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "182": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Plot / narrative structure vs. Place / cultural setting",
+        "negative": "Plot / narrative structure",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Сюжет / структура повествования vs. Место / культурный контекст",
+        "negative": "Сюжет / структура повествования",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "183": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy / mythology vs. Visual style / cinematography",
+        "negative": "Fantasy / mythology",
+        "positive": "Visual style / cinematography"
+      },
+      "ru": {
+        "axis": "Фэнтези / мифология vs. Визуальный стиль / операторская работа",
+        "negative": "Фэнтези / мифология",
+        "positive": "Визуальный стиль / операторская работа"
+      }
+    }
+  },
+  "184": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Work / institutions",
+        "negative": "Sports / competition",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Работа / институты",
+        "negative": "Спорт / соревнование",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "185": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Politics / society",
+        "negative": "Place / cultural setting",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Политика / общество",
+        "negative": "Место / культурный контекст",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "186": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Arthouse / reflective",
+        "negative": "Politics / society",
+        "positive": "Arthouse / reflective"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Авторское / рефлексивное",
+        "negative": "Политика / общество",
+        "positive": "Авторское / рефлексивное"
+      }
+    }
+  },
+  "187": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Sports / competition",
+        "negative": "Politics / society",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Спорт / соревнование",
+        "negative": "Политика / общество",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "188": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Religion / faith",
+        "negative": "Drugs / vice",
+        "positive": "Religion / faith"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Религия / вера",
+        "negative": "Наркотики / пороки",
+        "positive": "Религия / вера"
+      }
+    }
+  },
+  "189": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Place / cultural setting",
+        "negative": "Politics / society",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Место / культурный контекст",
+        "negative": "Политика / общество",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "190": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Politics / society",
+        "negative": "Arthouse / reflective",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Политика / общество",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "191": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Religion / faith vs. Music / performance",
+        "negative": "Religion / faith",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Религия / вера vs. Музыка / выступления",
+        "negative": "Религия / вера",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "192": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Comedy / irony vs. Place / cultural setting",
+        "negative": "Comedy / irony",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Комедия / ирония vs. Место / культурный контекст",
+        "negative": "Комедия / ирония",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "193": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Family / holiday",
+        "negative": "Family / coming of age",
+        "positive": "Family / holiday"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Семья / праздничное кино",
+        "negative": "Семья / взросление",
+        "positive": "Семья / праздничное кино"
+      }
+    }
+  },
+  "194": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Psychology / identity vs. Sports / competition",
+        "negative": "Psychology / identity",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Психология / идентичность vs. Спорт / соревнование",
+        "negative": "Психология / идентичность",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "195": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Family / holiday",
+        "negative": "Family / coming of age",
+        "positive": "Family / holiday"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Семья / праздничное кино",
+        "negative": "Семья / взросление",
+        "positive": "Семья / праздничное кино"
+      }
+    }
+  },
+  "196": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Politics / society",
+        "negative": "Music / performance",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Политика / общество",
+        "negative": "Музыка / выступления",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "197": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Sports / competition vs. Place / cultural setting",
+        "negative": "Sports / competition",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Спорт / соревнование vs. Место / культурный контекст",
+        "negative": "Спорт / соревнование",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "198": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Action / intensity",
+        "negative": "Family / coming of age",
+        "positive": "Action / intensity"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Экшен / интенсивность",
+        "negative": "Семья / взросление",
+        "positive": "Экшен / интенсивность"
+      }
+    }
+  },
+  "199": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Sports / competition",
+        "negative": "Arthouse / reflective",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Спорт / соревнование",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "200": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Comedy / irony",
+        "negative": "Place / cultural setting",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Комедия / ирония",
+        "negative": "Место / культурный контекст",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "201": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Work / institutions",
+        "negative": "Politics / society",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Работа / институты",
+        "negative": "Политика / общество",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "202": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Comedy / irony",
+        "negative": "Family / coming of age",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Комедия / ирония",
+        "negative": "Семья / взросление",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "203": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Western / frontier",
+        "negative": "Place / cultural setting",
+        "positive": "Western / frontier"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Вестерн / фронтир",
+        "negative": "Место / культурный контекст",
+        "positive": "Вестерн / фронтир"
+      }
+    }
+  },
+  "204": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / holiday vs. Arthouse / reflective",
+        "negative": "Family / holiday",
+        "positive": "Arthouse / reflective"
+      },
+      "ru": {
+        "axis": "Семья / праздничное кино vs. Авторское / рефлексивное",
+        "negative": "Семья / праздничное кино",
+        "positive": "Авторское / рефлексивное"
+      }
+    }
+  },
+  "205": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Religion / faith vs. Politics / society",
+        "negative": "Religion / faith",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Религия / вера vs. Политика / общество",
+        "negative": "Религия / вера",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "206": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Place / cultural setting",
+        "negative": "Arthouse / reflective",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Место / культурный контекст",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "207": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drugs / vice vs. Work / institutions",
+        "negative": "Drugs / vice",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Наркотики / пороки vs. Работа / институты",
+        "negative": "Наркотики / пороки",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "208": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "History / period setting vs. Place / cultural setting",
+        "negative": "History / period setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "История / историческая эпоха vs. Место / культурный контекст",
+        "negative": "История / историческая эпоха",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "209": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Science fiction / futurism",
+        "negative": "Politics / society",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Научная фантастика / футуризм",
+        "negative": "Политика / общество",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "210": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Psychology / identity",
+        "negative": "Drama / mortality",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Психология / идентичность",
+        "negative": "Драма / смертность",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "211": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy / mythology vs. Music / performance",
+        "negative": "Fantasy / mythology",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Фэнтези / мифология vs. Музыка / выступления",
+        "negative": "Фэнтези / мифология",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "212": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Family / holiday",
+        "negative": "Place / cultural setting",
+        "positive": "Family / holiday"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Семья / праздничное кино",
+        "negative": "Место / культурный контекст",
+        "positive": "Семья / праздничное кино"
+      }
+    }
+  },
+  "213": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Biography / true story vs. Place / cultural setting",
+        "negative": "Biography / true story",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Биография / реальная история vs. Место / культурный контекст",
+        "negative": "Биография / реальная история",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "214": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Drugs / vice",
+        "negative": "Place / cultural setting",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Наркотики / пороки",
+        "negative": "Место / культурный контекст",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "215": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Sports / competition",
+        "negative": "Science fiction / futurism",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Спорт / соревнование",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "216": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Travel / setting",
+        "negative": "Family / coming of age",
+        "positive": "Travel / setting"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Путешествия / пространство",
+        "negative": "Семья / взросление",
+        "positive": "Путешествия / пространство"
+      }
+    }
+  },
+  "217": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "War / geopolitics vs. Science fiction / futurism",
+        "negative": "War / geopolitics",
+        "positive": "Science fiction / futurism"
+      },
+      "ru": {
+        "axis": "Война / геополитика vs. Научная фантастика / футуризм",
+        "negative": "Война / геополитика",
+        "positive": "Научная фантастика / футуризм"
+      }
+    }
+  },
+  "218": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. Psychology / identity",
+        "negative": "Arthouse / reflective",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. Психология / идентичность",
+        "negative": "Авторское / рефлексивное",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "219": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Psychology / identity vs. Place / cultural setting",
+        "negative": "Psychology / identity",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Психология / идентичность vs. Место / культурный контекст",
+        "negative": "Психология / идентичность",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "220": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "negative": "Cerebral / Eccentric cinema",
+        "positive": "Visceral / High-stakes drama"
+      },
+      "ru": {
+        "negative": "Интеллектуальный гротеск / Сюрреалистический нуар",
+        "positive": "Экспрессивная висцеральная драма"
+      }
+    }
+  },
+  "221": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Romance / sexuality vs. Comedy / irony",
+        "negative": "Romance / sexuality",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Романтика / сексуальность vs. Комедия / ирония",
+        "negative": "Романтика / сексуальность",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "222": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Music / performance vs. Drugs / vice",
+        "negative": "Music / performance",
+        "positive": "Drugs / vice"
+      },
+      "ru": {
+        "axis": "Музыка / выступления vs. Наркотики / пороки",
+        "negative": "Музыка / выступления",
+        "positive": "Наркотики / пороки"
+      }
+    }
+  },
+  "223": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Fantasy / mythology vs. Sports / competition",
+        "negative": "Fantasy / mythology",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Фэнтези / мифология vs. Спорт / соревнование",
+        "negative": "Фэнтези / мифология",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "224": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Politics / society",
+        "negative": "Place / cultural setting",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Политика / общество",
+        "negative": "Место / культурный контекст",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "225": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "History / period setting vs. Sports / competition",
+        "negative": "History / period setting",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "История / историческая эпоха vs. Спорт / соревнование",
+        "negative": "История / историческая эпоха",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "226": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Music / performance",
+        "negative": "Place / cultural setting",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Музыка / выступления",
+        "negative": "Место / культурный контекст",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "227": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Biography / true story vs. Crime / investigation",
+        "negative": "Biography / true story",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Биография / реальная история vs. Криминал / расследование",
+        "negative": "Биография / реальная история",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "228": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Arthouse / reflective vs. History / period setting",
+        "negative": "Arthouse / reflective",
+        "positive": "History / period setting"
+      },
+      "ru": {
+        "axis": "Авторское / рефлексивное vs. История / историческая эпоха",
+        "negative": "Авторское / рефлексивное",
+        "positive": "История / историческая эпоха"
+      }
+    }
+  },
+  "229": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "negative": "High Art / Avant-garde",
+        "positive": "Pop Culture / Spectacle"
+      },
+      "ru": {
+        "negative": "Высокое искусство / Авангард",
+        "positive": "Поп-культура / Аттракцион"
+      }
+    }
+  },
+  "230": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Plot / narrative structure vs. Music / performance",
+        "negative": "Plot / narrative structure",
+        "positive": "Music / performance"
+      },
+      "ru": {
+        "axis": "Сюжет / структура повествования vs. Музыка / выступления",
+        "negative": "Сюжет / структура повествования",
+        "positive": "Музыка / выступления"
+      }
+    }
+  },
+  "231": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Chinese martial arts",
+        "negative": "Politics / society",
+        "positive": "Chinese martial arts"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Китайские боевые искусства",
+        "negative": "Политика / общество",
+        "positive": "Китайские боевые искусства"
+      }
+    }
+  },
+  "232": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Place / cultural setting",
+        "negative": "Drama / mortality",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Место / культурный контекст",
+        "negative": "Драма / смертность",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "233": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Religion / faith vs. Comedy / irony",
+        "negative": "Religion / faith",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Религия / вера vs. Комедия / ирония",
+        "negative": "Религия / вера",
+        "positive": "Комедия / ирония"
+      }
+    }
+  },
+  "234": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Politics / society",
+        "negative": "Work / institutions",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Политика / общество",
+        "negative": "Работа / институты",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "235": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Religion / faith vs. Politics / society",
+        "negative": "Religion / faith",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Религия / вера vs. Политика / общество",
+        "negative": "Религия / вера",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "236": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Sports / competition",
+        "negative": "Family / coming of age",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Спорт / соревнование",
+        "negative": "Семья / взросление",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "237": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Place / cultural setting vs. Crime / investigation",
+        "negative": "Place / cultural setting",
+        "positive": "Crime / investigation"
+      },
+      "ru": {
+        "axis": "Место / культурный контекст vs. Криминал / расследование",
+        "negative": "Место / культурный контекст",
+        "positive": "Криминал / расследование"
+      }
+    }
+  },
+  "238": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Politics / society",
+        "negative": "Family / coming of age",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Политика / общество",
+        "negative": "Семья / взросление",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "239": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Comedy / irony vs. Work / institutions",
+        "negative": "Comedy / irony",
+        "positive": "Work / institutions"
+      },
+      "ru": {
+        "axis": "Комедия / ирония vs. Работа / институты",
+        "negative": "Комедия / ирония",
+        "positive": "Работа / институты"
+      }
+    }
+  },
+  "240": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Biography / true story",
+        "negative": "Science fiction / futurism",
+        "positive": "Biography / true story"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Биография / реальная история",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Биография / реальная история"
+      }
+    }
+  },
+  "241": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. History / period setting",
+        "negative": "Work / institutions",
+        "positive": "History / period setting"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. История / историческая эпоха",
+        "negative": "Работа / институты",
+        "positive": "История / историческая эпоха"
+      }
+    }
+  },
+  "242": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Comedy / irony vs. Psychology / identity",
+        "negative": "Comedy / irony",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Комедия / ирония vs. Психология / идентичность",
+        "negative": "Комедия / ирония",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "243": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Place / cultural setting",
+        "negative": "Science fiction / futurism",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Место / культурный контекст",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "244": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "History / period setting vs. Place / cultural setting",
+        "negative": "History / period setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "История / историческая эпоха vs. Место / культурный контекст",
+        "negative": "История / историческая эпоха",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "245": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Work / institutions vs. Politics / society",
+        "negative": "Work / institutions",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Работа / институты vs. Политика / общество",
+        "negative": "Работа / институты",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "246": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Visual style / cinematography vs. Politics / society",
+        "negative": "Visual style / cinematography",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Визуальный стиль / операторская работа vs. Политика / общество",
+        "negative": "Визуальный стиль / операторская работа",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "247": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Place / cultural setting",
+        "negative": "Travel / setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Место / культурный контекст",
+        "negative": "Путешествия / пространство",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "248": {
+    "colors": {
+      "negative": "#f43f5e",
+      "positive": "#0ea5e9"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Sports / competition",
+        "negative": "Family / coming of age",
+        "positive": "Sports / competition"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Спорт / соревнование",
+        "negative": "Семья / взросление",
+        "positive": "Спорт / соревнование"
+      }
+    }
+  },
+  "249": {
+    "colors": {
+      "negative": "#f59e0b",
+      "positive": "#10b981"
+    },
+    "labels": {
+      "en": {
+        "axis": "Politics / society vs. Psychology / identity",
+        "negative": "Politics / society",
+        "positive": "Psychology / identity"
+      },
+      "ru": {
+        "axis": "Политика / общество vs. Психология / идентичность",
+        "negative": "Политика / общество",
+        "positive": "Психология / идентичность"
+      }
+    }
+  },
+  "250": {
+    "colors": {
+      "negative": "#38bdf8",
+      "positive": "#a78bfa"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / holiday vs. Place / cultural setting",
+        "negative": "Family / holiday",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Семья / праздничное кино vs. Место / культурный контекст",
+        "negative": "Семья / праздничное кино",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "251": {
+    "colors": {
+      "negative": "#f97316",
+      "positive": "#14b8a6"
+    },
+    "labels": {
+      "en": {
+        "axis": "Family / coming of age vs. Adaptation / source material",
+        "negative": "Family / coming of age",
+        "positive": "Adaptation / source material"
+      },
+      "ru": {
+        "axis": "Семья / взросление vs. Экранизация / первоисточник",
+        "negative": "Семья / взросление",
+        "positive": "Экранизация / первоисточник"
+      }
+    }
+  },
+  "252": {
+    "colors": {
+      "negative": "#ef4444",
+      "positive": "#22c55e"
+    },
+    "labels": {
+      "en": {
+        "axis": "Drama / mortality vs. Politics / society",
+        "negative": "Drama / mortality",
+        "positive": "Politics / society"
+      },
+      "ru": {
+        "axis": "Драма / смертность vs. Политика / общество",
+        "negative": "Драма / смертность",
+        "positive": "Политика / общество"
+      }
+    }
+  },
+  "253": {
+    "colors": {
+      "negative": "#eab308",
+      "positive": "#6366f1"
+    },
+    "labels": {
+      "en": {
+        "axis": "Travel / setting vs. Place / cultural setting",
+        "negative": "Travel / setting",
+        "positive": "Place / cultural setting"
+      },
+      "ru": {
+        "axis": "Путешествия / пространство vs. Место / культурный контекст",
+        "negative": "Путешествия / пространство",
+        "positive": "Место / культурный контекст"
+      }
+    }
+  },
+  "254": {
+    "colors": {
+      "negative": "#ec4899",
+      "positive": "#06b6d4"
+    },
+    "labels": {
+      "en": {
+        "axis": "Science fiction / futurism vs. Visual style / cinematography",
+        "negative": "Science fiction / futurism",
+        "positive": "Visual style / cinematography"
+      },
+      "ru": {
+        "axis": "Научная фантастика / футуризм vs. Визуальный стиль / операторская работа",
+        "negative": "Научная фантастика / футуризм",
+        "positive": "Визуальный стиль / операторская работа"
+      }
+    }
+  },
+  "255": {
+    "colors": {
+      "negative": "#8b5cf6",
+      "positive": "#84cc16"
+    },
+    "labels": {
+      "en": {
+        "axis": "Japan / samurai vs. Comedy / irony",
+        "negative": "Japan / samurai",
+        "positive": "Comedy / irony"
+      },
+      "ru": {
+        "axis": "Япония / самураи vs. Комедия / ирония",
+        "negative": "Япония / самураи",
+        "positive": "Комедия / ирония"
+      }
+    }
+  }
+}

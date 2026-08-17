@@ -158,9 +158,14 @@ body {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  pointer-events: all;
+  cursor: default;
+  transition: fill 120ms ease;
 }
-
-
+.wheel__ring-text--active {
+  fill: var(--accent);
+  font-weight: 700;
+}
 .card {
   width: 100%; max-width: 480px;
   background: var(--panel); border: 1px solid var(--border);

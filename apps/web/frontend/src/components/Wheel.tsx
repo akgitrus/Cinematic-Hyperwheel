@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
@@ -27,10 +28,11 @@ const RING_PAD = 36;
 // of sitting on straight lines. SVG uses a down-right (+y down) coordinate
 // space; angles are measured clockwise from the +x (right).
 const HALF_PI = Math.PI / 2;
-// Labels sit on arcs of the two rings; each arc is sized from the label's
-// measured pixel width so the text is never clipped at the arc ends. The
-// half-angular sweep is capped so a label can't stray toward the adjacent pole.
-const MAX_HALF_ANGLE = (45 * Math.PI) / 180;
+// Labels sit on arcs of the ring, each sized from the label's measured pixel
+// width so the text is never clipped at the arc ends. The cap stays generous:
+// on hover the full text is drawn on the same ring and may overlap the
+// neighbouring labels while it has focus (that's intentional).
+const MAX_HALF_ANGLE = (150 * Math.PI) / 180;
 
 // Approximate the on-screen pixel width of a label (uppercase, with the
 // rings' 0.06em letter-spacing) so we can size the host arc correctly.
@@ -75,6 +77,7 @@ function shortLabel(text: string): string {
 
 export default function Wheel({ circle, size = 320, title }: Props) {
   const { t, i18n } = useTranslation();
+  const [activeLabel, setActiveLabel] = useState<null | string>(null);
   const compact = size < COMPACT_BELOW;
   const halfBox = size / 2;
   const pad = compact ? 20 : RING_PAD;
@@ -109,10 +112,11 @@ export default function Wheel({ circle, size = 320, title }: Props) {
   // Size each label's host arc from its measured width so long labels are
   // never clipped at the arc ends (fixed tiny arcs used to cut text off).
   const fontPx = 9;
-  const hTop = labelArcHalf(ringR, gYNeg, fontPx);
-  const hBottom = labelArcHalf(ringR, gYPos, fontPx);
-  const hRight = labelArcHalf(ringR, gXPos, fontPx);
-  const hLeft = labelArcHalf(ringR, gXNeg, fontPx);
+  // Arcs are sized to the FULL label so the hovered (expanded) text fits.
+  const hTop = labelArcHalf(ringR, labelsY.negative, fontPx);
+  const hBottom = labelArcHalf(ringR, labelsY.positive, fontPx);
+  const hRight = labelArcHalf(ringR, labelsX.positive, fontPx);
+  const hLeft = labelArcHalf(ringR, labelsX.negative, fontPx);
   // Left (negative) reads bottom->top, right (positive) top->bottom.
   const dXNeg = ringArcPath(center, ringR, Math.PI - hLeft, Math.PI + hLeft, 1);
   const dXPos = ringArcPath(center, ringR, -hRight, hRight, 1);
@@ -167,12 +171,8 @@ export default function Wheel({ circle, size = 320, title }: Props) {
     `${circle.axis_x.colors.negative} 270deg,` +
     `${circle.axis_y.colors.negative} 360deg)`;
 
-  const hint =
-    `${labelsX.axis}: ${labelsX.negative} \u2194 ${labelsX.positive}  |  ` +
-    `${labelsY.axis}: ${labelsY.negative} \u2194 ${labelsY.positive}`;
-
   return (
-    <div className={"wheel" + (compact ? " wheel--compact" : "")} title={hint}>
+    <div className={"wheel" + (compact ? " wheel--compact" : "")}>
       <div className="wheel__stage" style={{ width: wrap, height: wrap }}>
         <div
           className="wheel__disc"
@@ -211,24 +211,40 @@ export default function Wheel({ circle, size = 320, title }: Props) {
               <path id={idXNeg} d={dXNeg} />
               <path id={idXPos} d={dXPos} />
             </defs>
-            <text className="wheel__ring-text">
+            <text
+              className={"wheel__ring-text" + (activeLabel === "yneg" ? " wheel__ring-text--active" : "")}
+              onMouseEnter={() => setActiveLabel("yneg")}
+              onMouseLeave={() => setActiveLabel(null)}
+            >
               <textPath href={`#${idYNeg}`} startOffset="50%" textAnchor="middle">
-                {gYNeg}
+                {activeLabel === "yneg" ? labelsY.negative : gYNeg}
               </textPath>
             </text>
-            <text className="wheel__ring-text">
+            <text
+              className={"wheel__ring-text" + (activeLabel === "ypos" ? " wheel__ring-text--active" : "")}
+              onMouseEnter={() => setActiveLabel("ypos")}
+              onMouseLeave={() => setActiveLabel(null)}
+            >
               <textPath href={`#${idYPos}`} startOffset="50%" textAnchor="middle">
-                {gYPos}
+                {activeLabel === "ypos" ? labelsY.positive : gYPos}
               </textPath>
             </text>
-            <text className="wheel__ring-text">
+            <text
+              className={"wheel__ring-text" + (activeLabel === "xneg" ? " wheel__ring-text--active" : "")}
+              onMouseEnter={() => setActiveLabel("xneg")}
+              onMouseLeave={() => setActiveLabel(null)}
+            >
               <textPath href={`#${idXNeg}`} startOffset="50%" textAnchor="middle">
-                {gXNeg}
+                {activeLabel === "xneg" ? labelsX.negative : gXNeg}
               </textPath>
             </text>
-            <text className="wheel__ring-text">
+            <text
+              className={"wheel__ring-text" + (activeLabel === "xpos" ? " wheel__ring-text--active" : "")}
+              onMouseEnter={() => setActiveLabel("xpos")}
+              onMouseLeave={() => setActiveLabel(null)}
+            >
               <textPath href={`#${idXPos}`} startOffset="50%" textAnchor="middle">
-                {gXPos}
+                {activeLabel === "xpos" ? labelsX.positive : gXPos}
               </textPath>
             </text>
           </g>

@@ -106,12 +106,12 @@ Each disc's fill is a decorative "mood" gradient built from that circle's
 axis colors, not a literal encoding of the values — the source of truth
 is the point's position plus the text readout (z-score per axis, angle,
 vector length).
-On the main wheel the pole labels are drawn curving along two concentric ring
-arcs around the disc (axis X on the inner ring, axis Y on the outer ring);
-hovering a circle still shows the full labels as a tooltip. Secondary circles
-render compact - the point, the `PCx/PCy` tag, and a compact axis legend (each
-axis's pole labels) in the readout, keeping the sidebar legible while still
-labeling the axes.
+On both the main and the secondary wheels the four pole labels are drawn
+curving along a single ring around the disc (outside its coloured gradient,
+on the page background), sized per label so the text is never clipped. On the
+smaller secondary circles the labels are shortened to the first "/" segment
+("Wilderness / travel ..." -> "Wilderness") so they fit the tiny disc; hovering
+a circle still shows the full labels as a tooltip.
 
 ## Localization
 

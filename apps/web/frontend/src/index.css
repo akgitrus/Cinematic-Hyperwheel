@@ -17,13 +17,27 @@ body {
 }
 
 .app {
-  max-width: 640px;
+  max-width: 820px;
   margin: 0 auto;
   padding: 48px 20px 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 28px;
+}
+
+.wheel-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.wheel-row__secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
 }
 
 .lang-switch {
@@ -107,21 +121,18 @@ body {
 .search__title { font-size: 13px; }
 .search__meta { font-size: 12px; color: var(--muted); }
 
-.wheel { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 8px; }
+.wheel { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: help; }
+.wheel--compact { gap: 6px; }
 .wheel__disc {
   position: relative;
   border-radius: 50%;
-  /* decorative "mood" gradient - matches the axis labels below, not a
-     literal encoding of PCA values (that's the point + readout text) */
-  background: conic-gradient(
-    from 0deg,
-    #ffd88a 0deg,   /* top: свет */
-    #a78bfa 90deg,  /* right: авторское */
-    #ef4444 180deg, /* bottom: мрак */
-    #38bdf8 270deg, /* left: блокбастер */
-    #ffd88a 360deg
-  );
+  /* background is set inline per-circle (from axis colors) - decorative
+     "mood" gradient, not a literal encoding of the values; the point's
+     position + text readout are the source of truth */
   box-shadow: 0 0 40px rgba(110, 231, 255, 0.08), inset 0 0 60px rgba(0,0,0,0.55);
+}
+.wheel--compact .wheel__disc {
+  box-shadow: 0 0 16px rgba(110, 231, 255, 0.06), inset 0 0 24px rgba(0,0,0,0.55);
 }
 .wheel__ring { fill: rgba(6,8,14,0.55); stroke: rgba(255,255,255,0.15); stroke-width: 1; }
 .wheel__axis { stroke: rgba(255,255,255,0.25); stroke-width: 1; stroke-dasharray: 3 4; }
@@ -143,6 +154,8 @@ body {
 
 .wheel__readout { text-align: center; font-size: 12px; color: var(--muted); }
 .wheel__readout-title { color: var(--text); font-size: 14px; margin-bottom: 4px; }
+.wheel__readout-axis { font-size: 10px; letter-spacing: 0.06em; opacity: 0.8; }
+.wheel--compact .wheel__readout { font-size: 10px; }
 
 .card {
   width: 100%; max-width: 480px;

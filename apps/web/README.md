@@ -1,7 +1,8 @@
 # Cinematic Hyperwheel — web UI (stage 1)
 
 Reference-movie search (fuzzy, matched against title/directedBy/starring)
-plus a visualization of the movie as a point on the fixed PC2/PC3 plane.
+plus a visualization of the movie as one or more points on PCA-component
+planes ("circles"), each labeled by a human-curated config.
 
 ## Data
 
@@ -47,47 +48,83 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ## API
 
-- `GET /api/search?q=...&limit=8` — fuzzy search (rapidfuzz `WRatio`) over
-  a combined title+directedBy+starring string. Titles are matched with
-  the leading article reordered to the front (`"Matrix, The (1999)"` ->
-  `"The Matrix (1999)"`) and common stopwords (the/a/an) stripped, so
-  generic words don't produce false-positive matches; the title field is
-  weighted above director/cast.
-- `GET /api/movie/{item_id}/wheel` — the movie's coordinates on the
-  PC2/PC3 plane (z-score, angle, radius, explained variance per axis)
+- `GET /api/search?q=...&limit=8` — fuzzy search over title/director/cast.
+  Titles are matched with the leading article reordered to the front
+  (`"Matrix, The (1999)"` -> `"The Matrix (1999)"`), lowercased,
+  depunctuated, and with common stopwords (the/a/an) stripped before
+  scoring. Title and director/cast are scored **separately** (not
+  concatenated into one string — a long cast list would otherwise dilute
+  the title match) and combined with a title-dominant weight; a strong
+  standalone director/cast match can still surface on its own.
+- `GET /api/movie/{item_id}/wheel` — `{ item_id, circles: [...] }`, one
+  entry per circle (see below), each with `axis_x`/`axis_y` (pc index,
+  colors, labels per language, explained variance), `z_x`/`z_y`, `angle_deg`,
+  `radius`, and `primary` (true for the main circle).
 
-## The wheel
+## PCA component config (`pc_config.json`)
 
-Fixed PC2/PC3 plane (not "auto" — a consistent shared axis across all
-movies matters more here than each movie's single most expressive
-plane). Axes are labeled loosely:
+`apps/web/backend/app/pc_config.json` is hand-curated, one component at a
+time: run `diagnose`, read a component's criteria weights and the real
+items at each pole (docs/math.md section 4), decide what it represents,
+then add an entry:
 
-- horizontal (PC2): blockbuster (−) ↔ arthouse (+)
-- vertical (PC3): light/hopeful (−) ↔ dark/violent (+)
+```json
+"7": {
+  "excluded_from_hue": false,
+  "colors": { "negative": "#hex", "positive": "#hex" },
+  "labels": {
+    "en": { "axis": "...", "negative": "...", "positive": "..." },
+    "ru": { "axis": "...", "negative": "...", "positive": "..." }
+  }
+}
+```
 
-The disc's fill is a decorative "mood" gradient, not a literal encoding
-of the values — the source of truth is the point's position plus the
-text readout (z-score per axis, angle, vector length).
+`excluded_from_hue: true` marks a component that should never be used for
+rotation/display (e.g. PC1, a general "quality/halo" axis — see
+docs/math.md section 4) but can still be documented for reference.
+
+Only components listed here are eligible to appear as a circle — this
+bounds candidate selection to reviewed, non-noise axes, and guarantees
+every circle has a label/color for every supported language. A prefilled
+example for PC1–PC3 ships in the repo; extend it as more components get
+reviewed.
+
+## The wheel(s)
+
+For a selected movie, the backend picks the two components on which
+*that item* is most expressive (largest |z-score|) among the non-excluded
+components in `pc_config.json` — this is the **main circle**. The
+remaining configured components are ranked by |z-score| and paired
+consecutively (rank #3+#4, #5+#6, ...) into **secondary circles**, shown
+smaller in a column on the right. No axis is reused across circles: since
+PCA components are orthogonal, a cross-pair (e.g. rank #3 with rank #7)
+carries no extra signal beyond what each axis's own magnitude already
+conveys — so a straight ranked partition covers the item's "signature"
+without redundancy, each circle roughly less prominent than the last.
+
+Each disc's fill is a decorative "mood" gradient built from that circle's
+axis colors, not a literal encoding of the values — the source of truth
+is the point's position plus the text readout (z-score per axis, angle,
+vector length). Hovering a circle shows the full pole labels as a
+tooltip; secondary circles render compact (no in-line pole labels, just
+the point and the `PCx/PCy` tag) to keep the sidebar legible.
 
 ## Localization
 
 The frontend uses `react-i18next`. Currently English (default) and
 Russian, with a language switcher in the top-right corner; language
 choice is auto-detected from the browser and persisted in
-`localStorage`.
+`localStorage`. Wheel axis labels are localized through `pc_config.json`
+itself (a `labels` entry per language, per component) rather than the
+UI's translation files, since they're curated content, not UI chrome.
 
-To add a new language:
+To add a new UI language:
 1. add `frontend/src/i18n/locales/<code>.json` with the same keys as `en.json`
 2. register it in the `resources` map in `frontend/src/i18n/index.ts`
 3. add `{ code: "<code>", label: "..." }` to `LANGUAGES` in `frontend/src/components/LanguageSwitcher.tsx`
-
-The backend currently has no user-facing localized strings (API returns
-structured data, not text for display); if that changes later, the
-natural approach is an `Accept-Language` header / `?lang=` param read in
-`main.py`.
+4. add a `"<code>"` entry under `labels` for each component in `pc_config.json`
 
 ## Next (stage 2, not in this build)
 
-- `auto` / manual hue-plane switching
 - actual scheme-based recommendations (complementary/triadic/...) around
-  the selected movie, shown as points on the same wheel
+  the selected movie, shown as points on the same wheel(s)

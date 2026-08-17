@@ -7,10 +7,6 @@
     "placeholder": "Название, год, режиссёр... например «Матрица 1999»"
   },
   "wheel": {
-    "axisLight": "свет",
-    "axisDark": "мрак",
-    "axisBlockbuster": "блокбастер",
-    "axisArthouse": "авторское",
     "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
     "readoutAngle": "угол {{angle}}° · длина {{radius}}"
   },

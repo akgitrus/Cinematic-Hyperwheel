@@ -1,66 +1,99 @@
 import { useTranslation } from "react-i18next";
-import { WheelPoint } from "../api";
+import { WheelCircle } from "../api";
 
 interface Props {
-  point: WheelPoint | null;
+  circle: WheelCircle;
+  size?: number;
   title?: string;
 }
 
-const SIZE = 320;
-const CENTER = SIZE / 2;
-const MAX_R = SIZE / 2 - 28;
 // z-scores are unbounded in principle; clamp to a comfortable display range
 const Z_CLAMP = 3;
+// below this disc size, skip the four pole-label strings around the disc
+// (no room to render them legibly) - full labels are still available as
+// a native tooltip on hover
+const COMPACT_BELOW = 220;
 
-export default function Wheel({ point, title }: Props) {
-  const { t } = useTranslation();
-  let x = CENTER;
-  let y = CENTER;
-  if (point) {
-    const zx = Math.max(-Z_CLAMP, Math.min(Z_CLAMP, point.z_x));
-    const zy = Math.max(-Z_CLAMP, Math.min(Z_CLAMP, point.z_y));
-    // +PC2 (right) = arthouse, +PC3 (down) = dark - matches the axis
-    // labels below; screen y grows downward, so +PC3 maps to +y directly.
-    x = CENTER + (zx / Z_CLAMP) * MAX_R;
-    y = CENTER + (zy / Z_CLAMP) * MAX_R;
-  }
+export default function Wheel({ circle, size = 320, title }: Props) {
+  const { t, i18n } = useTranslation();
+  const compact = size < COMPACT_BELOW;
+  const center = size / 2;
+  const maxR = size / 2 - (compact ? 10 : 28);
+
+  const lang = i18n.resolvedLanguage ?? "en";
+  const labelsX = circle.axis_x.labels[lang] ?? circle.axis_x.labels.en;
+  const labelsY = circle.axis_y.labels[lang] ?? circle.axis_y.labels.en;
+
+  const zx = Math.max(-Z_CLAMP, Math.min(Z_CLAMP, circle.z_x));
+  const zy = Math.max(-Z_CLAMP, Math.min(Z_CLAMP, circle.z_y));
+  // +x (right) = axis_x positive pole, +y (down) = axis_y positive pole -
+  // screen y grows downward, so +z_y maps to +y directly.
+  const x = center + (zx / Z_CLAMP) * maxR;
+  const y = center + (zy / Z_CLAMP) * maxR;
+
+  const gradient =
+    `conic-gradient(from 0deg,` +
+    `${circle.axis_y.colors.negative} 0deg,` +
+    `${circle.axis_x.colors.positive} 90deg,` +
+    `${circle.axis_y.colors.positive} 180deg,` +
+    `${circle.axis_x.colors.negative} 270deg,` +
+    `${circle.axis_y.colors.negative} 360deg)`;
+
+  const hint =
+    `${labelsX.axis}: ${labelsX.negative} \u2194 ${labelsX.positive}  |  ` +
+    `${labelsY.axis}: ${labelsY.negative} \u2194 ${labelsY.positive}`;
 
   return (
-    <div className="wheel">
-      <div className="wheel__disc" style={{ width: SIZE, height: SIZE }}>
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-          <circle cx={CENTER} cy={CENTER} r={MAX_R} className="wheel__ring" />
-          <line x1={CENTER} y1={20} x2={CENTER} y2={SIZE - 20} className="wheel__axis" />
-          <line x1={20} y1={CENTER} x2={SIZE - 20} y2={CENTER} className="wheel__axis" />
-          {point && (
-            <line x1={CENTER} y1={CENTER} x2={x} y2={y} className="wheel__vector" />
-          )}
-          {point && <circle cx={x} cy={y} r={7} className="wheel__point" />}
+    <div className={"wheel" + (compact ? " wheel--compact" : "")} title={hint}>
+      <div className="wheel__disc" style={{ width: size, height: size, background: gradient }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <circle cx={center} cy={center} r={maxR} className="wheel__ring" />
+          <line
+            x1={center} y1={center - maxR + 4}
+            x2={center} y2={center + maxR - 4}
+            className="wheel__axis"
+          />
+          <line
+            x1={center - maxR + 4} y1={center}
+            x2={center + maxR - 4} y2={center}
+            className="wheel__axis"
+          />
+          <line x1={center} y1={center} x2={x} y2={y} className="wheel__vector" />
+          <circle cx={x} cy={y} r={compact ? 4 : 7} className="wheel__point" />
         </svg>
-        <span className="wheel__label wheel__label--top">{t("wheel.axisLight")}</span>
-        <span className="wheel__label wheel__label--bottom">{t("wheel.axisDark")}</span>
-        <span className="wheel__label wheel__label--left">{t("wheel.axisBlockbuster")}</span>
-        <span className="wheel__label wheel__label--right">{t("wheel.axisArthouse")}</span>
+        {!compact && (
+          <>
+            <span className="wheel__label wheel__label--top">{labelsY.negative}</span>
+            <span className="wheel__label wheel__label--bottom">{labelsY.positive}</span>
+            <span className="wheel__label wheel__label--left">{labelsX.negative}</span>
+            <span className="wheel__label wheel__label--right">{labelsX.positive}</span>
+          </>
+        )}
       </div>
-      {point && (
-        <div className="wheel__readout">
-          <div className="wheel__readout-title">{title}</div>
-          <div>
-            {t("wheel.readout", {
-              pcX: point.pc_x,
-              zX: point.z_x.toFixed(2),
-              pcY: point.pc_y,
-              zY: point.z_y.toFixed(2),
-            })}
-          </div>
-          <div>
-            {t("wheel.readoutAngle", {
-              angle: point.angle_deg.toFixed(1),
-              radius: point.radius.toFixed(2),
-            })}
-          </div>
+      <div className="wheel__readout">
+        {!compact && title && <div className="wheel__readout-title">{title}</div>}
+        <div className="wheel__readout-axis">
+          PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
         </div>
-      )}
+        {!compact && (
+          <>
+            <div>
+              {t("wheel.readout", {
+                pcX: circle.axis_x.pc,
+                zX: circle.z_x.toFixed(2),
+                pcY: circle.axis_y.pc,
+                zY: circle.z_y.toFixed(2),
+              })}
+            </div>
+            <div>
+              {t("wheel.readoutAngle", {
+                angle: circle.angle_deg.toFixed(1),
+                radius: circle.radius.toFixed(2),
+              })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -34,9 +34,10 @@ def search(q: str = Query(..., min_length=1), limit: int = 8):
 @app.get("/api/movie/{item_id}/wheel")
 def wheel(item_id: int):
     try:
-        return _engine.point_for(item_id)
+        circles = _engine.circles_for(item_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Item not found in the PCA basis")
+    return {"item_id": item_id, "circles": circles}
 
 
 # Serve the built frontend (apps/web/frontend/dist) if present, so the

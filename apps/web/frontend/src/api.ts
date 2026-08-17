@@ -8,16 +8,32 @@ export interface MovieHit {
   score: number;
 }
 
-export interface WheelPoint {
-  item_id: number;
-  pc_x: number;
-  pc_y: number;
+export interface AxisLabels {
+  axis: string;
+  negative: string;
+  positive: string;
+}
+
+export interface AxisConfig {
+  pc: number;
+  colors: { negative: string; positive: string };
+  labels: Record<string, AxisLabels>; // keyed by language code, e.g. "en"/"ru"
+  explained: number;
+}
+
+export interface WheelCircle {
+  primary: boolean;
+  axis_x: AxisConfig;
+  axis_y: AxisConfig;
   z_x: number;
   z_y: number;
   angle_deg: number;
   radius: number;
-  explained_x: number;
-  explained_y: number;
+}
+
+export interface WheelResponse {
+  item_id: number;
+  circles: WheelCircle[];
 }
 
 export async function searchMovies(q: string): Promise<MovieHit[]> {
@@ -27,7 +43,7 @@ export async function searchMovies(q: string): Promise<MovieHit[]> {
   return data.results;
 }
 
-export async function getWheelPoint(itemId: number): Promise<WheelPoint> {
+export async function getWheelCircles(itemId: number): Promise<WheelResponse> {
   const res = await fetch(`/api/movie/${itemId}/wheel`);
   if (!res.ok) throw new Error("wheel lookup failed");
   return res.json();

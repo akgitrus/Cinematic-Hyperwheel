@@ -19,7 +19,9 @@ ARTIFACT_PATH = Path(os.environ.get("HYPERWHEEL_ARTIFACT_PATH", DATA_DIR / "arti
 N_COMPONENTS = int(os.environ.get("HYPERWHEEL_N_COMPONENTS", "20"))
 STANDARDIZE = os.environ.get("HYPERWHEEL_NO_STANDARDIZE", "") == ""
 
-# Fixed hue plane for the wheel visualization (1-based, same convention as
-# the CLI / docs/math.md). Per-item "auto" and manual switching are a
-# later step - see docs/math.md section 6a.
-WHEEL_PLANE = (2, 3)  # PC2 / PC3
+# Human-curated per-component labels/colors (see pc_config.py) - lives
+# next to the app code, not under DATA_DIR, since it's authored content
+# rather than raw/derived data.
+PC_CONFIG_PATH = Path(
+    os.environ.get("HYPERWHEEL_PC_CONFIG_PATH", Path(__file__).resolve().parent / "pc_config.json")
+)

@@ -7,10 +7,6 @@
     "placeholder": "Title, year, director... e.g. \"The Matrix 1999\""
   },
   "wheel": {
-    "axisLight": "light",
-    "axisDark": "dark",
-    "axisBlockbuster": "blockbuster",
-    "axisArthouse": "arthouse",
     "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
     "readoutAngle": "angle {{angle}}° · length {{radius}}"
   },

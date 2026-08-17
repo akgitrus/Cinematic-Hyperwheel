@@ -81,6 +81,12 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
     def z(idx: int, pc: int) -> float:
         return float(_engine.scores[idx, pc - 1] / _engine.pc_std[pc - 1])
 
+    # All PCA components used by any of this reference's circles (main +
+    # secondary), so the frontend can plot each recommendation on every circle.
+    all_pcs = sorted(
+        {p for c in circles for p in (c["axis_x"]["pc"], c["axis_y"]["pc"])}
+    )
+
     angles = []
     for angle_deg in SCHEMES[scheme]:
         rows = df[df["angle_deg"] == angle_deg].sort_values("rank")
@@ -99,6 +105,7 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
                 "z_x": round(zx, 4),
                 "z_y": round(zy, 4),
                 "angle_deg": round((math.degrees(math.atan2(zy, zx)) % 360), 2),
+                "pc_z": {str(p): round(z(idx, p), 4) for p in all_pcs},
             })
         angles.append({"angle_deg": angle_deg, "items": items})
 

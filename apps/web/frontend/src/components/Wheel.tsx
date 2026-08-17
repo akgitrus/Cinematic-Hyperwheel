@@ -125,7 +125,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   const dXPos = ringArcPath(center, ringR, -hRight, hRight, 1);
   // Top (negative) reads left->right, bottom (positive) left->right.
   const dYNeg = ringArcPath(center, ringR, -HALF_PI - hTop, -HALF_PI + hTop, 1);
-  const dYPos = ringArcPath(center, ringR+8, HALF_PI + hBottom, HALF_PI - hBottom, 0);
+  const dYPos = ringArcPath(center, ringR+6, HALF_PI + hBottom, HALF_PI - hBottom, 0);
 
   // Clamp by VECTOR MAGNITUDE, not per-axis - clamping z_x and z_y
   // independently would let a point near the diagonal (both axes close

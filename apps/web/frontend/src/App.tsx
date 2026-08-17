@@ -5,6 +5,7 @@ import Wheel from "./components/Wheel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import {
   MovieHit,
+  RecAngle,
   RecommendResponse,
   WheelCircle,
   getRecommendations,
@@ -18,6 +19,20 @@ const SCHEMES = [
   "split-complementary",
   "tetradic",
 ];
+
+// Build per-circle recommendation overlays, using each item's z-scores on that
+// circle's own PCA plane (falls back to nothing if the plane isn't covered).
+function buildOverlays(circle: WheelCircle, recs: RecommendResponse | null): RecAngle[] | undefined {
+  if (!recs) return undefined;
+  const xp = circle.axis_x.pc;
+  const yp = circle.axis_y.pc;
+  return recs.angles.map((a) => ({
+    angle_deg: a.angle_deg,
+    items: a.items
+      .filter((it) => it.pc_z && it.pc_z[String(xp)] != null && it.pc_z[String(yp)] != null)
+      .map((it) => ({ ...it, z_x: it.pc_z[String(xp)], z_y: it.pc_z[String(yp)] })),
+  }));
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -125,7 +140,7 @@ export default function App() {
               circle={primary}
               size={320}
               title={selected?.title}
-              overlays={recs?.angles}
+              overlays={buildOverlays(primary, recs)}
             />
           )}
           {selected && (
@@ -148,7 +163,12 @@ export default function App() {
           {secondary.length > 0 && (
             <div className="wheel-row__secondary">
               {secondary.map((c) => (
-                <Wheel key={`${c.axis_x.pc}-${c.axis_y.pc}`} circle={c} size={140} />
+                <Wheel
+                  key={`${c.axis_x.pc}-${c.axis_y.pc}`}
+                  circle={c}
+                  size={140}
+                  overlays={buildOverlays(c, recs)}
+                />
               ))}
             </div>
           )}

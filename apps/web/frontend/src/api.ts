@@ -51,6 +51,8 @@ export interface RecItem {
   z_x: number;
   z_y: number;
   angle_deg: number;
+  /** z-scores of this item on every PCA component used by the reference's circles. */
+  pc_z: Record<string, number>;
 }
 
 export interface RecAngle {

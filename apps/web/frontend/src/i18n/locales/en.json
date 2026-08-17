@@ -16,6 +16,19 @@
     "rating": "Rating",
     "unknown": "—"
   },
+  "scheme": {
+    "label": "Color scheme",
+    "complementary": "Complementary",
+    "triadic": "Triadic",
+    "analogous": "Analogous",
+    "split-complementary": "Split complementary",
+    "tetradic": "Tetradic"
+  },
+  "recommendations": {
+    "title": "Recommendations",
+    "angle": "Angle {{angle}}°",
+    "error": "Could not fetch recommendations."
+  },
   "errors": {
     "wheelLookup": "Could not fetch the movie's coordinates in PCA space."
   }

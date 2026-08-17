@@ -16,6 +16,19 @@
     "rating": "Рейтинг",
     "unknown": "—"
   },
+  "scheme": {
+    "label": "Цветовая схема",
+    "complementary": "Комплементарная",
+    "triadic": "Триада",
+    "analogous": "Аналоговая",
+    "split-complementary": "Расщеплённый комплемент",
+    "tetradic": "Тетрада"
+  },
+  "recommendations": {
+    "title": "Рекомендации",
+    "angle": "Угол {{angle}}°",
+    "error": "Не удалось получить рекомендации."
+  },
   "errors": {
     "wheelLookup": "Не удалось получить координаты фильма в PCA-пространстве."
   }

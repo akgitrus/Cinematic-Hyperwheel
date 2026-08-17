@@ -3,21 +3,50 @@ import { useTranslation } from "react-i18next";
 import SearchBar from "./components/SearchBar";
 import Wheel from "./components/Wheel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
-import { MovieHit, WheelCircle, getWheelCircles } from "./api";
+import {
+  MovieHit,
+  RecommendResponse,
+  WheelCircle,
+  getRecommendations,
+  getWheelCircles,
+} from "./api";
+
+const SCHEMES = [
+  "complementary",
+  "triadic",
+  "analogous",
+  "split-complementary",
+  "tetradic",
+];
 
 export default function App() {
   const { t, i18n } = useTranslation();
   const [selected, setSelected] = useState<MovieHit | null>(null);
   const [circles, setCircles] = useState<WheelCircle[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [scheme, setScheme] = useState<string>(SCHEMES[0]);
+  const [recs, setRecs] = useState<RecommendResponse | null>(null);
+  const [recError, setRecError] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = i18n.resolvedLanguage ?? "en";
   }, [i18n.resolvedLanguage]);
 
+  const fetchRecommendations = async (itemId: number, sch: string) => {
+    try {
+      const r = await getRecommendations(itemId, sch);
+      setRecs(r);
+      setRecError(null);
+    } catch {
+      setRecs(null);
+      setRecError(t("recommendations.error"));
+    }
+  };
+
   const handleSelect = async (movie: MovieHit) => {
     setSelected(movie);
     setError(null);
+    setRecError(null);
     try {
       const res = await getWheelCircles(movie.item_id);
       setCircles(res.circles);
@@ -25,6 +54,12 @@ export default function App() {
       setCircles([]);
       setError(t("errors.wheelLookup"));
     }
+    await fetchRecommendations(movie.item_id, scheme);
+  };
+
+  const handleSchemeChange = (sch: string) => {
+    setScheme(sch);
+    if (selected) void fetchRecommendations(selected.item_id, sch);
   };
 
   const [primary, ...secondary] = circles;
@@ -40,11 +75,30 @@ export default function App() {
 
       <SearchBar onSelect={handleSelect} />
 
+      <div className="rec-form">
+        <label className="rec-form__label" htmlFor="scheme">
+          {t("scheme.label")}
+        </label>
+        <select
+          id="scheme"
+          className="rec-form__select"
+          value={scheme}
+          onChange={(e) => handleSchemeChange(e.target.value)}
+        >
+          {SCHEMES.map((s) => (
+            <option key={s} value={s}>
+              {t(`scheme.${s}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {error && <div className="app__error">{error}</div>}
+      {recError && <div className="app__error">{recError}</div>}
 
       {primary && (
         <div className="wheel-row">
-          <Wheel circle={primary} size={320} title={selected?.title} />
+          <Wheel circle={primary} size={320} title={selected?.title} overlays={recs?.angles} />
           {secondary.length > 0 && (
             <div className="wheel-row__secondary">
               {secondary.map((c) => (
@@ -52,6 +106,26 @@ export default function App() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {recs && (
+        <div className="recommendations">
+          <h2 className="recommendations__title">{t("recommendations.title")}</h2>
+          {recs.angles.map((a, gi) => (
+            <div key={gi} className="recommendations__angle">
+              <div className="recommendations__angle-head">
+                {t("recommendations.angle", { angle: a.angle_deg })}
+              </div>
+              <ol className="recommendations__list">
+                {a.items.map((it) => (
+                  <li key={it.item_id} className="recommendations__item">
+                    {it.title}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
         </div>
       )}
 

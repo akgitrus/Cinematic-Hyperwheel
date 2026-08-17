@@ -7,9 +7,70 @@ import sys
 import numpy as np
 import pandas as pd
 
-from .basis import build_taste_basis
+from .basis import TasteBasis, build_taste_basis
 from .planes import select_hue_plane
 from .rotation import SCHEMES, rotate_whitened
+
+
+def recommend_on_basis(
+    basis: TasteBasis,
+    X: np.ndarray,
+    reference_item: str,
+    scheme: str,
+    plane: tuple[int, int],
+    top_k: int = 5,
+) -> pd.DataFrame:
+    """
+    Same rotation logic as recommend(), but takes a PRE-BUILT TasteBasis and
+    the raw criteria matrix X instead of rebuilding PCA from scratch - for
+    callers that cache the basis at startup (e.g. a web service) and don't
+    want to recompute it on every request.
+
+    plane: explicit 1-based (i, j) component pair forming the hue plane on
+        which to rotate (the caller decides it - typically the same reviewed,
+        labelled plane the wheel UI shows).
+
+    The returned rows mirror recommend(): {scheme, angle_deg, rank, item,
+    distance_to_target}.
+    """
+    if reference_item not in basis.items:
+        raise ValueError(f"Item '{reference_item}' not found in the data.")
+    if scheme not in SCHEMES:
+        raise ValueError(f"Unknown scheme '{scheme}'. Available: {list(SCHEMES)}")
+    if max(plane) > len(basis.pc_std):
+        raise ValueError(
+            f"plane={plane} requires at least {max(plane)} components "
+            f"(basis has {len(basis.pc_std)})."
+        )
+
+    ref_idx = basis.items.index(reference_item)
+    y_ref = basis.U @ ((basis.Q[ref_idx] - basis.M) / basis.scale)
+
+    plane0 = (plane[0] - 1, plane[1] - 1)   # 1-based -> 0-based
+
+    rows: list[dict] = []
+    for angle_deg in SCHEMES[scheme]:
+        theta = np.radians(angle_deg)
+        y_target = rotate_whitened(y_ref, basis.pc_std, theta, plane=plane0)
+        # Add to the reference only the delta introduced by the rotation
+        # within the hue plane (see the comment in recommend()).
+        delta = (basis.U.T @ (y_target - y_ref)) * basis.scale
+        target_vec = X[ref_idx] + delta   # (n_criteria,)
+
+        dists = np.linalg.norm(X - target_vec[None, :], axis=1)
+        dists[ref_idx] = np.inf
+        order = np.argsort(dists)[:top_k]
+
+        for rank, idx in enumerate(order, start=1):
+            rows.append({
+                "scheme": scheme,
+                "angle_deg": angle_deg,
+                "rank": rank,
+                "item": basis.items[idx],
+                "distance_to_target": round(float(dists[idx]), 4),
+            })
+
+    return pd.DataFrame(rows)
 
 
 def recommend(
@@ -80,35 +141,14 @@ def recommend(
             file=sys.stderr,
         )
 
-    rows = []
-    for angle_deg in SCHEMES[scheme]:
-        theta = np.radians(angle_deg)
-        y_target = rotate_whitened(y_ref, basis.pc_std, theta, plane=plane)
-        # IMPORTANT: add to the reference only the delta introduced by the
-        # rotation within the hue plane, rather than rebuilding the target
-        # from scratch using only the top-k components. Otherwise anything
-        # outside the hue plane gets collapsed to the mean - especially
-        # critical when the top-k components do not explain all of the
-        # variance (see /docs/math.md, section 5).
-        # basis.scale converts the delta from the scaled space back into
-        # the original criteria units.
-        delta = (basis.U.T @ (y_target - y_ref)) * basis.scale
-        target_vec = X[ref_idx] + delta   # (n_criteria,)
-
-        dists = np.linalg.norm(X - target_vec[None, :], axis=1)
-        dists[ref_idx] = np.inf
-        order = np.argsort(dists)[:top_k]
-
-        for rank, idx in enumerate(order, start=1):
-            rows.append({
-                "scheme": scheme,
-                "angle_deg": angle_deg,
-                "rank": rank,
-                "item": basis.items[idx],
-                "distance_to_target": round(float(dists[idx]), 4),
-            })
-
-    result = pd.DataFrame(rows)
+    result = recommend_on_basis(
+        basis,
+        X,
+        reference_item=reference_item,
+        scheme=scheme,
+        plane=resolved_components,
+        top_k=top_k,
+    )
     print(
         f"\nReference: {reference_item}  "
         f"(L={L_ref:.3f}, S={S_ref:.3f}, "

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { WheelCircle } from "../api";
+import { RecAngle, WheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
 
 interface Props {
   circle: WheelCircle;
   size?: number;
   title?: string;
+  /** Optional recommendation overlay points (one per scheme angle). */
+  overlays?: RecAngle[];
 }
 
 // z-scores are unbounded in principle; clamp to a comfortable display range
@@ -75,9 +77,10 @@ function shortLabel(text: string): string {
   return (cut >= 0 ? text.slice(0, cut) : text).trim();
 }
 
-export default function Wheel({ circle, size = 320, title }: Props) {
+export default function Wheel({ circle, size = 320, title, overlays = [] }: Props) {
   const { t, i18n } = useTranslation();
   const [activeLabel, setActiveLabel] = useState<null | string>(null);
+  const [activeOverlay, setActiveOverlay] = useState<number | null>(null);
   const compact = size < COMPACT_BELOW;
   const halfBox = size / 2;
   const pad = compact ? 20 : RING_PAD;
@@ -162,6 +165,21 @@ export default function Wheel({ circle, size = 320, title }: Props) {
   const glowBase = compact ? 3 : 5;
   const glowScale = compact ? 3 : 6;
   const glowPx = glowBase + Math.min(rawR, 5) * glowScale;
+
+  // Recommendation overlay points (rank-1 per scheme angle), drawn on the same
+  // disc with the same vector-magnitude clamp as the reference point.
+  const recPoints = overlays.map((o) => {
+    const zi = o.items[0];
+    const rzx = zi?.z_x ?? 0;
+    const rzy = zi?.z_y ?? 0;
+    const rr = Math.hypot(rzx, rzy);
+    const rs = rr > Z_CLAMP ? Z_CLAMP / rr : 1;
+    return {
+      cx: center + ((rzx * rs) / Z_CLAMP) * maxR,
+      cy: center + ((rzy * rs) / Z_CLAMP) * maxR,
+      rec: o,
+    };
+  });
 
   const gradient =
     `conic-gradient(from 0deg,` +
@@ -248,7 +266,33 @@ export default function Wheel({ circle, size = 320, title }: Props) {
               </textPath>
             </text>
           </g>
+          {recPoints.map((p, i) => (
+            <circle
+              key={`rec-${i}`}
+              cx={p.cx}
+              cy={p.cy}
+              r={compact ? 5 : 8}
+              className="wheel__rec-point"
+              onMouseEnter={() => setActiveOverlay(i)}
+              onMouseLeave={() => setActiveOverlay(null)}
+            />
+          ))}
         </svg>
+        {activeOverlay !== null && recPoints[activeOverlay] && (
+          <div
+            className="wheel__rec-popup"
+            style={{ left: recPoints[activeOverlay].cx + 12, top: recPoints[activeOverlay].cy }}
+          >
+            <div className="wheel__rec-popup-title">
+              Angle {recPoints[activeOverlay].rec.angle_deg}?
+            </div>
+            {recPoints[activeOverlay].rec.items.map((it) => (
+              <div key={it.item_id} className="wheel__rec-popup-row">
+                {it.rank}. {it.title}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="wheel__readout">
         {!compact && title && <div className="wheel__readout-title">{title}</div>}

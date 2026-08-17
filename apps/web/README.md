@@ -56,6 +56,12 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   concatenated into one string — a long cast list would otherwise dilute
   the title match) and combined with a title-dominant weight; a strong
   standalone director/cast match can still surface on its own.
+- `GET /api/movie/{item_id}/recommend?scheme=...` — color-wheel
+  recommendations (complementary/triadic/analogous/split-complementary/tetradic).
+  Uses the same reviewed plane as the reference's main wheel and the basis
+  built once at startup; returns the shared axis config, the reference
+  coordinate, and, per scheme angle, the top-5 matches (rank, title, z_x/z_y,
+  angle, distance).
 - `GET /api/movie/{item_id}/wheel` — `{ item_id, circles: [...] }`, one
   entry per circle (see below), each with `axis_x`/`axis_y` (pc index,
   colors, labels per language, explained variance), `z_x`/`z_y`, `angle_deg`,
@@ -130,5 +136,7 @@ To add a new UI language:
 
 ## Next (stage 2, not in this build)
 
-- actual scheme-based recommendations (complementary/triadic/...) around
-  the selected movie, shown as points on the same wheel(s)
+- richer recommendation UI over the scheme-based overlays now implemented
+  (currently: scheme selector, per-angle top-5 list, and the rank-1 points
+  overlaid on the reference's main wheel, with a hover popup listing each
+  angle's matches)

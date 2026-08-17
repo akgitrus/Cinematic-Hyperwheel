@@ -35,7 +35,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from hyperwheel_recommender import build_taste_basis, load_input
+from hyperwheel_recommender import TasteBasis, build_taste_basis, load_input
 
 from .config import ARTIFACT_PATH, N_COMPONENTS, STANDARDIZE
 from .pc_config import load_pc_config
@@ -48,6 +48,8 @@ class WheelEngine:
     pc_std: np.ndarray
     explained: np.ndarray
     pc_config: dict[int, dict]
+    basis: TasteBasis        # prebuilt basis, reused by the recommend endpoint
+    X: np.ndarray            # (n_items, n_criteria) raw criteria matrix
 
     def _axis_payload(self, pc: int) -> dict:
         cfg = self.pc_config[pc]
@@ -113,4 +115,6 @@ def build_engine() -> WheelEngine:
         pc_std=basis.pc_std,
         explained=basis.explained,
         pc_config=pc_config,
+        basis=basis,
+        X=wide.to_numpy(dtype=np.float32),
     )

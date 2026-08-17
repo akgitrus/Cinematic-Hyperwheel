@@ -43,6 +43,44 @@ export async function searchMovies(q: string): Promise<MovieHit[]> {
   return data.results;
 }
 
+export interface RecItem {
+  item_id: number;
+  title: string;
+  rank: number;
+  distance_to_target: number;
+  z_x: number;
+  z_y: number;
+  angle_deg: number;
+}
+
+export interface RecAngle {
+  angle_deg: number;
+  items: RecItem[];
+}
+
+export interface RecommendReference {
+  z_x: number;
+  z_y: number;
+  angle_deg: number;
+  radius: number;
+}
+
+export interface RecommendResponse {
+  item_id: number;
+  scheme: string;
+  axis_x: AxisConfig;
+  axis_y: AxisConfig;
+  reference: RecommendReference | null;
+  angles: RecAngle[];
+}
+
+export async function getRecommendations(itemId: number, scheme: string): Promise<RecommendResponse> {
+  const res = await fetch(`/api/movie/${itemId}/recommend?scheme=${encodeURIComponent(scheme)}`);
+  if (!res.ok) throw new Error("recommend lookup failed");
+  return res.json();
+}
+
+
 export async function getWheelCircles(itemId: number): Promise<WheelResponse> {
   const res = await fetch(`/api/movie/${itemId}/wheel`);
   if (!res.ok) throw new Error("wheel lookup failed");

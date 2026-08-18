@@ -105,42 +105,49 @@ class MovieIndex:
         self._title_norm = [
             _normalize_for_match(_reorder_article(r.title)) for r in records
         ]
-        self._people_norm = [
-            _normalize_for_match(f"{r.directed_by} {r.starring}") for r in records
-        ]
+        # director/cast now scored as two SEPARATE fields, not one
+        # concatenated string - needed so a director match can be
+        # ranked above a cast match, per the title -> director -> cast
+        # priority (year needs no separate field: it's already inside
+        # the stored title string, e.g. "(1999)").
+        self._director_norm = [_normalize_for_match(r.directed_by) for r in records]
+        self._cast_norm = [_normalize_for_match(r.starring) for r in records]
 
     def search(self, query: str, limit: int = 8, score_cutoff: float = 45.0) -> list[dict]:
         query_norm = _normalize_for_match(query.strip())
         if not query_norm:
             return []
 
-        scored: list[tuple[float, int]] = []
+        scored: list[tuple[float, float, float, float, int]] = []
         for i in range(len(self.records)):
-            # token_set_ratio, not WRatio: WRatio blends in
-            # partial_token_set_ratio, which saturates to ~100 whenever
-            # query and title share even one short common word (e.g.
-            # "of") once the two strings differ enough in length - i.e.
-            # almost always, regardless of real relevance. Plain
-            # token_set_ratio doesn't have that escape hatch and still
-            # handles reordered/missing tokens fine (which is what we
-            # actually need after _reorder_article + stopword-stripping).
             title_score = fuzz.token_set_ratio(query_norm, self._title_norm[i])
-            people_text = self._people_norm[i]
-            people_score = fuzz.token_set_ratio(query_norm, people_text) if people_text else 0.0
-            weighted = _TITLE_WEIGHT * title_score + _PEOPLE_WEIGHT * people_score
-            # A query that's purely (or mostly) a director/actor name should
-            # still surface the movie even though title_score is near zero -
-            # the 25% weight above would otherwise drown it out. Let a
-            # strong standalone people-match win on its own, slightly
-            # discounted so an equally strong title match still wins ties.
-            score = max(weighted, people_score * 0.9)
-            if score >= score_cutoff:
-                scored.append((score, i))
 
-        scored.sort(key=lambda t: -t[0])
+            director_text = self._director_norm[i]
+            director_score = fuzz.token_set_ratio(query_norm, director_text) if director_text else 0.0
+
+            cast_text = self._cast_norm[i]
+            cast_score = fuzz.token_set_ratio(query_norm, cast_text) if cast_text else 0.0
+
+            # `relevance` is used ONLY for the score_cutoff filter and for the
+            # number shown to the caller - it still lets a pure name query
+            # ("Kubrick") pass the cutoff even with title_score == 0. It is
+            # NOT used for ordering results (see the sort below) - that's the
+            # whole point of the fix: a decent cast/director hit must not be
+            # able to numerically outscore a real title hit.
+            relevance = max(title_score, director_score * 0.9, cast_score * 0.85)
+            if relevance >= score_cutoff:
+                scored.append((title_score, director_score, cast_score, relevance, i))
+
+        # Strict field priority: title, then director, then cast (year is
+        # already part of the stored title string). A match on a
+        # higher-priority field ALWAYS outranks a stronger match on a
+        # lower-priority one, e.g. a title containing the query word beats
+        # a cast list that merely happens to contain a person whose name is
+        # that word (e.g. actress "Donna Air" vs a query "air").
+        scored.sort(key=lambda t: (-t[0], -t[1], -t[2]))
 
         results = []
-        for score, i in scored[:limit]:
+        for title_score, director_score, cast_score, relevance, i in scored[:limit]:
             r = self.records[i]
             results.append({
                 "item_id": r.item_id,
@@ -149,6 +156,6 @@ class MovieIndex:
                 "starring": r.starring,
                 "avgRating": r.avg_rating,
                 "imdbId": r.imdb_id,
-                "score": round(float(score), 1),
+                "score": round(float(relevance), 1),
             })
         return results

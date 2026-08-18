@@ -6,6 +6,21 @@ interface Props {
   onSelect: (movie: MovieHit) => void;
 }
 
+// How many cast names to show in the dropdown before truncating with
+// "...". Just enough to usually include a matched name without making
+// the row wrap onto multiple lines.
+const CAST_PREVIEW_COUNT = 4;
+
+function previewCast(starring: string): string {
+  if (!starring) return "";
+  const names = starring
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (names.length <= CAST_PREVIEW_COUNT) return names.join(", ");
+  return names.slice(0, CAST_PREVIEW_COUNT).join(", ") + ", …";
+}
+
 export default function SearchBar({ onSelect }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -53,8 +68,13 @@ export default function SearchBar({ onSelect }: Props) {
                 setOpen(false);
               }}
             >
-              <span className="search__title">{r.title}</span>
-              <span className="search__meta">{r.directedBy}</span>
+              <div className="search__result-main">
+                <span className="search__title">{r.title}</span>
+                <span className="search__meta">{r.directedBy}</span>
+              </div>
+              {r.starring && (
+                <div className="search__cast">{previewCast(r.starring)}</div>
+              )}
             </li>
           ))}
         </ul>

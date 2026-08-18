@@ -1,8 +1,13 @@
+export type Span = [number, number];
+
 export interface MovieHit {
   item_id: number;
   title: string;
+  titleHighlights: Span[];
   directedBy: string;
-  starring: string;
+  directedByHighlights: Span[];
+  castPreview: string;
+  castPreviewHighlights: Span[];
   avgRating: number | null;
   imdbId: string | null;
   score: number;

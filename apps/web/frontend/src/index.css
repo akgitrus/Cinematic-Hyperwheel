@@ -132,10 +132,16 @@ body {
 .search__cast {
   font-size: 11px;
   color: var(--muted);
-  opacity: 0.75;
+  opacity: 0.85;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.search__hl {
+  background: rgba(110, 231, 255, 0.28);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 .rec-form {

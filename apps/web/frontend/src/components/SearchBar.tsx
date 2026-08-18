@@ -1,24 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MovieHit, searchMovies } from "../api";
+import { MovieHit, Span, searchMovies } from "../api";
 
 interface Props {
   onSelect: (movie: MovieHit) => void;
 }
 
-// How many cast names to show in the dropdown before truncating with
-// "...". Just enough to usually include a matched name without making
-// the row wrap onto multiple lines.
-const CAST_PREVIEW_COUNT = 4;
-
-function previewCast(starring: string): string {
-  if (!starring) return "";
-  const names = starring
-    .split(",")
-    .map((n) => n.trim())
-    .filter(Boolean);
-  if (names.length <= CAST_PREVIEW_COUNT) return names.join(", ");
-  return names.slice(0, CAST_PREVIEW_COUNT).join(", ") + ", …";
+// Renders `text` with the given character spans wrapped in <mark>.
+// Spans come pre-computed from the backend (both the "where did this
+// match" offsets and, for cast, the truncation window are decided
+// server-side - the client just paints the ranges it's given).
+function renderHighlighted(text: string, spans: Span[]) {
+  if (!text || spans.length === 0) return text;
+  const sorted = [...spans].sort((a, b) => a[0] - b[0]);
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  sorted.forEach(([start, end], i) => {
+    if (start > cursor) parts.push(text.slice(cursor, start));
+    parts.push(
+      <mark key={i} className="search__hl">
+        {text.slice(start, end)}
+      </mark>
+    );
+    cursor = end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
 }
 
 export default function SearchBar({ onSelect }: Props) {
@@ -69,11 +76,17 @@ export default function SearchBar({ onSelect }: Props) {
               }}
             >
               <div className="search__result-main">
-                <span className="search__title">{r.title}</span>
-                <span className="search__meta">{r.directedBy}</span>
+                <span className="search__title">
+                  {renderHighlighted(r.title, r.titleHighlights)}
+                </span>
+                <span className="search__meta">
+                  {renderHighlighted(r.directedBy, r.directedByHighlights)}
+                </span>
               </div>
-              {r.starring && (
-                <div className="search__cast">{previewCast(r.starring)}</div>
+              {r.castPreview && (
+                <div className="search__cast">
+                  {renderHighlighted(r.castPreview, r.castPreviewHighlights)}
+                </div>
               )}
             </li>
           ))}

@@ -103,6 +103,12 @@ def main() -> None:
         "--no-standardize", action="store_true",
         help="Disable z-scoring criteria before PCA (enabled by default)",
     )
+    p_rec.add_argument(
+        "--shortlist-size", type=int, default=50,
+        help="Stage-A candidate pool size (closest items to the target by "
+             "full-space distance) that Stage B's angular re-rank picks "
+             "--top-k from. Must be >= --top-k. See /docs/math.md, section 6b.",
+    )
 
     args = parser.parse_args()
     _print_effective_args(args)
@@ -146,6 +152,7 @@ def main() -> None:
             hue_components=hue_components,
             exclude_components=exclude_components,
             candidate_components=args.candidate_components,
+            shortlist_size=args.shortlist_size,
         )
         print(result.to_string(index=False))
         if args.out:

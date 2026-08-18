@@ -148,3 +148,40 @@ Verified on synthetic data reproducing the diffuse spectrum: different
 reference items reliably resolve to different, non-overlapping component
 pairs (e.g. PC8/PC12, PC3/PC5, PC6/PC17, PC9/PC18 across four different
 references in one test run).
+
+### 6b. Two-stage selection: character shortlist + angular re-rank
+
+A single full-space nearest-neighbor search on `target_vec` conflates two
+different goals: "still feels like the reference" and "actually sits at
+the target angle". When the hue plane explains only a modest share of
+total variance (e.g. PC2+PC3 at ~11.6% combined, see section 6), the first
+goal dominates the full-space distance almost by construction -
+`target_vec` differs from the reference in only two of hundreds of
+dimensions, so the remaining dimensions decide the ranking, and the
+resulting top-k tends to land near-center with an arbitrary angle instead
+of near the intended 180°/120°/etc.
+
+`recommend_on_basis` resolves this in two stages instead of one:
+
+- **Stage A** - unchanged: the `shortlist_size` closest real items to
+  `target_vec` by full Euclidean distance. This is what enforces
+  character preservation (section 5) - delta is nonzero only inside the
+  hue plane, so distance elsewhere is a genuine measure of shared
+  character.
+- **Stage B** - among that shortlist, rank by angular distance (in the
+  whitened hue plane) to the exact target angle, and keep the closest
+  `top_k`. This is what enforces the rotation actually being expressed,
+  not just "some nearby item".
+
+`distance_to_target` in the output is untouched - Stage A's metric, not
+reweighted. A new `angular_error_deg` column reports Stage B's own
+metric per returned item, so callers can see how good the angular match
+actually was instead of inferring it indirectly from position on a chart.
+
+`shortlist_size` trades off between the two goals: too small and Stage B
+may have nothing with a good angle to choose from (degenerates back to
+Stage-A-only behavior); too large and Stage B approaches "closest angle
+in the whole catalog" regardless of character, undermining Stage A's
+guarantee. No principled default exists yet - start at 50 and inspect
+`angular_error_deg` vs. `distance_to_target` across a few reference items
+to tune it for a given catalog and n_criteria.

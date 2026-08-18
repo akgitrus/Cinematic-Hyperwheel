@@ -46,11 +46,17 @@ def wheel(item_id: int):
 
 @app.get("/api/movie/{item_id}/recommend")
 def recommend(item_id: int, scheme: str = Query("complementary")):
-    """Color-wheel recommendations (see hyperwheel_recommender.recommend_on_basis).
+    """Color-wheel recommendations, computed INDEPENDENTLY per circle.
 
-    Uses the same reviewed plane (axis_x/axis_y) as the reference's main
-    wheel circle, reusing the basis built once at startup. Returns the
-    top-k matches per scheme angle (k=5) plus the shared axis config.
+    Each circle gets its own recommend_on_basis() call using its own
+    plane - Stage A (character shortlist) and Stage B (angle+radius
+    re-rank) are both run fresh for each circle's own axes, rather than
+    projecting one main-circle result onto the other planes. Because PCA
+    components are orthogonal, a good rotation on PC2/PC3 says nothing
+    about position on PC5/PC6 - projecting a single result was giving
+    secondary circles scattered, unoptimized points. This means each
+    circle's top-k items are generally a DIFFERENT set of movies, not the
+    same 5 movies viewed from different axes.
     """
     if scheme not in SCHEMES:
         raise HTTPException(
@@ -58,77 +64,75 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
             detail=f"Unknown scheme '{scheme}'. Available: {sorted(SCHEMES)}",
         )
     try:
-        circles = _engine.circles_for(item_id)
+        wheel_circles = _engine.circles_for(item_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Item not found in the PCA basis")
 
-    main = circles[0]
-    pc_x = main["axis_x"]["pc"]
-    pc_y = main["axis_y"]["pc"]
-
-    try:
-        df = recommend_on_basis(
-            _engine.basis,
-            _engine.X,
-            reference_item=item_id,
-            scheme=scheme,
-            plane=(pc_x, pc_y),
-            top_k=6,
-            shortlist_size=700
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    ridx = _engine.id_to_idx.get(item_id)
 
     def z(idx: int, pc: int) -> float:
         return float(_engine.scores[idx, pc - 1] / _engine.pc_std[pc - 1])
 
-    # All PCA components used by any of this reference's circles (main +
-    # secondary), so the frontend can plot each recommendation on every circle.
-    all_pcs = sorted(
-        {p for c in circles for p in (c["axis_x"]["pc"], c["axis_y"]["pc"])}
-    )
+    circles_out = []
+    for wc in wheel_circles:
+        pc_x = wc["axis_x"]["pc"]
+        pc_y = wc["axis_y"]["pc"]
 
-    angles = []
-    for angle_deg in SCHEMES[scheme]:
-        rows = df[df["angle_deg"] == angle_deg].sort_values("rank")
-        items = []
-        for r in rows.to_dict("records"):
-            iid = int(r["item"])
-            idx = _engine.id_to_idx.get(iid)
-            if idx is None:
-                continue
-            zx, zy = z(idx, pc_x), z(idx, pc_y)
-            items.append({
-                "item_id": iid,
-                "title": _titles.get(iid, str(iid)),
-                "rank": r["rank"],
-                "distance_to_target": r["distance_to_target"],
+        try:
+            df = recommend_on_basis(
+                _engine.basis,
+                _engine.X,
+                reference_item=item_id,
+                scheme=scheme,
+                plane=(pc_x, pc_y),
+                top_k=6,
+                shortlist_size=700
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+        angles = []
+        for angle_deg in SCHEMES[scheme]:
+            rows = df[df["angle_deg"] == angle_deg].sort_values("rank")
+            items = []
+            for r in rows.to_dict("records"):
+                iid = int(r["item"])
+                idx = _engine.id_to_idx.get(iid)
+                if idx is None:
+                    continue
+                zx, zy = z(idx, pc_x), z(idx, pc_y)
+                items.append({
+                    "item_id": iid,
+                    "title": _titles.get(iid, str(iid)),
+                    "rank": r["rank"],
+                    "distance_to_target": r["distance_to_target"],
+                    "angular_error_deg": r.get("angular_error_deg"),
+                    "radius_ratio": r.get("radius_ratio"),
+                    "z_x": round(zx, 4),
+                    "z_y": round(zy, 4),
+                    "angle_deg": round((math.degrees(math.atan2(zy, zx)) % 360), 2),
+                })
+            angles.append({"angle_deg": angle_deg, "items": items})
+
+        reference = None
+        if ridx is not None:
+            zx, zy = z(ridx, pc_x), z(ridx, pc_y)
+            reference = {
                 "z_x": round(zx, 4),
                 "z_y": round(zy, 4),
                 "angle_deg": round((math.degrees(math.atan2(zy, zx)) % 360), 2),
-                "pc_z": {str(p): round(z(idx, p), 4) for p in all_pcs},
-            })
-        angles.append({"angle_deg": angle_deg, "items": items})
+                "radius": round(float(math.hypot(zx, zy)), 4),
+            }
 
-    reference = None
-    ridx = _engine.id_to_idx.get(item_id)
-    if ridx is not None:
-        zx, zy = z(ridx, pc_x), z(ridx, pc_y)
-        reference = {
-            "z_x": round(zx, 4),
-            "z_y": round(zy, 4),
-            "angle_deg": round((math.degrees(math.atan2(zy, zx)) % 360), 2),
-            "radius": round(float(math.hypot(zx, zy)), 4),
-        }
+        circles_out.append({
+            "primary": wc["primary"],
+            "axis_x": wc["axis_x"],
+            "axis_y": wc["axis_y"],
+            "reference": reference,
+            "angles": angles,
+        })
 
-    return {
-        "item_id": item_id,
-        "scheme": scheme,
-        "axis_x": main["axis_x"],
-        "axis_y": main["axis_y"],
-        "reference": reference,
-        "angles": angles,
-    }
+    return {"item_id": item_id, "scheme": scheme, "circles": circles_out}
 
 
 # Serve the built frontend (apps/web/frontend/dist) if present, so the

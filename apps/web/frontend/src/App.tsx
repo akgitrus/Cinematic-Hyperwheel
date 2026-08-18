@@ -5,7 +5,7 @@ import Wheel from "./components/Wheel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import {
   MovieHit,
-  RecAngle,
+  RecommendCircle,
   RecommendResponse,
   WheelCircle,
   getRecommendations,
@@ -20,18 +20,14 @@ const SCHEMES = [
   "tetradic",
 ];
 
-// Build per-circle recommendation overlays, using each item's z-scores on that
-// circle's own PCA plane (falls back to nothing if the plane isn't covered).
-function buildOverlays(circle: WheelCircle, recs: RecommendResponse | null): RecAngle[] | undefined {
+// Match a /wheel circle to its own /recommend circle by axis pair - each
+// circle was recommended against independently now, so this is a lookup,
+// not a projection/filter like the old pc_z-based buildOverlays was.
+function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): RecommendCircle | undefined {
   if (!recs) return undefined;
-  const xp = circle.axis_x.pc;
-  const yp = circle.axis_y.pc;
-  return recs.angles.map((a) => ({
-    angle_deg: a.angle_deg,
-    items: a.items
-      .filter((it) => it.pc_z && it.pc_z[String(xp)] != null && it.pc_z[String(yp)] != null)
-      .map((it) => ({ ...it, z_x: it.pc_z[String(xp)], z_y: it.pc_z[String(yp)] })),
-  }));
+  return recs.circles.find(
+    (c) => c.axis_x.pc === circle.axis_x.pc && c.axis_y.pc === circle.axis_y.pc
+  );
 }
 
 export default function App() {
@@ -78,6 +74,8 @@ export default function App() {
   };
 
   const [primary, ...secondary] = circles;
+  // Left panel stays tied to the main circle only, per decision above.
+  const primaryRecCircle = recs?.circles.find((c) => c.primary);
 
   return (
     <div className="app">
@@ -113,10 +111,10 @@ export default function App() {
 
       <div className="layout3">
         <aside className="layout3__left">
-          {recs && (
+          {primaryRecCircle && (
             <div className="recommendations">
               <h2 className="recommendations__title">{t("recommendations.title")}</h2>
-              {recs.angles.map((a, gi) => (
+              {primaryRecCircle.angles.map((a, gi) => (
                 <div key={gi} className="recommendations__angle">
                   <div className="recommendations__angle-head">
                     {t("recommendations.angle", { angle: a.angle_deg })}
@@ -140,7 +138,7 @@ export default function App() {
               circle={primary}
               size={320}
               title={selected?.title}
-              overlays={buildOverlays(primary, recs)}
+              overlays={findRecCircle(primary, recs)?.angles}
             />
           )}
           {selected && (
@@ -167,7 +165,7 @@ export default function App() {
                   key={`${c.axis_x.pc}-${c.axis_y.pc}`}
                   circle={c}
                   size={140}
-                  overlays={buildOverlays(c, recs)}
+                  overlays={findRecCircle(c, recs)?.angles}
                 />
               ))}
             </div>

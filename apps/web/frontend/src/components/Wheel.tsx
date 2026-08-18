@@ -308,6 +308,13 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
               Angle {recPoints[activeOverlay].angle}&deg; &middot; #{recPoints[activeOverlay].item.rank}
             </div>
             <div className="wheel__rec-popup-row">{recPoints[activeOverlay].item.title}</div>
+            {recPoints[activeOverlay].item.angular_error_deg != null && (
+              <div className="wheel__rec-popup-row">
+                Δangle: {recPoints[activeOverlay].item.angular_error_deg!.toFixed(1)}°
+                {recPoints[activeOverlay].item.radius_ratio != null &&
+                  ` · r-ratio: ${recPoints[activeOverlay].item.radius_ratio!.toFixed(2)}`}
+              </div>
+            )}
           </div>
         )}
       </div>

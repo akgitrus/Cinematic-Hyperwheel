@@ -48,11 +48,11 @@ export interface RecItem {
   title: string;
   rank: number;
   distance_to_target: number;
+  angular_error_deg: number | null;
+  radius_ratio: number | null;
   z_x: number;
   z_y: number;
   angle_deg: number;
-  /** z-scores of this item on every PCA component used by the reference's circles. */
-  pc_z: Record<string, number>;
 }
 
 export interface RecAngle {
@@ -67,13 +67,18 @@ export interface RecommendReference {
   radius: number;
 }
 
-export interface RecommendResponse {
-  item_id: number;
-  scheme: string;
+export interface RecommendCircle {
+  primary: boolean;
   axis_x: AxisConfig;
   axis_y: AxisConfig;
   reference: RecommendReference | null;
   angles: RecAngle[];
+}
+
+export interface RecommendResponse {
+  item_id: number;
+  scheme: string;
+  circles: RecommendCircle[];
 }
 
 export async function getRecommendations(itemId: number, scheme: string): Promise<RecommendResponse> {
@@ -81,7 +86,6 @@ export async function getRecommendations(itemId: number, scheme: string): Promis
   if (!res.ok) throw new Error("recommend lookup failed");
   return res.json();
 }
-
 
 export async function getWheelCircles(itemId: number): Promise<WheelResponse> {
   const res = await fetch(`/api/movie/${itemId}/wheel`);

@@ -34,24 +34,59 @@ export default function SearchBar({ onSelect }: Props) {
   const [results, setResults] = useState<MovieHit[]>([]);
   const [open, setOpen] = useState(false);
   const debounceRef = useRef<number | undefined>(undefined);
+  // FIX: monotonically increasing id per fired request, so that when
+  // several searches are in flight at once (typing faster than the
+  // debounce window lets them settle), a late-arriving response for an
+  // OLDER keystroke can be detected and dropped instead of clobbering
+  // the results of a newer one that already resolved - this is what was
+  // causing the "flicker" of stale result sets while typing fast.
+  const requestIdRef = useRef(0);
+  // FIX: sentinel query value we just set programmatically (on select),
+  // so the search effect can recognize "this change came from picking a
+  // result, not from typing" and skip re-searching/reopening for it.
+  const suppressNextSearchRef = useRef<string | null>(null);
 
   useEffect(() => {
     window.clearTimeout(debounceRef.current);
+
+    // FIX: if this exact query value was just set by handleSelect below,
+    // consume the flag and skip firing a search for it - otherwise the
+    // debounced search resolves ~250ms+ after selection and calls
+    // setOpen(true) again, making the dropdown pop back open on its own.
+    if (suppressNextSearchRef.current === query) {
+      suppressNextSearchRef.current = null;
+      return;
+    }
+
     if (query.trim().length < 2) {
       setResults([]);
       return;
     }
     debounceRef.current = window.setTimeout(async () => {
+      const myRequestId = ++requestIdRef.current;
       try {
         const hits = await searchMovies(query);
+        // FIX: a newer request was fired (and possibly already resolved)
+        // while this one was in flight - discard this stale response.
+        if (myRequestId !== requestIdRef.current) return;
         setResults(hits);
         setOpen(true);
       } catch {
+        if (myRequestId !== requestIdRef.current) return;
         setResults([]);
       }
     }, 250);
     return () => window.clearTimeout(debounceRef.current);
   }, [query]);
+
+  const handleSelect = (r: MovieHit) => {
+    onSelect(r);
+    // FIX: mark the upcoming query change as "programmatic" before
+    // triggering it, so the effect above ignores it.
+    suppressNextSearchRef.current = r.title;
+    setQuery(r.title);
+    setOpen(false);
+  };
 
   return (
     <div className="search">
@@ -60,7 +95,13 @@ export default function SearchBar({ onSelect }: Props) {
         placeholder={t("search.placeholder")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => results.length && setOpen(true)}
+        onFocus={(e) => {
+          // Select-all on focus, so clicking/tabbing into an already-filled
+          // field (e.g. after picking a result) lets the user immediately
+          // retype instead of having to manually clear it first.
+          e.target.select();
+          if (results.length) setOpen(true);
+        }}
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
       />
       {open && results.length > 0 && (
@@ -69,11 +110,7 @@ export default function SearchBar({ onSelect }: Props) {
             <li
               key={r.item_id}
               className="search__result"
-              onMouseDown={() => {
-                onSelect(r);
-                setQuery(r.title);
-                setOpen(false);
-              }}
+              onMouseDown={() => handleSelect(r)}
             >
               <div className="search__result-main">
                 <span className="search__title">

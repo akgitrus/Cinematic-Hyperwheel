@@ -44,6 +44,18 @@ to a small window AROUND the matched name (falling back to "first N"
 when the match wasn't in the cast), and remaps the highlight spans
 into that cropped string - so the frontend needs no truncation logic
 of its own.
+
+Scoring performance: scores for the query against EVERY record are
+computed with rapidfuzz.process.cdist (one call per scorer, run as a
+single batched C loop over the whole catalog) rather than a Python
+`for` loop calling fuzz.token_set_ratio/partial_ratio individually per
+record. On a catalog of thousands of items this distinction is the
+difference between single-digit-millisecond and multi-second search
+latency: rapidfuzz's own comparison work is fast either way, but the
+per-call Python/function-call overhead of doing it thousands of times
+in a loop dominates the total time - cdist amortizes that overhead
+into six batched calls total (token_set_ratio + partial_ratio, x3
+fields) regardless of catalog size.
 """
 from __future__ import annotations
 
@@ -52,7 +64,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from rapidfuzz import fuzz
+import numpy as np
+from rapidfuzz import fuzz, process
 
 _ARTICLE_RE = re.compile(
     r"^(?P<base>.+),\s*(?P<article>The|A|An)(?P<year>\s*\(\d{4}\))?$",
@@ -87,21 +100,25 @@ def _normalize_for_match(text: str) -> str:
     return " ".join(_tokenize(text))
 
 
-def _field_score(query_norm: str, text_norm: str) -> float:
+def _batch_field_scores(query_norm: str, texts_norm: list[str]) -> np.ndarray:
     """
-    Whole-token fuzzy score OR substring/prefix score, whichever is
-    higher - "air" matches "Airplane!" via partial_ratio (substring) as
-    well as "Air Force One" via token_set_ratio (whole-token,
-    reorder-tolerant). Deliberately plain partial_ratio, not
-    partial_token_set_ratio/WRatio, which saturate to ~100 on any
-    shared short token regardless of real relevance.
+    Vectorized equivalent of calling _field_score(query_norm, t) for every
+    t in texts_norm: max(token_set_ratio, partial_ratio) per record, via
+    two batched rapidfuzz.process.cdist calls instead of a Python loop of
+    2 * len(texts_norm) individual fuzz calls. Empty strings score 0
+    (rapidfuzz's own behavior, matching the old _field_score early-return).
+
+    workers=-1 lets rapidfuzz split each batched call across all available
+    CPU cores (its C loop releases the GIL) - worth it once len(texts_norm)
+    is in the thousands; for a handful of records the thread/process setup
+    overhead would outweigh the gain, but that's not the regime this is
+    used in (it's the whole-catalog case, not the small per-record path).
     """
-    if not text_norm:
-        return 0.0
-    return max(
-        fuzz.token_set_ratio(query_norm, text_norm),
-        fuzz.partial_ratio(query_norm, text_norm),
-    )
+    if not texts_norm:
+        return np.empty(0, dtype=np.float64)
+    ts = process.cdist([query_norm], texts_norm, scorer=fuzz.token_set_ratio, workers=-1)[0]
+    pr = process.cdist([query_norm], texts_norm, scorer=fuzz.partial_ratio, workers=-1)[0]
+    return np.maximum(ts, pr)
 
 
 def _find_highlights(query_tokens: list[str], raw_text: str) -> list[tuple[int, int]]:
@@ -246,25 +263,28 @@ class MovieIndex:
 
     def search(self, query: str, limit: int = 8, score_cutoff: float = 45.0) -> list[dict]:
         query_norm = _normalize_for_match(query.strip())
-        if not query_norm:
+        if not query_norm or not self.records:
             return []
         query_tokens = query_norm.split()
 
-        scored: list[tuple[float, float, float, float, int]] = []
-        for i in range(len(self.records)):
-            title_score = _field_score(query_norm, self._title_norm[i])
-            director_score = _field_score(query_norm, self._director_norm[i])
-            cast_score = _field_score(query_norm, self._cast_norm[i])
+        # --- vectorized scoring pass: 6 batched C calls total, instead of
+        # up to 6 * len(records) individual Python-level fuzz calls (see
+        # module docstring, "Scoring performance") ---
+        title_score = _batch_field_scores(query_norm, self._title_norm)
+        director_score = _batch_field_scores(query_norm, self._director_norm)
+        cast_score = _batch_field_scores(query_norm, self._cast_norm)
 
-            # `relevance` is used ONLY for the score_cutoff filter and for the
-            # number shown to the caller - it still lets a pure name query
-            # ("Kubrick") pass the cutoff even with title_score == 0. It is
-            # NOT used for ordering results (see the sort below) - that's the
-            # whole point of the fix: a decent cast/director hit must not be
-            # able to numerically outscore a real title hit.
-            relevance = max(title_score, director_score * 0.9, cast_score * 0.85)
-            if relevance >= score_cutoff:
-                scored.append((title_score, director_score, cast_score, relevance, i))
+        # `relevance` is used ONLY for the score_cutoff filter and for the
+        # number shown to the caller - it still lets a pure name query
+        # ("Kubrick") pass the cutoff even with title_score == 0. It is
+        # NOT used for ordering results (see the sort below) - that's the
+        # whole point of the fix: a decent cast/director hit must not be
+        # able to numerically outscore a real title hit.
+        relevance = np.maximum(title_score, np.maximum(director_score * 0.9, cast_score * 0.85))
+
+        candidate_idx = np.nonzero(relevance >= score_cutoff)[0]
+        if candidate_idx.size == 0:
+            return []
 
         # Strict field priority: title, then director, then cast (year is
         # already part of the stored title string). A match on a
@@ -272,10 +292,16 @@ class MovieIndex:
         # lower-priority one, e.g. a title containing the query word beats
         # a cast list that merely happens to contain a person whose name is
         # that word (e.g. actress "Donna Air" vs a query "air").
-        scored.sort(key=lambda t: (-t[0], -t[1], -t[2]))
+        # np.lexsort's LAST key is primary.
+        order = candidate_idx[np.lexsort((
+            -cast_score[candidate_idx],
+            -director_score[candidate_idx],
+            -title_score[candidate_idx],
+        ))][:limit]
 
         results = []
-        for title_score, director_score, cast_score, relevance, i in scored[:limit]:
+        for i in order:
+            i = int(i)
             r = self.records[i]
 
             title_hl = _find_highlights(query_tokens, r.title)
@@ -294,6 +320,6 @@ class MovieIndex:
                 "starring": r.starring,
                 "avgRating": r.avg_rating,
                 "imdbId": r.imdb_id,
-                "score": round(float(relevance), 1),
+                "score": round(float(relevance[i]), 1),
             })
         return results

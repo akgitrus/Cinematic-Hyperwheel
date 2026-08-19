@@ -6,14 +6,15 @@ planes ("circles"), each labeled by a human-curated config.
 
 ## Data
 
-Expected under `/data/genome_2021/` by default (overridable via env vars):
+Expected under `/data/ml-latest/` by default (overridable via env vars):
 
-- `metadata.jsonl` — as in the sample (`title`, `directedBy`, `starring`, `avgRating`, `imdbId`, `item_id`)
+- TODO: Update! `metadata.jsonl` — as in the sample (`title`, `directedBy`, `starring`, `avgRating`, `imdbId`, `item_id`)
 - `artifact.npz` — pre-built once, by hand, via the engine's CLI:
 
   ```bash
-  python -m hyperwheel_recommender build data/genome_2021/ratings_long.csv \
-    --out data/genome_2021/artifact.npz
+  python -m hyperwheel_recommender build data/ml-latest/ml-latest/genome-scores.csv \
+    --tags-path data/ml-latest/ml-latest/genome-tags.csv \
+    --out data/ml-latest/artifact.npz
   ```
 
 Paths are overridable via `HYPERWHEEL_DATA_DIR`, `HYPERWHEEL_METADATA_PATH`,

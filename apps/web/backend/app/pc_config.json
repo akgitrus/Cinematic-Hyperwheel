@@ -21,33 +21,33 @@
   },
   "2": {
     "colors": {
-      "negative": "#F4A630",
-      "positive": "#24434E"
+      "positive": "#F4A630",
+      "negative": "#24434E"
     },
     "labels": {
       "en": {
-        "negative": "Popcorn Entertainment",
-        "positive": "Auteur Cinema"
+        "positive": "Popcorn Entertainment",
+        "negative": "Art-house"
       },
       "ru": {
-        "negative": "Динамичный мейнстрим",
-        "positive": "Авторский артхаус"
+        "positive": "Зрелищный блокбастер",
+        "negative": "Авторский артхаус"
       }
     }
   },
   "3": {
     "colors": {
-      "negative": "#E2706F",
-      "positive": "#5B1B2F"
+      "positive": "#E2706F",
+      "negative": "#5B1B2F"
     },
     "labels": {
       "en": {
-        "negative": "Heartwarming Drama",
-        "positive": "Transgressive Horror"
+        "positive": "Heartwarming Drama",
+        "negative": "Transgressive Horror"
       },
       "ru": {
-        "negative": "Трогательная драма",
-        "positive": "Трансгрессивный хоррор"
+        "positive": "Трогательная драма",
+        "negative": "Трансгрессивный хоррор"
       }
     }
   },
@@ -58,60 +58,60 @@
     },
     "labels": {
       "en": {
-        "negative": "Quirky Dramedy",
+        "negative": "Crime Thriller",
         "positive": "Visual Epic"
       },
       "ru": {
-        "negative": "Жизненная комедия",
-        "positive": "Визуальный эпос"
+        "negative": "КриминКриминальный триллер",
+        "positive": "Масштабный Sci-Fi"
       }
     }
   },
   "5": {
     "colors": {
-      "negative": "#355D70",
-      "positive": "#AE83D2"
+      "positive": "#355D70",
+      "negative": "#AE83D2"
     },
     "labels": {
       "en": {
-        "negative": "Political Thriller",
-        "positive": "Family Fantasy"
+        "positive": "Political Thriller",
+        "negative": "Comedy"
       },
       "ru": {
-        "negative": "Политический триллер",
-        "positive": "Семейное фэнтези"
+        "positive": "Политический триллер",
+        "negative": "Комедия"
       }
     }
   },
   "6": {
     "colors": {
-      "negative": "#434854",
-      "positive": "#F1D041"
+      "positive": "#434854",
+      "negative": "#F1D041"
     },
     "labels": {
       "en": {
-        "negative": "Existential Drama",
-        "positive": "Slapstick Comedy"
+        "positive": "Existential Drama",
+        "negative": "Classic Hollywood"
       },
       "ru": {
-        "negative": "Экзистенциальная драма",
-        "positive": "Эксцентричная комедия"
+        "positive": "Экзистенциальная драма",
+        "negative": "Голливудская классика"
       }
     }
   },
   "7": {
     "colors": {
-      "negative": "#409792",
-      "positive": "#2D193A"
+      "positive": "#409792",
+      "negative": "#2D193A"
     },
     "labels": {
       "en": {
-        "negative": "Art-SciFi / Philosophical Fiction",
-        "positive": "Pure Horror"
+        "positive": "Puzzle Film",
+        "negative": "Splatter Horror"
       },
       "ru": {
-        "negative": "Арт-фикшн / Философская фантастика",
-        "positive": "Чистый хоррор"
+        "positive": "Интеллектуальный детектив",
+        "negative": "Экстремальный хоррор"
       }
     }
   },
@@ -122,12 +122,12 @@
     },
     "labels": {
       "en": {
-        "negative": "Blunt Grotesque / Historical Fact",
-        "positive": "Psychological Thriller / Neo-noir"
+        "negative": "Absurdist Comedy",
+        "positive": "Dark Fantasy"
       },
       "ru": {
-        "negative": "Прямолинейный гротеск / Исторический факт",
-        "positive": "Психологический детектив / Неонуар"
+        "negative": "Абсурдистская комедия",
+        "positive": "Мистический триллер"
       }
     }
   },
@@ -138,12 +138,12 @@
     },
     "labels": {
       "en": {
-        "negative": "Science fiction",
-        "positive": "Superhero / comic-book"
+        "negative": "Atmospheric Horror",
+        "positive": "Superhero / comic-book / martial Arts"
       },
       "ru": {
-        "negative": "Научная фантастика",
-        "positive": "Супергерои / комиксы"
+        "negative": "Камерный хоррор",
+        "positive": "Боевые искусства"
       }
     }
   },
@@ -154,12 +154,76 @@
     },
     "labels": {
       "en": {
-        "negative": "Noir / romantic",
-        "positive": "Brutal / political action"
+        "negative": "Love & Relationships",
+        "positive": "Brutal movie"
       },
       "ru": {
-        "negative": "Нуар / романтика",
-        "positive": "Брутальный / политический экшен"
+        "negative": "Любовная драма",
+        "positive": "Брутальное кино"
+      }
+    }
+  },
+  "11": {
+    "colors": {
+      "negative": "#764156",
+      "positive": "#B2462D"
+    },
+    "labels": {
+      "en": {
+        "negative": "Romantic",
+        "positive": "Political Satire"
+      },
+      "ru": {
+        "negative": "Романтика",
+        "positive": "Политическая сатира"
+      }
+    }
+  },
+  "12": {
+    "colors": {
+      "negative": "#764156",
+      "positive": "#B2462D"
+    },
+    "labels": {
+      "en": {
+        "negative": "Family Film",
+        "positive": "Historical Epic"
+      },
+      "ru": {
+        "negative": "Семейное кино",
+        "positive": "Исторический эпос"
+      }
+    }
+  },
+  "13": {
+    "colors": {
+      "negative": "#764156",
+      "positive": "#B2462D"
+    },
+    "labels": {
+      "en": {
+        "negative": "Corporate Franchises",
+        "positive": "Minimalist & Visceral Cinema"
+      },
+      "ru": {
+        "negative": "Корпоративная франшиза",
+        "positive": "Минималистичное кино"
+      }
+    }
+  },
+  "14": {
+    "colors": {
+      "negative": "#764156",
+      "positive": "#B2462D"
+    },
+    "labels": {
+      "en": {
+        "negative": "Retro Coming-of-Age",
+        "positive": "Superhero Cinema"
+      },
+      "ru": {
+        "negative": "Ретро-драмеди о взрослении",
+        "positive": "Супергерои"
       }
     }
   }

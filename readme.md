@@ -737,6 +737,7 @@ The Tag Genome represents each movie by its relevance to a common set of semanti
 
 This makes the dataset a natural starting point for representing movies as points in a high-dimensional semantic space.
 
+TODO: UPDATE!
 * **Dataset:** [Tag Genome — GroupLens](https://grouplens.org/datasets/movielens/tag-genome-2021/)
 * **Download and usage terms:** [Tag Genome README](https://files.grouplens.org/datasets/tag-genome-2021/genome_2021_readme.txt)
 * **Original papers:**

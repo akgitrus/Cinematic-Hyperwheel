@@ -1,5 +1,6 @@
 # External data
-data/genome_2021/*.*
+data/genome_2021/
+data/ml-latest/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

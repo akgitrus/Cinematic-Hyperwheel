@@ -19,14 +19,14 @@ costs:
 
 Usage:
     python tools/filter_metadata_to_artifact.py \\
-        --metadata data/genome_2021/metadata.jsonl \\
-        --artifact data/genome_2021/artifact.npz \\
-        --out data/genome_2021/metadata.filtered.jsonl
+        --metadata data/ml-latest/metadata.original.jsonl \\ TODO: UPDATE!
+        --artifact data/ml-latest/artifact.npz \\
+        --out data/ml-latest/metadata.jsonl TODO: UPDATE!
 
 Then point HYPERWHEEL_METADATA_PATH (or the default METADATA_PATH in
 apps/web/backend/app/config.py) at the filtered file, e.g.:
 
-    export HYPERWHEEL_METADATA_PATH=data/genome_2021/metadata.filtered.jsonl
+    export HYPERWHEEL_METADATA_PATH=data/ml-latest/metadata.filtered.jsonl  TODO: UPDATE!
 
 or simply overwrite metadata.jsonl in place once you've checked the
 output (this script never writes to --metadata itself, so the original

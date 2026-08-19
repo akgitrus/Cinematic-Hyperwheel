@@ -43,6 +43,7 @@ def main() -> None:
              "CSV on every start)",
     )
     p_build.add_argument("csv_path")
+    p_build.add_argument("--tags-path", help="Tags CSV path", default=None)
     p_build.add_argument("--out", required=True, help="Where to save the .npz artifact")
     p_build.add_argument("--chunksize", type=int, default=500_000)
 
@@ -115,7 +116,7 @@ def main() -> None:
 
     if args.command == "build":
         t0 = time.time()
-        wide = load_matrix(args.csv_path, chunksize=args.chunksize)
+        wide = load_matrix(args.csv_path, genome_tags_csv_path=args.tags_path, chunksize=args.chunksize)
         save_artifact(wide, args.out)
         print(
             f"Done: {wide.shape[0]} items x {wide.shape[1]} criteria "

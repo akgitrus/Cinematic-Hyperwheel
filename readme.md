@@ -4,7 +4,7 @@ Experimental open-source project exploring **harmony beyond similarity** in movi
 
 Cinematic-Hyperwheel investigates whether principles behind harmonious color schemes — such as complementary, analogous, and triadic relationships — can be applied to a high-dimensional semantic representation of movies.
 
-The project uses the **MovieLens Tag Genome** to represent movies as points in a high-dimensional feature space, extracts the structure of that space using PCA, and applies controlled rotations in selected semantic planes to generate movies that are deliberately different from a reference while remaining structurally related to it.
+The project uses the **MovieLens Tag Genome** (currently sourced from the MovieLens Latest Dataset, `ml-latest`) to represent movies as points in a high-dimensional feature space, extracts the structure of that space using PCA, and applies controlled rotations in selected semantic planes to generate movies that are deliberately different from a reference while remaining structurally related to it.
 
 ---
 
@@ -87,7 +87,7 @@ The analogy is not intended to claim that movies literally have "colors". Instea
 
 ## Movie representation
 
-The current experimental representation is based on the **MovieLens Tag Genome 2021** dataset.
+The current experimental representation is based on the tag genome included in the **MovieLens Latest Dataset** (`ml-latest`, full).
 
 Each movie is represented by its relevance to a common set of semantic tags.
 
@@ -113,11 +113,16 @@ movie = (x₁, x₂, ..., xₙ)
 
 where each dimension corresponds to a semantic characteristic.
 
-The current Tag Genome 2021 data contains:
+The tag genome shipped with `ml-latest` contains, per GroupLens' published
+figures:
 
-- 9,734 movies
-- 1,084 unique tags
-- 10,551,656 tag-movie scores
+- ~14,000,000 tag-movie relevance scores
+- ~1,100 unique tags
+- movies covered by the genome are a subset of the full catalog (86,537
+  movies in `movies.csv`) - exact counts depend on the specific `ml-latest`
+  snapshot downloaded; see `docs/performance.md` for the numbers measured
+  on the artifact actually in use, and `tools/filter_metadata_to_artifact.py`
+  for how the searchable movie list is narrowed down to that subset.
 
 This provides a common high-dimensional representation in which movies can be compared geometrically.
 
@@ -729,22 +734,39 @@ The exact structure may evolve as the research progresses.
 
 ## Data
 
-### MovieLens Tag Genome Dataset 2021
+### MovieLens Latest Dataset (`ml-latest`, full)
 
-Cinematic-Hyperwheel uses the **MovieLens Tag Genome Dataset 2021** released by the GroupLens Research Group at the University of Minnesota.
+Cinematic-Hyperwheel uses the **MovieLens Latest Dataset** (`ml-latest`,
+full version) released by the GroupLens Research Group at the University
+of Minnesota.
 
-The Tag Genome represents each movie by its relevance to a common set of semantic tags. The dataset contains relevance values for **9,734 movies and 1,084 tags**, with each relevance value represented on a continuous scale from 0 to 1.
+Of the six files GroupLens ships in `ml-latest`
+(`genome-scores.csv`, `genome-tags.csv`, `links.csv`, `movies.csv`,
+`ratings.csv`, `tags.csv`), this project uses exactly three:
 
-This makes the dataset a natural starting point for representing movies as points in a high-dimensional semantic space.
+* `movies.csv` (`movieId,title,genres`) - the movie catalog behind
+  search and the movie card. Filtered down to the subset that has tag
+  genome data before being used by the web app (see
+  `tools/filter_metadata_to_artifact.py`).
+* `genome-scores.csv` (`movieId,tagId,relevance`) and `genome-tags.csv`
+  (`tagId,tag`) - together, the tag genome: relevance values for each
+  (movie, tag) pair on a continuous `[0, 1]` scale. This is the input to
+  the PCA basis (see `hyperwheel_recommender build`).
 
-TODO: UPDATE!
-* **Dataset:** [Tag Genome — GroupLens](https://grouplens.org/datasets/movielens/tag-genome-2021/)
-* **Download and usage terms:** [Tag Genome README](https://files.grouplens.org/datasets/tag-genome-2021/genome_2021_readme.txt)
-* **Original papers:**
-    [Kotkov et al., 2021] Kotkov, D., Maslov, A., and Neovius, M. (2021). Revisiting the tag relevance prediction problem. In Proceedings of the 44th International ACM SIGIR conference on Research and Development in Information Retrieval. https://doi.org/10.1145/3404835.3463019
+`ratings.csv`, `tags.csv`, and `links.csv` are **not used** by this
+project.
+
+* **Dataset:** [MovieLens Latest Datasets — GroupLens](https://grouplens.org/datasets/movielens/latest/)
+* **Download and usage terms:** [ml-latest README](https://files.grouplens.org/datasets/movielens/ml-latest-README.html)
+* **Required citations** (per the `ml-latest` README's Usage License -
+  see the full terms there, summarized in the License section below):
+    [Harper and Konstan, 2015] F. Maxwell Harper and Joseph A. Konstan. 2015. The MovieLens Datasets: History and Context. ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4: 19:1–19:19. https://doi.org/10.1145/2827872
     [Vig et al., 2012] Vig, J., Sen, S., and Riedl, J. (2012). The tag genome: Encoding community knowledge to support novel interaction. ACM Trans. Interact. Intell. Syst., 2(3):13:1–13:44. https://doi.org/10.1145/2362394.2362395
 
-The dataset is used in accordance with the usage terms specified by GroupLens. The dataset itself is not redistributed with this repository; users should obtain it directly from the official GroupLens source.
+The dataset is used in accordance with the usage terms specified by
+GroupLens (see License below for the specific conditions). The dataset
+itself is not redistributed with this repository; users should obtain it 
+directly from the official GroupLens source.
 
 ---
 
@@ -760,9 +782,10 @@ repository. Third-party datasets, libraries, models, and other external
 materials are **not covered by this license** and remain subject to their
 respective licenses and terms of use.
 
-In particular, the Tag Genome dataset used in the experiments is
-provided by the GroupLens Research Group and is subject to its own
-terms of use. The dataset is not redistributed with this repository.
+In particular, the MovieLens Latest Dataset (`ml-latest`) used in the
+experiments is provided by the GroupLens Research Group and is subject
+to its own Usage License (full text:
+[ml-latest README](https://files.grouplens.org/datasets/movielens/ml-latest-README.html#usage-license)).
 
 See [Data](#Data) for information about datasets and other
 external resources used by the project.

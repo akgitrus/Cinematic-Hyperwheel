@@ -1,20 +1,42 @@
 # Cinematic Hyperwheel — web UI (stage 1)
 
-Reference-movie search (fuzzy, matched against title/directedBy/starring)
-plus a visualization of the movie as one or more points on PCA-component
-planes ("circles"), each labeled by a human-curated config.
+Reference-movie search (literal, title-only) plus a visualization of the
+movie as one or more points on PCA-component planes ("circles"), each
+labeled by a human-curated config.
 
 ## Data
 
+MovieLens Latest Dataset (`ml-latest`, full) - see the root
+[readme.md](../../readme.md#data) for the dataset link, required
+citations, and the GroupLens Usage License terms (acknowledgement,
+no-commercial-use-without-permission, etc.) that apply to anyone
+standing up their own instance.
+
 Expected under `/data/ml-latest/` by default (overridable via env vars):
 
-- TODO: Update! `metadata.jsonl` — as in the sample (`title`, `directedBy`, `starring`, `avgRating`, `imdbId`, `item_id`)
+- `movies.csv` (`movieId,title,genres`, as downloaded) - **must be
+  filtered down first** to only the movies that have Tag Genome data,
+  via `tools/filter_metadata_to_artifact.py` (see below); pointing
+  `HYPERWHEEL_METADATA_PATH` at the raw, unfiltered `movies.csv` works
+  but wastes search time on ~86k movies where the ~13k with genome data
+  would do, and surfaces movies that will 404 on `/wheel`.
 - `artifact.npz` — pre-built once, by hand, via the engine's CLI:
 
   ```bash
-  python -m hyperwheel_recommender build data/ml-latest/ml-latest/genome-scores.csv \
-    --tags-path data/ml-latest/ml-latest/genome-tags.csv \
+  python -m hyperwheel_recommender build data/ml-latest/genome-scores.csv \
+    --tags-path data/ml-latest/genome-tags.csv \
     --out data/ml-latest/artifact.npz
+  ```
+
+  then filter the catalog against it:
+
+  ```bash
+  python tools/filter_metadata_to_artifact.py \
+    --movies data/ml-latest/movies.original.csv \
+    --artifact data/ml-latest/artifact.npz \
+    --out data/ml-latest/movies.csv
+
+  export HYPERWHEEL_METADATA_PATH=data/ml-latest/movies.csv
   ```
 
 Paths are overridable via `HYPERWHEEL_DATA_DIR`, `HYPERWHEEL_METADATA_PATH`,
@@ -49,14 +71,18 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ## API
 
-- `GET /api/search?q=...&limit=8` — fuzzy search over title/director/cast.
-  Titles are matched with the leading article reordered to the front
-  (`"Matrix, The (1999)"` -> `"The Matrix (1999)"`), lowercased,
-  depunctuated, and with common stopwords (the/a/an) stripped before
-  scoring. Title and director/cast are scored **separately** (not
-  concatenated into one string — a long cast list would otherwise dilute
-  the title match) and combined with a title-dominant weight; a strong
-  standalone director/cast match can still surface on its own.
+- `GET /api/search?q=...&limit=8` — literal (non-fuzzy) search over the
+  movie **title only**; `genres` are returned for display but are not
+  matched against. Titles are matched with the leading article reordered
+  to the front (`"Matrix, The (1999)"` -> `"The Matrix (1999)"`),
+  lowercased, depunctuated, and with common stopwords (the/a/an) stripped
+  before matching. Results are ranked into tiers rather than by a
+  continuous fuzzy score: exact prefix, then word-boundary phrase match,
+  then plain substring, then a word-order-agnostic fallback (every query
+  token present as a substring, in any order) - see
+  `apps/web/backend/app/search.py` for the full tiering rationale. No
+  typo tolerance: unlike the previous rapidfuzz-based version, a
+  misspelled query will not match.
 - `GET /api/movie/{item_id}/recommend?scheme=...` — color-wheel
   recommendations (complementary/triadic/analogous/split-complementary/tetradic),
   computed **independently for each circle** shown on `/wheel` for this

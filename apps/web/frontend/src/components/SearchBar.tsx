@@ -7,9 +7,8 @@ interface Props {
 }
 
 // Renders `text` with the given character spans wrapped in <mark>.
-// Spans come pre-computed from the backend (both the "where did this
-// match" offsets and, for cast, the truncation window are decided
-// server-side - the client just paints the ranges it's given).
+// Spans come pre-computed from the backend - the client just paints the
+// ranges it's given.
 function renderHighlighted(text: string, spans: Span[]) {
   if (!text || spans.length === 0) return text;
   const sorted = [...spans].sort((a, b) => a[0] - b[0]);
@@ -116,13 +115,16 @@ export default function SearchBar({ onSelect }: Props) {
                 <span className="search__title">
                   {renderHighlighted(r.title, r.titleHighlights)}
                 </span>
-                <span className="search__meta">
-                  {renderHighlighted(r.directedBy, r.directedByHighlights)}
-                </span>
               </div>
-              {r.castPreview && (
-                <div className="search__cast">
-                  {renderHighlighted(r.castPreview, r.castPreviewHighlights)}
+              {/* Genres are shown but never highlighted - they aren't
+                  part of the match, only the title is (see search.py). */}
+              {r.genres.length > 0 && (
+                <div className="search__genres">
+                  {r.genres.map((g) => (
+                    <span key={g} className="search__genre-badge">
+                      {g}
+                    </span>
+                  ))}
                 </div>
               )}
             </li>

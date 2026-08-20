@@ -4,13 +4,7 @@ export interface MovieHit {
   item_id: number;
   title: string;
   titleHighlights: Span[];
-  directedBy: string;
-  directedByHighlights: Span[];
-  castPreview: string;
-  castPreviewHighlights: Span[];
-  avgRating: number | null;
-  imdbId: string | null;
-  score: number;
+  genres: string[];
 }
 
 export interface AxisLabels {

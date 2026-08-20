@@ -4,16 +4,14 @@
     "tagline": "harmony beyond similarity"
   },
   "search": {
-    "placeholder": "Title, year, director... e.g. \"The Matrix 1999\""
+    "placeholder": "Title, year... e.g. \"The Matrix 1999\""
   },
   "wheel": {
     "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
     "readoutAngle": "angle {{angle}}° · length {{radius}}"
   },
   "card": {
-    "director": "Director",
-    "starring": "Starring",
-    "rating": "Rating",
+    "genres": "Genres",
     "unknown": "—"
   },
   "scheme": {
@@ -31,5 +29,10 @@
   },
   "errors": {
     "wheelLookup": "Could not fetch the movie's coordinates in PCA space."
+  },
+  "footer": {
+    "text": "Movie data provided by the MovieLens Latest Dataset, GroupLens Research, University of Minnesota. This project is not endorsed by and is not affiliated with GroupLens or the University of Minnesota.",
+    "datasetLink": "MovieLens Latest Dataset",
+    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)"
   }
 }

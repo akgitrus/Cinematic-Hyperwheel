@@ -144,15 +144,19 @@ export default function App() {
           {selected && (
             <div className="card">
               <div className="card__title">{selected.title}</div>
-              <div className="card__row">
-                {t("card.director")}: {selected.directedBy || t("card.unknown")}
-              </div>
-              <div className="card__row">
-                {t("card.starring")}: {selected.starring || t("card.unknown")}
-              </div>
-              <div className="card__row">
-                {t("card.rating")}: {selected.avgRating ?? t("card.unknown")}
-              </div>
+              {selected.genres.length > 0 ? (
+                <div className="card__genres">
+                  {selected.genres.map((g) => (
+                    <span key={g} className="card__genre-badge">
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="card__row">
+                  {t("card.genres")}: {t("card.unknown")}
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -172,6 +176,21 @@ export default function App() {
           )}
         </aside>
       </div>
+
+      <footer className="app__footer">
+        <p>
+          {t("footer.text")}{" "}
+          <a
+            href="https://grouplens.org/datasets/movielens/latest/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("footer.datasetLink")}
+          </a>
+          .
+        </p>
+        <p className="app__footer-citation">{t("footer.citation")}</p>
+      </footer>
     </div>
   );
 }

@@ -4,16 +4,14 @@
     "tagline": "гармония за пределами схожести"
   },
   "search": {
-    "placeholder": "Название, год, режиссёр... например «Матрица 1999»"
+    "placeholder": "Название, год... например «Матрица 1999»"
   },
   "wheel": {
     "readout": "PC{{pcX}}: {{zX}}σ · PC{{pcY}}: {{zY}}σ",
     "readoutAngle": "угол {{angle}}° · длина {{radius}}"
   },
   "card": {
-    "director": "Режиссёр",
-    "starring": "В ролях",
-    "rating": "Рейтинг",
+    "genres": "Жанры",
     "unknown": "—"
   },
   "scheme": {
@@ -31,5 +29,10 @@
   },
   "errors": {
     "wheelLookup": "Не удалось получить координаты фильма в PCA-пространстве."
+  },
+  "footer": {
+    "text": "Данные о фильмах предоставлены датасетом MovieLens Latest Dataset, GroupLens Research, University of Minnesota. Проект не одобрен GroupLens или University of Minnesota и никак с ними не аффилирован.",
+    "datasetLink": "MovieLens Latest Dataset",
+    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)"
   }
 }

@@ -13,7 +13,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
 DATA_DIR = Path(os.environ.get("HYPERWHEEL_DATA_DIR", REPO_ROOT / "data" / "ml-latest"))
-METADATA_PATH = Path(os.environ.get("HYPERWHEEL_METADATA_PATH", DATA_DIR / "metadata.jsonl")) # TODO: UPDATE!
+# movies.csv (movieId,title,genres) - the ml-latest catalog file, expected
+# to already be filtered down to movies with Tag Genome data (see
+# tools/filter_metadata_to_artifact.py); METADATA_PATH is kept as the env
+# var / constant name for backward compatibility with existing deploys.
+METADATA_PATH = Path(os.environ.get("HYPERWHEEL_METADATA_PATH", DATA_DIR / "movies.csv"))
 ARTIFACT_PATH = Path(os.environ.get("HYPERWHEEL_ARTIFACT_PATH", DATA_DIR / "artifact.npz"))
 
 N_COMPONENTS = int(os.environ.get("HYPERWHEEL_N_COMPONENTS", "20"))

@@ -86,7 +86,7 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
                 scheme=scheme,
                 plane=(pc_x, pc_y),
                 top_k=6,
-                shortlist_size=700
+                shortlist_size=800 # ~5% of all
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc))

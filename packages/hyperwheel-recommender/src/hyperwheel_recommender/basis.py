@@ -18,6 +18,11 @@ class TasteBasis:
     criteria: list[str]
     L: np.ndarray             # (n_items,) each item's own mean across criteria
     Q: np.ndarray              # (n_items, n_criteria) shape vectors (row-centered)
+    Q_scaled: np.ndarray   # (n_items, n_criteria) = (Q - M) / scale — the
+                            # exact standardized shape space PCA was fit on;
+                            # kept so Stage A (recommend.py) can measure
+                            # "character" distance in the same space,
+                            # instead of raw, scale-dominated units.
     M: np.ndarray               # (n_criteria,) typical shape profile across the whole
                                  # category (mean of Q over items) - removed before PCA,
                                  # otherwise the first component picks up the shape
@@ -93,6 +98,7 @@ def build_taste_basis(
 
     return TasteBasis(
         items=items, criteria=criteria, L=L, Q=Q, M=M, U=U,
+        Q_scaled=Q_scaled,
         pc_std=pc_std, scores=scores,
         explained=explained, singular_values=S, scale=scale,
     )

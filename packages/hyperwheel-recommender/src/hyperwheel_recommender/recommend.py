@@ -11,7 +11,7 @@ from .basis import TasteBasis, build_taste_basis
 from .planes import select_hue_plane
 from .rotation import SCHEMES, rotate_whitened
 
-ANGLE_TOL_RAD = np.radians(5.0)  # bucket width for "angularly tied" candidates in Stage B;
+ANGLE_TOL_RAD = np.radians(15.0)  # bucket width for "angularly tied" candidates in Stage B;
                                    # see /docs/math.md section 6b - radius only breaks ties
                                    # within this window, it never overrides a clearly better angle
 
@@ -109,10 +109,24 @@ def recommend_on_basis(
         theta = np.radians(angle_deg)
         y_target = rotate_whitened(y_ref, basis.pc_std, theta, plane=plane0)
         delta = (basis.U.T @ (y_target - y_ref)) * basis.scale
-        target_vec = X[ref_idx] + delta   # (n_criteria,)
+        target_vec = X[ref_idx] + delta   # (n_criteria,) — unchanged: this
+                                            # is still the real reconstruction
+                                            # used for nearest-neighbor search
 
-        # --- Stage A: character shortlist (unchanged distance metric) ---
-        dists = np.linalg.norm(X - target_vec[None, :], axis=1)
+        # --- Stage A: character shortlist ---
+        # Distance is computed in the SAME standardized shape space the PCA
+        # basis was fit on ((Q - M) / scale), not raw criteria units.
+        # target_vec's own L is recomputed fresh (not reused from the
+        # reference) - this also means any accidental leakage of `delta`
+        # into the mean/lightness direction (a rotation should only move
+        # the item within the hue plane, never its overall L) is removed
+        # before it can distort the "character" comparison, rather than
+        # silently rewarding candidates that happen to share that leak.
+        L_target = target_vec.mean()
+        Q_target = target_vec - L_target
+        Qc_target_scaled = (Q_target - basis.M) / basis.scale
+
+        dists = np.linalg.norm(basis.Q_scaled - Qc_target_scaled[None, :], axis=1)
         dists[ref_idx] = np.inf
         n_avail = min(shortlist_size, len(dists) - 1)
         shortlist = np.argpartition(dists, n_avail)[:n_avail]

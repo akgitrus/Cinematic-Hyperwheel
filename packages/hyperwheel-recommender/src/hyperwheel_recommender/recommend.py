@@ -15,6 +15,13 @@ ANGLE_TOL_RAD = np.radians(15.0)  # bucket width for "angularly tied" candidates
                                    # see /docs/math.md section 6b - radius only breaks ties
                                    # within this window, it never overrides a clearly better angle
 
+# HARD radius tolerance for Stage B, |log(cand_r / target_r)|. Whitened radius
+# ("saturation") has no fixed absolute scale - it varies per reference item and per
+# plane - so the gate is a dimensionless, symmetric ratio; RADIUS_TOL_LOG is tunable
+# (e.g. log(1.5) ~ +/-50%; the tighter the window, the fewer candidates pass).
+# A candidate is eligible for Stage B only if its radius is within this window.
+RADIUS_TOL_LOG = np.log(1.1)
+
 def _circular_diff_rad(a: np.ndarray | float, b: float) -> np.ndarray | float:
     """Smallest absolute angular distance between a and b, wrapped to [0, pi]."""
     d = np.abs(a - b) % (2 * np.pi)
@@ -65,6 +72,9 @@ def recommend_on_basis(
         own position in the (whitened) hue plane is angularly closest to
         the target angle - i.e. the ones that actually express the
         requested rotation, not just any nearby item.
+        Stage B now HARD-GATES a sector of (angle, radius): only shortlist 
+        candidates that are within ANGLE_TOL_RAD of the target angle AND 
+        within RADIUS_TOL_LOG of the target radius are eligible.
 
     This does not change what target_vec means - it's still the reference
     plus a delta confined to the hue plane. `distance_to_target` in the
@@ -141,16 +151,15 @@ def recommend_on_basis(
         shortlist = np.argpartition(dists, n_avail)[:n_avail]
         shortlist = shortlist[np.argsort(dists[shortlist])]
 
-        # --- Stage B: angle-first re-rank, radius as an explicit tie-break ---
+        # --- Stage B: angle-first re-rank; radius is now a HARD eligibility gate ---
         # NOT a single Euclidean distance to the target point in the plane:
         # dist² = r_c² - 2·r_c·r_t·cos(Δθ) + r_t² lets a large-radius,
         # wrong-angle candidate look "closer" than a small-radius,
         # well-angled one whenever target_r is large enough - the same
         # trade-off problem Stage A has in full space, just relocated to
         # 2D. Angle defines what the scheme IS (180°/120°/...); radius is
-        # a secondary, desirable-but-not-defining match. So they're kept
-        # as separate, explicitly ordered sort keys instead of one blended
-        # number.
+        # a secondary match, but now a HARD eligibility gate: a candidate whose
+        # radius sits outside the RADIUS_TOL_LOG window is excluded.
         z_ti = y_target[pi] / std_i
         z_tj = y_target[pj] / std_j
         target_r = np.hypot(z_ti, z_tj)
@@ -158,17 +167,34 @@ def recommend_on_basis(
 
         cand_r = np.hypot(z_i_all[shortlist], z_j_all[shortlist])
         angle_err = _circular_diff_rad(angle_all[shortlist], target_angle)
+        # Relative radius mismatch in log-ratio (dimensionless, symmetric):
+        # 0 = exact match
         radius_mismatch = (
             np.abs(np.log(np.maximum(cand_r, 1e-6) / max(target_r, 1e-6)))
             if target_r > 1e-9 else np.zeros_like(cand_r)
         )
 
-        # Coarse angular bucket first (candidates within ~ANGLE_TOL_RAD of
-        # each other are treated as angularly "tied"), then radius match
-        # breaks ties within a bucket, then exact angle as a final,
-        # rarely-reached tiebreak. np.lexsort's LAST key is primary.
-        bucket = np.round(angle_err / ANGLE_TOL_RAD)
-        order = shortlist[np.lexsort((angle_err, radius_mismatch, bucket))][:top_k]
+        # HARD RADIUS + ANGLE GATES: a candidate is eligible for Stage B only if
+        # BOTH its radius is within RADIUS_TOL_LOG of the target radius AND its
+        # angular error from the target angle is within ANGLE_TOL_RAD.
+        # Among eligible candidates, the coarse angle bucket (~ANGLE_TOL_RAD wide)
+        # is kept so angularly "tied" winners are chosen by the tightest radius,
+        # then the exact angle as a final tie-break.
+        if target_r > 1e-9:
+            radius_ok = radius_mismatch <= RADIUS_TOL_LOG
+        else:
+            radius_ok = np.ones_like(radius_mismatch, dtype=bool)
+        both = radius_ok & (angle_err <= ANGLE_TOL_RAD)
+        eligible = shortlist[both]
+        n_found = int(eligible.size)
+        if n_found == 0:
+            # no candidates within both the radius and angle sectors: report
+            # nothing for this angle rather than substitute an unsuitable item
+            continue
+        el_angle = angle_err[both]
+        el_radius = radius_mismatch[both]
+        el_bucket = np.round(el_angle / ANGLE_TOL_RAD)
+        order = eligible[np.lexsort((el_angle, el_radius, el_bucket))][:top_k]
 
         cand_r_ord = np.hypot(z_i_all[order], z_j_all[order])
         ang_err_ord = np.degrees(_circular_diff_rad(angle_all[order], target_angle))
@@ -184,7 +210,21 @@ def recommend_on_basis(
                 "radius_ratio": round(float(ce / target_r), 3) if target_r > 1e-9 else None,
             })
 
-    return pd.DataFrame(rows)
+    # Always return the full schema, even when `rows` is empty (every scheme
+    # angle had zero sector-eligible candidates) - otherwise pd.DataFrame([])
+    # would carry no columns and callers doing df["angle_deg"] would KeyError.
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "scheme",
+            "angle_deg",
+            "rank",
+            "item",
+            "distance_to_target",
+            "angular_error_deg",
+            "radius_ratio",
+        ],
+    )
 
 
 def recommend(

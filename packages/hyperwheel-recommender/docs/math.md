@@ -177,6 +177,27 @@ of near the intended 180°/120°/etc.
   whitened hue plane) to the exact target angle, and keep the closest
   `top_k`. This is what enforces the rotation actually being expressed,
   not just "some nearby item".
+   Stage B now applies a HARD radius gate. `RADIUS_TOL_LOG` is a dimensionless,
+   symmetric ratio `|log(cand_r / target_r)|` (radius has no fixed absolute scale - it
+   varies per reference and per plane - so only relative deviation is meaningful). A
+   Stage-A shortlist candidate is eligible for Stage B only if its radius sits within
+   this window (e.g. `RADIUS_TOL_LOG = log(1.5)` ~ +/-50%; a tighter value like
+   `log(1.1)` ~ +/-10% is stricter, a tunable product gate).
+
+   Angle is now HARD-gated too: a candidate is eligible only if its angular error
+   is within `ANGLE_TOL_RAD` of the target as well as its radius being within the
+   radius window (a genuine "sector" = angle + radius). Among candidates passing
+   both gates, the coarse angle bucket (width `ANGLE_TOL_RAD`) keeps angularly
+   "tied" candidates together and lets the tightest radius win within a bucket, with
+   the exact angle as the final tie-break. Because both gross outliers are already
+   excluded, these buckets only order good sector-matching candidates.
+
+   The magnitude is a tuning choice: the median relative radius deviation across
+   Stage-A shortlists is ~log(2); tighter values (e.g. `log(1.5)` or `log(1.1)`)
+   keep well-typed references populated and make extreme-saturation references
+   (where few/no items exist at the target radius) visibly short or empty.
+   Do not set `RADIUS_TOL_LOG = log(1.0)` (=0): with a hard gate that means
+   "radius must be exactly equal to target", i.e. nothing ever qualifies.
 
 `distance_to_target` in the output is Stage A's own metric - standardized
 shape-space distance, not reweighted by Stage B, and not a raw full-space

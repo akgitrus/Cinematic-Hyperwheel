@@ -11,25 +11,22 @@ shown axis has a reviewed label/color for both poles, in every language.
 
 Among those eligible components (excluding any flagged
 excluded_from_hue, e.g. PC1 - a general "quality" axis, docs/math.md
-section 4):
+section 4), EVERY possible axis pair (combination) is generated, and the
+circles are ranked by descending aggregated z-score - here the item's
+summed absolute scores on the two axes, |z_a| + |z_b|. The top-ranked
+pair (the axes on which this item is most expressive overall) becomes
+the MAIN circle; the rest follow in order of decreasing aggregate.
 
-  - the MAIN circle uses the two components on which this specific item
-    is most expressive (largest |z-score|) - the "auto" plane from
-    planes.select_hue_plane, but restricted to the curated component set
-    rather than a contiguous 1..N range.
-  - each SECONDARY circle pairs the next two components by |z-score|,
-    consecutively and without reusing an axis. Since PCA components are
-    orthogonal, an item's standing on one axis says nothing about its
-    standing on another - an arbitrary cross-pair (e.g. rank #3 with
-    rank #7) carries no extra "interaction" signal beyond what each
-    axis's own magnitude already conveys on its own. Consecutive pairing
-    exhausts the ranked list exactly once, with no axis repeated across
-    circles, and each subsequent circle has a naturally decreasing
-    combined magnitude (a leftover unpaired axis, if the candidate count
-    is odd, is simply dropped).
+Unlike the old consecutive-pairing rule (ranked list split into
+neighbouring pairs, ~n/2 circles, each axis used once), generating all
+combinations makes every meaningful plane available - so a user can
+pivot the main wheel onto any axis - at the cost of producing C(n,2)
+circles instead of roughly n/2 (e.g. 9 curated axes -> 36 circles).
+Ties are broken by stable sort over the ascending-pc combination order.
 """
 from __future__ import annotations
 
+import itertools
 import math
 from dataclasses import dataclass
 
@@ -76,12 +73,20 @@ class WheelEngine:
             )
 
         z = {pc: float(self.scores[idx, pc - 1] / self.pc_std[pc - 1]) for pc in candidates}
-        ranked = sorted(candidates, key=lambda pc: -abs(z[pc]))
+
+        # Every possible axis pair (combination), ranked by the item's
+        # aggregate z-score across the two axes (|z_a| + |z_b|). Sorting is
+        # stable, so equal aggregates keep the ascending-pc insertion order
+        # of itertools.combinations over `candidates` (dict order is already
+        # ascending) - deterministic ties.
+        pairs = []
+        for a, b in itertools.combinations(candidates, 2):
+            aggregate = abs(z[a]) + abs(z[b])
+            pairs.append((aggregate, a, b))
+        pairs.sort(key=lambda t: -t[0])
 
         circles = []
-        # consecutive, non-overlapping pairs from the ranked list; an odd
-        # leftover at the end (zip stops at the shorter sequence) is dropped
-        for rank, (a, b) in enumerate(zip(ranked[0::2], ranked[1::2])):
+        for rank, (_, a, b) in enumerate(pairs):
             pc_x, pc_y = sorted((a, b))
             z_x, z_y = z[pc_x], z[pc_y]
             angle = math.degrees(math.atan2(z_y, z_x)) % 360

@@ -135,16 +135,17 @@ reviewed.
 
 ## The wheel(s)
 
-For a selected movie, the backend picks the two components on which
-*that item* is most expressive (largest |z-score|) among the non-excluded
-components in `pc_config.json` — this is the **main circle**. The
-remaining configured components are ranked by |z-score| and paired
-consecutively (rank #3+#4, #5+#6, ...) into **secondary circles**, shown
-smaller in a column on the right. No axis is reused across circles: since
-PCA components are orthogonal, a cross-pair (e.g. rank #3 with rank #7)
-carries no extra signal beyond what each axis's own magnitude already
-conveys — so a straight ranked partition covers the item's "signature"
-without redundancy, each circle roughly less prominent than the last.
+For a selected movie, the backend builds **every possible axis pair**
+(combination) from the non-excluded components in `pc_config.json` and
+ranks them by that item's aggregate z-score across the two axes
+(|z_a| + |z_b|, descending). The top-ranked pair - the axes on which the
+item is most expressive overall - is the **main circle**; the remaining
+pairs fill the **secondary circles**, shown smaller in a column on the
+right, in descending order of prominence. Generating all combinations
+(C(n,2) circles, e.g. 9 curated axes -> 36) means any axis can participate
+in the main circle and can later be swapped by the user to pivot the main
+plane, unlike the previous straight ranked partition that used each axis
+exactly once.
 
 Each disc's fill is a decorative "mood" gradient built from that circle's
 axis colors, not a literal encoding of the values — the source of truth

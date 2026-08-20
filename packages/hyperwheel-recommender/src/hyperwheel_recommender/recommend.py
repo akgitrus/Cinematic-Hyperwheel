@@ -49,20 +49,29 @@ def recommend_on_basis(
     reference in only two of hundreds of dimensions, so full-space
     distance is dominated by everything BUT the rotation.
 
-    Stage A (character shortlist): the `shortlist_size` closest items to
-        target_vec by full Euclidean distance, exactly as before. This is
-        still what enforces "preserving the reference's overall character"
-        (/docs/math.md section 5, readme "Delta reconstruction") - delta is
-        nonzero only inside the hue plane, so distance in the OTHER
-        dimensions is a genuine measure of shared character.
+    Stage A (character shortlist): the `shortlist_size` closest real items
+        to target_vec, measured in the STANDARDIZED SHAPE SPACE the PCA
+        basis was fit on - i.e. distance between each candidate's own
+        (Q - M) / scale and target_vec's own (recomputed) (Q - M) / scale -
+        not raw Euclidean distance in the original [0,1] criteria units.
+        This is what enforces "preserving the reference's overall
+        character" (/docs/math.md section 5, readme "Delta reconstruction"):
+        delta is nonzero only inside the hue plane, so distance in the
+        OTHER dimensions is a genuine measure of shared character - but
+        only if measured in the same standardized space PCA itself uses,
+        since raw criteria units let a large-L or high-variance criterion
+        dominate the distance regardless of actual shape similarity.
     Stage B (angular re-rank): among that shortlist, keep the `top_k` whose
         own position in the (whitened) hue plane is angularly closest to
         the target angle - i.e. the ones that actually express the
         requested rotation, not just any nearby item.
 
-    This does not change what target_vec or distance_to_target mean -
-    Stage A distances are untouched, so `distance_to_target` in the output
-    stays an honest full-space Euclidean distance, not a reweighted one.
+    This does not change what target_vec means - it's still the reference
+    plus a delta confined to the hue plane. `distance_to_target` in the
+    output is Stage A's own metric: standardized shape-space distance, not
+    a raw full-space Euclidean distance - see above. It stays untouched by
+    Stage B's angular re-rank, so callers can inspect it directly, but it
+    is not comparable to a naive `||X_a - X_b||` computed elsewhere.
 
     shortlist_size: how many Stage-A candidates are eligible for Stage B.
         Too small and Stage B may have nothing with a decent angle to pick

@@ -163,18 +163,24 @@ of near the intended 180°/120°/etc.
 
 `recommend_on_basis` resolves this in two stages instead of one:
 
-- **Stage A** - unchanged: the `shortlist_size` closest real items to
-  `target_vec` by full Euclidean distance. This is what enforces
-  character preservation (section 5) - delta is nonzero only inside the
-  hue plane, so distance elsewhere is a genuine measure of shared
-  character.
+- **Stage A** - the `shortlist_size` closest real items to `target_vec`,
+  measured in the STANDARDIZED SHAPE SPACE the PCA basis itself was fit
+  on (`(Q - M) / scale`, section 3), not raw Euclidean distance in the
+  original `[0,1]` criteria units. This is what enforces character
+  preservation (section 5) - delta is nonzero only inside the hue plane,
+  so distance elsewhere is a genuine measure of shared character, but
+  only once L (overall level) and per-criterion scale are normalized out
+  the same way they are before PCA; a raw-units distance would instead
+  let a shift in overall level, or a single high-variance criterion,
+  dominate the ranking regardless of actual shape similarity.
 - **Stage B** - among that shortlist, rank by angular distance (in the
   whitened hue plane) to the exact target angle, and keep the closest
   `top_k`. This is what enforces the rotation actually being expressed,
   not just "some nearby item".
 
-`distance_to_target` in the output is untouched - Stage A's metric, not
-reweighted. A new `angular_error_deg` column reports Stage B's own
+`distance_to_target` in the output is Stage A's own metric - standardized
+shape-space distance, not reweighted by Stage B, and not a raw full-space
+Euclidean distance in criteria units. A new `angular_error_deg` column reports Stage B's own
 metric per returned item, so callers can see how good the angular match
 actually was instead of inferring it indirectly from position on a chart.
 

@@ -20,14 +20,24 @@ const SCHEMES = [
   "tetradic",
 ];
 
-// Match a /wheel circle to its own /recommend circle by axis pair - each
-// circle was recommended against independently now, so this is a lookup,
-// not a projection/filter like the old pc_z-based buildOverlays was.
 function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): RecommendCircle | undefined {
   if (!recs) return undefined;
   return recs.circles.find(
     (c) => c.axis_x.pc === circle.axis_x.pc && c.axis_y.pc === circle.axis_y.pc
   );
+}
+
+function toWheelCircle(rc: RecommendCircle): WheelCircle | null {
+  if (!rc.reference) return null;
+  return {
+    primary: rc.primary,
+    axis_x: rc.axis_x,
+    axis_y: rc.axis_y,
+    z_x: rc.reference.z_x,
+    z_y: rc.reference.z_y,
+    angle_deg: rc.reference.angle_deg,
+    radius: rc.reference.radius,
+  };
 }
 
 export default function App() {
@@ -58,6 +68,7 @@ export default function App() {
     setSelected(movie);
     setError(null);
     setRecError(null);
+    setRecs(null);
     try {
       const res = await getWheelCircles(movie.item_id);
       setCircles(res.circles);
@@ -73,8 +84,12 @@ export default function App() {
     if (selected) void fetchRecommendations(selected.item_id, sch);
   };
 
-  const [primary, ...secondary] = circles;
-  // Left panel stays tied to the main circle only, per decision above.
+  const displayCircles: WheelCircle[] =
+    recs && !recError
+      ? recs.circles.map(toWheelCircle).filter((c): c is WheelCircle => c !== null)
+      : circles;
+
+  const [primary, ...secondary] = displayCircles;
   const primaryRecCircle = recs?.circles.find((c) => c.primary);
 
   return (
@@ -135,6 +150,7 @@ export default function App() {
         <main className="layout3__center">
           {primary && (
             <Wheel
+              key={`${primary.axis_x.pc}-${primary.axis_y.pc}`}
               circle={primary}
               size={320}
               title={selected?.title}

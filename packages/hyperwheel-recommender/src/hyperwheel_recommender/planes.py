@@ -45,7 +45,7 @@ def select_hue_plane(
         idiosyncratic criterion's noise - could get selected just because
         one item happens to spike there by chance. Defaults to all
         components available in the basis if not given; callers working
-        with long tails (see /docs/math.md, section 7) should set this
+        with long tails (see /docs/math.md, section 6a) should set this
         explicitly, e.g. to the point where cumulative variance stops
         being meaningful.
     """

@@ -161,7 +161,9 @@ dimensions, so the remaining dimensions decide the ranking, and the
 resulting top-k tends to land near-center with an arbitrary angle instead
 of near the intended 180°/120°/etc.
 
-`recommend_on_basis` resolves this in two stages instead of one:
+The shared two-stage core (`_stage_ab_rows` in `recommend.py`, used by
+both `recommend_on_basis` and `recommend_many_planes` - see section 6c)
+resolves this in two stages instead of one:
 
 - **Stage A** - the `shortlist_size` closest real items to `target_vec`,
   measured in the STANDARDIZED SHAPE SPACE the PCA basis itself was fit
@@ -212,3 +214,45 @@ in the whole catalog" regardless of character, undermining Stage A's
 guarantee. No principled default exists yet - start at 50 and inspect
 `angular_error_deg` vs. `distance_to_target` across a few reference items
 to tune it for a given catalog and n_criteria.
+
+### 6c. Batched Stage A across many planes for the same reference
+
+A single reference item may need recommendations on several different
+hue planes at once - e.g. every candidate axis pair a caller wants to
+compare (see `select_hue_plane`, section 6a, for how one such plane gets
+chosen automatically; a caller wanting several planes at once is a
+natural extension of the same idea). Recomputing Stage A's full
+O(n_items x n_criteria) standardized-shape-space distance from scratch
+for every (plane, angle) combination is wasteful: for a fixed reference,
+a rotation confined to plane (i, j) only ever moves the target within
+the 2D subspace spanned by principal axes U[i], U[j] - every other
+coordinate of the target is identical to the reference.
+
+Writing the delta as `dy_i * v_i + dy_j * v_j` (v_i, v_j being the two
+axis directions pulled back into criteria space and re-standardized the
+same way Q_scaled is), the squared standardized shape-space distance to
+any candidate k decomposes as:
+
+dist(k)^2 = base(k)
+- 2dy_iproj_i(k) - 2dy_jproj_j(k)
++ dy_i^2*||v_i||^2 + dy_j^2*||v_j||^2 + 2dy_idy_j*(v_i . v_j)
+
+- `base(k) = ||Q_scaled[k] - Q_scaled[ref]||^2` does not depend on the
+  plane or the rotation angle at all - the same for every plane and
+  every scheme angle for a given reference, so it's computed exactly
+  ONCE per reference (the one unavoidable O(n_items x n_criteria) pass).
+- `proj_i(k)`, `proj_j(k)`: O(n_items) per plane, reusing cached PCA scores.
+- `||v_i||^2`, `||v_j||^2`, `v_i . v_j`: O(n_criteria) per plane,
+  independent of catalog size.
+
+This is an exact algebraic identity of the Stage A distance described in
+section 6b - not an approximation - verified by direct comparison against
+the original full-reconstruction implementation (rebuild target_vec,
+recompute L/M, fresh O(n_items x n_criteria) norm) on synthetic data:
+identical item order and `distance_to_target` (to floating-point
+rounding) across every plane and scheme tested.
+
+`recommend_many_planes` (recommend.py) implements this for an arbitrary
+list of planes; `recommend_on_basis` is a thin single-plane wrapper
+around it, so both share exactly one Stage A/B implementation
+(`_stage_ab_rows`).

@@ -86,10 +86,12 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - `GET /api/movie/{item_id}/recommend?scheme=...` — color-wheel
   recommendations (complementary/triadic/analogous/split-complementary/tetradic),
   computed **independently for each circle** shown on `/wheel` for this
-  item. Each circle gets its own `recommend_on_basis` call using its own
-  axis pair — Stage A (character shortlist by full-space distance) and
-  Stage B (angle+radius re-rank within that shortlist, see
-  `docs/math.md` section 6b) both run fresh per circle. Because PCA
+  item. A single `recommend_many_planes` call resolves every circle's own
+  axis pair at once (see `docs/math.md` section 6c) — Stage A (character
+  shortlist in standardized shape space) and Stage B (angle+radius
+  re-rank within that shortlist, see `docs/math.md` section 6b) both run
+  fresh per circle; only the one-time reference-relative distance term is
+  now shared across circles instead of recomputed per circle. Because PCA
   components are orthogonal, a movie well-rotated on one circle's axes
   says nothing about its position on another circle's axes — so **each
   circle generally returns a different set of top-5 movies**, not the
@@ -167,11 +169,17 @@ plane only, and projected the resulting 5 movies onto every other
 circle's axes for display — cheap, but the projected points landed
 essentially at random on secondary circles, since a movie's position on
 one PCA plane is uninformative about its position on another orthogonal
-plane. The current backend instead calls `recommend_on_basis` once per
-circle, with that circle's own axis pair, so every circle's displayed
-points are the movies actually optimized for that circle's rotation and
-saturation — at the cost of no guaranteed overlap between circles' movie
-lists.
+plane. A later version fixed the accuracy problem by calling
+`recommend_on_basis` once per circle with that circle's own axis pair,
+but at C(n,2) circles (e.g. 9 curated axes → 36) that meant redoing the
+one expensive full-catalog distance computation once per circle. The
+current backend instead calls `recommend_many_planes` once per request
+with every circle's axis pair at once (see
+`packages/hyperwheel-recommender/docs/math.md` section 6c): the
+expensive part of Stage A is shared across all circles algebraically,
+and each circle still gets its own independently optimized Stage A/B
+result — same accuracy as the per-circle-call version, without paying
+for the shared part C(n,2) times.
 
 The left-hand "Recommendations" panel intentionally stays tied to the
 **main circle only** (its titles list is not repeated per secondary

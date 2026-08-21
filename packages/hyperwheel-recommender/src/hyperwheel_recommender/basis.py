@@ -36,6 +36,23 @@ class TasteBasis:
                                  # needed for whitening before rotation (see rotation.rotate_whitened)
     scores: np.ndarray          # (n_items, n_components) each item's coordinate along each component
 
+    # inv_scale, s, Q_norm_sq - cached for recommend.recommend_many_planes's algebraic Stage A
+    # shortcut (see /docs/math.md section 6c). Computed once here at
+    # basis-build time (same O(n_items x n_criteria) cost that a single
+    # Stage A pass already had), instead of once per (plane, angle) in
+    # the old per-circle loop.
+    inv_scale: np.ndarray   # (n_criteria,) = 1/scale
+    s: np.ndarray            # (n_items,) = Q_scaled @ inv_scale — per-item
+                              # scalar that lets recommend_many_planes
+                              # reconstruct the effect of L/M-recentering a
+                              # rotated target for ANY single hue plane,
+                              # without rebuilding target_vec or touching
+                              # the (n_items x n_criteria) matrix per plane.
+    Q_norm_sq: np.ndarray    # (n_items,) = ||Q_scaled[i]||^2, cached once so
+                              # the reference-relative "base" distance term
+                              # in recommend_many_planes is one dot product,
+                              # not a fresh full-matrix norm per plane.
+
 
 def build_taste_basis(
     wide: pd.DataFrame, n_components: int, standardize: bool = True
@@ -96,9 +113,14 @@ def build_taste_basis(
     pc_std = scores.std(axis=0)
     pc_std = np.where(pc_std < 1e-12, 1.0, pc_std)
 
+    inv_scale = 1.0 / scale
+    s = Q_scaled @ inv_scale
+    Q_norm_sq = np.einsum("ij,ij->i", Q_scaled, Q_scaled)
+
     return TasteBasis(
         items=items, criteria=criteria, L=L, Q=Q, M=M, U=U,
         Q_scaled=Q_scaled,
         pc_std=pc_std, scores=scores,
         explained=explained, singular_values=S, scale=scale,
+        inv_scale=inv_scale, s=s, Q_norm_sq=Q_norm_sq,
     )

@@ -26,7 +26,7 @@ from .basis import TasteBasis, build_taste_basis
 from .data import load_artifact, load_input, load_matrix, save_artifact
 from .diagnose import diagnose
 from .planes import select_hue_plane
-from .recommend import recommend, recommend_on_basis
+from .recommend import recommend, recommend_on_basis, recommend_many_planes
 from .rotation import SCHEMES, rotate_whitened
 
 __all__ = [
@@ -41,5 +41,6 @@ __all__ = [
     "select_hue_plane",
     "recommend",
     "recommend_on_basis",
+    "recommend_many_planes",
     "diagnose",
 ]

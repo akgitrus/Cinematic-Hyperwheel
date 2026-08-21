@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import METADATA_PATH
 from .search import MovieIndex, load_metadata
-from hyperwheel_recommender import SCHEMES, recommend_on_basis
+from hyperwheel_recommender import SCHEMES, recommend_many_planes
 
 from .wheel import build_engine
 
@@ -169,23 +169,25 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
     def z(idx: int, pc: int) -> float:
         return float(_engine.scores[idx, pc - 1] / _engine.pc_std[pc - 1])
 
-    circles_out = []
-    for wc in wheel_circles:
-        pc_x = wc["axis_x"]["pc"]
-        pc_y = wc["axis_y"]["pc"]
+    planes = [(wc["axis_x"]["pc"], wc["axis_y"]["pc"]) for wc in wheel_circles]
 
-        try:
-            df = recommend_on_basis(
-                _engine.basis,
-                _engine.X,
-                reference_item=item_id,
-                scheme=scheme,
-                plane=(pc_x, pc_y),
-                top_k=6,
-                shortlist_size=800 # ~5% of all
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+    try:
+        results = recommend_many_planes(
+            _engine.basis,
+            reference_item=item_id,
+            scheme=scheme,
+            planes=planes,
+            top_k=6,
+            shortlist_size=800, # ~5% of all
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    circles_out = []
+
+    for wc in wheel_circles:
+        pc_x, pc_y = wc["axis_x"]["pc"], wc["axis_y"]["pc"]
+        df = results[(pc_x, pc_y)]
 
         angles = []
         for angle_deg in SCHEMES[scheme]:

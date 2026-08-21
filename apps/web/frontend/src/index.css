@@ -11,15 +11,17 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   background: radial-gradient(circle at 50% -10%, #131a29, var(--bg) 60%);
   color: var(--text);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 .app {
+  min-height: 100vh;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 48px 20px 80px;
+  padding: 48px 20px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,8 +42,14 @@ body {
   padding-top: 8px;
 }
 
+.topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .lang-switch {
-  align-self: flex-end;
   display: flex;
   gap: 4px;
   padding: 3px;
@@ -301,7 +309,7 @@ body {
 .app__footer {
   width: 100%;
   max-width: 720px;
-  margin-top: 12px;
+  margin-top: auto;
   padding-top: 20px;
   border-top: 1px solid var(--border);
   text-align: center;
@@ -464,4 +472,152 @@ body {
 }
 .scroll-fade::-webkit-scrollbar-thumb:hover {
   background: rgba(110, 231, 255, 0.55); /* slightly brighter while actively dragging/hovering the thumb itself */
+}
+
+/* --- About trigger --- */
+.about-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0.75;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.about-trigger:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.12);
+}
+.about-trigger svg { display: block; }
+
+/* --- About modal --- */
+.about__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 14, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.about__panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 86vh;
+  overflow-y: auto;
+  background: radial-gradient(circle at 30% -10%, #171f30, var(--panel) 60%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 26px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(110, 231, 255, 0.05);
+}
+
+.about__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+.about__close:hover { color: var(--text); }
+
+.about__title {
+  margin: 0 0 18px;
+  font-size: 20px;
+  background: linear-gradient(90deg, #6ee7ff, #b46bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.about__section {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.about__section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.about__heading {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.about__section p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.about__section a { color: var(--accent); text-decoration: none; }
+.about__section a:hover { text-decoration: underline; }
+
+.about__fine {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+}
+
+.about__links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.about__linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  color: var(--text) !important;
+  font-size: 13px;
+  text-decoration: none !important;
+  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.about__linkbtn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.12);
+}
+
+.about__linkbtn--support {
+  background: linear-gradient(90deg, rgba(110, 231, 255, 0.12), rgba(180, 107, 255, 0.12));
+  border-color: rgba(180, 107, 255, 0.35);
+}
+.about__linkbtn--support:hover {
+  box-shadow: 0 0 0 3px rgba(180, 107, 255, 0.18);
+}
+
+/* slimmed-down footer */
+.app__footer--slim {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+.app__footer--slim button {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
 }

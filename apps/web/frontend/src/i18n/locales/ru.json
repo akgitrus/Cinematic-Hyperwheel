@@ -33,6 +33,34 @@
   "footer": {
     "text": "Данные о фильмах предоставлены датасетом MovieLens Latest Dataset, GroupLens Research, University of Minnesota. Проект не одобрен GroupLens или University of Minnesota и никак с ними не аффилирован.",
     "datasetLink": "MovieLens Latest Dataset",
-    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)"
+    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)",
+    "about": "О проекте",
+    "copyright": "© {{year}} Cinematic Hyperwheel project"
+  },
+  "about": {
+    "title": "О проекте",
+    "close": "Закрыть",
+    "project": {
+      "heading": "О проекте",
+      "text": "Cinematic Hyperwheel — экспериментальный проект, исследующий идею «гармонии за пределами схожести» в рекомендациях фильмов. С помощью PCA над MovieLens Tag Genome система подбирает фильмы, которые намеренно отличаются от референса, но при этом перекликаются с ним по духу — подобно тому, как комплементарные или триадные цвета соотносятся на цветовом круге."
+    },
+    "license": {
+      "heading": "Лицензия",
+      "text": "Исходный код распространяется по лицензии GNU Affero General Public License v3.0 или более поздней (AGPL-3.0-or-later).",
+      "copyright": "© 2026 Cinematic Hyperwheel project"
+    },
+    "data": {
+      "heading": "Данные",
+      "text": "Данные о фильмах предоставлены датасетом MovieLens Latest Dataset, GroupLens Research, University of Minnesota. Проект не одобрен GroupLens или University of Minnesota и никак с ними не аффилирован."
+    },
+    "source": {
+      "heading": "Исходный код",
+      "github": "Открыть на GitHub"
+    },
+    "support": {
+      "heading": "Поддержать",
+      "text": "Если проект вам нравится — можно поддержать его развитие.",
+      "button": "Поддержать проект"
+    }
   }
 }

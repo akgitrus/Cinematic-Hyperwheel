@@ -33,6 +33,34 @@
   "footer": {
     "text": "Movie data provided by the MovieLens Latest Dataset, GroupLens Research, University of Minnesota. This project is not endorsed by and is not affiliated with GroupLens or the University of Minnesota.",
     "datasetLink": "MovieLens Latest Dataset",
-    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)"
+    "citation": "F. M. Harper and J. A. Konstan, 2015 · J. Vig, S. Sen, and J. Riedl, 2012 (tag genome)",
+    "about": "About & Credits",
+    "copyright": "© {{year}} Cinematic Hyperwheel project"
+  },
+  "about": {
+    "title": "About & Credits",
+    "close": "Close",
+    "project": {
+      "heading": "About",
+      "text": "Cinematic Hyperwheel is an experimental project exploring \"harmony beyond similarity\" in movie recommendations — using PCA over the MovieLens Tag Genome to suggest movies that are deliberately different from a reference, yet resonate with it in spirit, the way complementary or triadic colors relate on a color wheel."
+    },
+    "license": {
+      "heading": "License",
+      "text": "Source code is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).",
+      "copyright": "© 2026 Cinematic Hyperwheel project"
+    },
+    "data": {
+      "heading": "Data",
+      "text": "Movie data provided by the MovieLens Latest Dataset, GroupLens Research, University of Minnesota. This project is not endorsed by and is not affiliated with GroupLens or the University of Minnesota."
+    },
+    "source": {
+      "heading": "Source code",
+      "github": "View on GitHub"
+    },
+    "support": {
+      "heading": "Support",
+      "text": "If you enjoy this project, you can support its development.",
+      "button": "Support the project"
+    }
   }
 }

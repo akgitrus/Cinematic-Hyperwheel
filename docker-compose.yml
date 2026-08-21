@@ -1,0 +1,10 @@
+services:
+  hyperwheel:
+    image: hyperwheel-web:latest
+    ports:
+      - "8000:8000"
+    environment:
+      HYPERWHEEL_DATA_DIR: /data/ml-latest
+    volumes:
+      - ${HYPERWHEEL_DATA_HOST_PATH}:/data/ml-latest:ro
+    restart: unless-stopped

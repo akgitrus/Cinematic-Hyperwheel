@@ -1,0 +1,7 @@
+node_modules
+apps/web/frontend/dist
+apps/web/frontend/node_modules
+data/
+.git
+__pycache__
+*.pyc

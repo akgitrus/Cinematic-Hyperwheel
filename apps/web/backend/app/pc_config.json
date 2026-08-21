@@ -21,8 +21,8 @@
   },
   "2": {
     "colors": {
-      "positive": "#F4A630",
-      "negative": "#24434E"
+      "positive": "#D95A36",
+      "negative": "#7560B6"
     },
     "labels": {
       "en": {
@@ -53,8 +53,8 @@
   },
   "4": {
     "colors": {
-      "negative": "#66BE9C",
-      "positive": "#375BAA"
+      "negative": "#6B4A78",
+      "positive": "#31A9C7"
     },
     "labels": {
       "en": {
@@ -70,7 +70,7 @@
   "5": {
     "colors": {
       "positive": "#355D70",
-      "negative": "#AE83D2"
+      "negative": "#E7B936"
     },
     "labels": {
       "en": {
@@ -86,7 +86,7 @@
   "6": {
     "colors": {
       "positive": "#434854",
-      "negative": "#F1D041"
+      "negative": "#C58A2A"
     },
     "labels": {
       "en": {
@@ -101,8 +101,8 @@
   },
   "7": {
     "colors": {
-      "positive": "#409792",
-      "negative": "#2D193A"
+      "positive": "#5D7FC7",
+      "negative": "#A23A55"
     },
     "labels": {
       "en": {
@@ -117,8 +117,8 @@
   },
   "8": {
     "colors": {
-      "negative": "#9D5334",
-      "positive": "#684175"
+      "negative": "#4FB6C4",
+      "positive": "#6B3F7A"
     },
     "labels": {
       "en": {
@@ -133,7 +133,7 @@
   },
   "9": {
     "colors": {
-      "negative": "#38BCDB",
+      "negative": "#385468",
       "positive": "#C4353D"
     },
     "labels": {
@@ -149,8 +149,8 @@
   },
   "10": {
     "colors": {
-      "negative": "#764156",
-      "positive": "#B2462D"
+      "negative": "#E08B8B",
+      "positive": "#A5442F"
     },
     "labels": {
       "en": {
@@ -166,8 +166,8 @@
   "11": {
     "excluded_from_hue": false,
     "colors": {
-      "negative": "#9A9734",
-      "positive": "#C25B7E"
+      "negative": "#C25B7E",
+      "positive": "#7A8C3A"
     },
     "labels": {
       "en": {

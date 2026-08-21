@@ -433,3 +433,35 @@ body {
   color: var(--muted);
   padding: 2px 0;
 }
+
+/* Elegant thin scrollbar - invisible until hover, then a slim
+   accent-tinted thumb on a fully transparent track. Applied to any
+   scrollable panel via .scroll-fade; currently used by .rec-panel__list. */
+.scroll-fade {
+  scrollbar-width: thin;                 /* Firefox: thin track/thumb */
+  scrollbar-color: transparent transparent; /* thumb, track - both hidden at rest */
+  transition: scrollbar-color 150ms ease;  /* Firefox animates this */
+}
+.scroll-fade:hover {
+  scrollbar-color: rgba(110, 231, 255, 0.35) transparent;
+}
+
+/* WebKit (Chrome/Safari/Edge) */
+.scroll-fade::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-fade::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-fade::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background-color 150ms ease;
+}
+.scroll-fade:hover::-webkit-scrollbar-thumb {
+  background: rgba(110, 231, 255, 0.35);
+}
+.scroll-fade::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 231, 255, 0.55); /* slightly brighter while actively dragging/hovering the thumb itself */
+}

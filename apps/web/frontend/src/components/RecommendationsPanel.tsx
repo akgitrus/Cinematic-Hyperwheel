@@ -39,7 +39,7 @@ export default function RecommendationsPanel({ circles }: Props) {
   return (
     <div className="rec-panel">
       <h2 className="recommendations__title">{t("recommendations.title")}</h2>
-      <div className="rec-panel__list">
+      <div className="rec-panel__list scroll-fade">
         {populated.map((circle) => {
           const cKey = circleKey(circle);
           return (

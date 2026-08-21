@@ -1,9 +1,21 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { RecommendCircle } from "../api";
+import { RecItem, RecommendCircle } from "../api";
+import { colorOnWheel } from "../utils/color";
+import { imdbSearchUrl } from "../utils/imdb";
 
 interface Props {
   circles: RecommendCircle[];
+  /**
+   * Placeholder for the future "open this movie as the wheel's
+   * reference" action. No-op by default until that navigation exists.
+   */
+  onSelectItem?: (itemId: number) => void;
+  /**
+   * Placeholder for a real per-item IMDb link. Defaults to an IMDb
+   * title search, since we don't carry an imdbId yet.
+   */
+  imdbUrlFor?: (item: RecItem) => string;
 }
 
 function circleKey(c: RecommendCircle): string {
@@ -16,7 +28,19 @@ function circleTitle(c: RecommendCircle, lang: string): string {
   return `${lx.axis} · ${ly.axis}`;
 }
 
-export default function RecommendationsPanel({ circles }: Props) {
+// Same bearing math as Wheel.tsx's recPoints: the reference's own compass
+// bearing (0 = top/north, clockwise) plus this scheme angle's relative
+// rotation, so a recommendation's swatch always matches the color its
+// point actually has on the wheel overlay - not an independent palette.
+function refCompassBearing(refX: number, refY: number): number {
+  return ((Math.atan2(refY, refX) * 180) / Math.PI + 90 + 360) % 360;
+}
+
+export default function RecommendationsPanel({
+  circles,
+  onSelectItem = () => {},
+  imdbUrlFor = (item) => imdbSearchUrl(item.title),
+}: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "en";
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -42,8 +66,15 @@ export default function RecommendationsPanel({ circles }: Props) {
       <div className="rec-panel__list scroll-fade">
         {populated.map((circle) => {
           const cKey = circleKey(circle);
+          const bearing = circle.reference
+            ? refCompassBearing(circle.reference.z_x, circle.reference.z_y)
+            : 0;
+
           return (
-            <div className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")} key={cKey}>
+            <section
+              className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
+              key={cKey}
+            >
               <div className="rec-circle__header">
                 <span className="rec-circle__badge">
                   PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
@@ -58,45 +89,121 @@ export default function RecommendationsPanel({ circles }: Props) {
                   const isOpen = expanded.has(key);
                   const [top, ...rest] = angle.items;
                   const hasMore = rest.length > 0;
+                  const swatch = colorOnWheel(
+                    bearing + angle.angle_deg,
+                    circle.axis_x.colors.positive,
+                    circle.axis_x.colors.negative,
+                    circle.axis_y.colors.positive,
+                    circle.axis_y.colors.negative
+                  );
 
                   return (
                     <div className="rec-angle" key={key}>
-                      <button
-                        type="button"
-                        className={"rec-angle__row" + (hasMore ? " rec-angle__row--clickable" : "")}
-                        onClick={() => hasMore && toggle(key)}
-                        aria-expanded={hasMore ? isOpen : undefined}
-                        disabled={!hasMore}
-                      >
-                        <span className="rec-angle__deg">{angle.angle_deg}°</span>
-                        <span className="rec-angle__item-title">{top.title}</span>
-                        {hasMore && (
-                          <span className={"rec-angle__chevron" + (isOpen ? " rec-angle__chevron--open" : "")}>
-                            ▾
-                          </span>
-                        )}
-                      </button>
+                      <RecRow
+                        item={top}
+                        swatchColor={swatch}
+                        onSelectItem={onSelectItem}
+                        imdbUrlFor={imdbUrlFor}
+                        trailing={
+                          hasMore ? (
+                            <button
+                              type="button"
+                              className={
+                                "rec-row__chevron" + (isOpen ? " rec-row__chevron--open" : "")
+                              }
+                              onClick={() => toggle(key)}
+                              aria-expanded={isOpen}
+                              aria-label={t("recommendations.showMore")}
+                            >
+                              ▾
+                            </button>
+                          ) : null
+                        }
+                      />
 
                       {hasMore && (
                         <div className={"rec-more" + (isOpen ? " rec-more--open" : "")}>
                           <div className="rec-more__inner">
-                            <ol className="rec-more__list">
-                              {rest.map((it) => (
-                                <li key={it.item_id} className="rec-more__item">
-                                  {it.title}
-                                </li>
-                              ))}
-                            </ol>
+                            {rest.map((it) => (
+                              <RecRow
+                                key={it.item_id}
+                                item={it}
+                                swatchColor={swatch}
+                                onSelectItem={onSelectItem}
+                                imdbUrlFor={imdbUrlFor}
+                                compact
+                              />
+                            ))}
                           </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
-            </div>
+            </section>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+interface RecRowProps {
+  item: RecItem;
+  swatchColor: string;
+  onSelectItem: (itemId: number) => void;
+  imdbUrlFor: (item: RecItem) => string;
+  trailing?: ReactNode;
+  compact?: boolean;
+}
+
+// A single recommendation row: rank, scheme-angle swatch, a title link
+// (future: navigates to this movie's own wheel), an external IMDb link,
+// and an optional trailing control (the expand/collapse chevron - only
+// ever passed for the top-ranked row of an angle). Each interactive zone
+// is its own element, not one big clickable row - the title link, the
+// IMDb link, and the chevron all need to be independently clickable once
+// the wheel-navigation link is real.
+function RecRow({ item, swatchColor, onSelectItem, imdbUrlFor, trailing, compact }: RecRowProps) {
+  const { t } = useTranslation();
+  return (
+    <div className={"rec-row" + (compact ? " rec-row--compact" : "")}>
+      <span className="rec-row__rank">{item.rank}</span>
+      <span
+        className="rec-row__swatch"
+        style={{ background: swatchColor, color: swatchColor }}
+        aria-hidden="true"
+      />
+      <div className="rec-row__body">
+        <a
+          className="rec-row__title"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            onSelectItem(item.item_id);
+          }}
+        >
+          {item.title}
+        </a>
+        {item.angular_error_deg != null && (
+          <span className="rec-row__meta">
+            Δangle: {item.angular_error_deg.toFixed(1)}°
+            {item.radius_ratio != null && ` · r-ratio: ${item.radius_ratio.toFixed(2)}`}
+          </span>
+        )}
+      </div>
+      <a
+        className="rec-row__imdb"
+        href={imdbUrlFor(item)}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={t("recommendations.openImdb")}
+        title={t("recommendations.openImdb")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        ↗
+      </a>
+      {trailing}
     </div>
   );
 }

@@ -337,28 +337,40 @@ body {
 .rec-panel__list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   max-height: 640px;
   overflow-y: auto;
   padding-right: 4px;
 }
 
+/* Flat sections, no border/background box - separated only by a hairline
+   above each section (except the first) and generous vertical spacing,
+   in the spirit of a plain editorial list rather than stacked cards. */
+
 .rec-circle {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px;
+  padding: 14px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+.rec-circle:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Primary circle is marked by a colored rule on the left and a brighter
+   title, not by a surrounding box. */
 .rec-circle--primary {
-  border-color: rgba(110, 231, 255, 0.35);
-  box-shadow: 0 0 0 1px rgba(110, 231, 255, 0.12);
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+  margin-left: -12px;
+}
+.rec-circle--primary .rec-circle__title {
+  color: var(--text);
 }
 
 .rec-circle__header {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .rec-circle__badge {
   font-size: 10px;
@@ -373,48 +385,94 @@ body {
 }
 
 .rec-angle + .rec-angle {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 2px;
 }
 
-.rec-angle__row {
-  width: 100%;
-  display: flex;
+/* One recommendation row: rank | swatch | title+meta | imdb link |
+   optional chevron. Grid, not a <button> - each zone is independently
+   interactive (title link, IMDb link, chevron), unlike the old
+   whole-row button. */
+.rec-row {
+  display: grid;
+  grid-template-columns: 18px 8px 1fr auto auto;
   align-items: center;
-  gap: 8px;
+  column-gap: 10px;
   padding: 6px 2px;
-  background: none;
-  border: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: default;
 }
-.rec-angle__row--clickable {
-  cursor: pointer;
-}
-.rec-angle__row--clickable:hover .rec-angle__item-title {
-  color: var(--accent);
+.rec-row--compact {
+  padding: 4px 2px;
+  opacity: 0.9;
 }
 
-.rec-angle__deg {
+.rec-row__rank {
   font-size: 11px;
   color: var(--muted);
-  min-width: 34px;
-  flex-shrink: 0;
+  text-align: right;
 }
-.rec-angle__item-title {
-  flex: 1;
+
+.rec-row__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.rec-row__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rec-row__title {
   font-size: 13px;
-  color: var(--text);
-  transition: color 120ms ease;
+  color: var(--accent);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.rec-angle__chevron {
+.rec-row__title:hover {
+  text-decoration: underline;
+}
+.rec-row__meta {
   font-size: 10px;
   color: var(--muted);
-  transition: transform 200ms ease;
-  flex-shrink: 0;
 }
-.rec-angle__chevron--open {
+
+.rec-row__imdb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.rec-row__imdb:hover {
+  color: var(--accent);
+  background: rgba(110, 231, 255, 0.1);
+}
+
+.rec-row__chevron {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  transition: transform 200ms ease, color 120ms ease;
+}
+.rec-row__chevron:hover {
+  color: var(--accent);
+}
+.rec-row__chevron--open {
   transform: rotate(180deg);
 }
 

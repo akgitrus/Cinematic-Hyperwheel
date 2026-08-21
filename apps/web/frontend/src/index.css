@@ -175,30 +175,6 @@ body {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.15);
 }
-.recommendations {
-  width: 100%;
-  max-width: 480px;
-}
-.recommendations__title {
-  font-size: 16px;
-  margin: 0 0 8px;
-  color: var(--text);
-}
-.recommendations__angle + .recommendations__angle { margin-top: 10px; }
-.recommendations__angle-head {
-  font-size: 12px;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-}
-.recommendations__list {
-  margin: 0;
-  padding-left: 20px;
-}
-.recommendations__item {
-  font-size: 13px;
-  color: var(--text);
-}
 
 .layout3 {
   display: flex;
@@ -225,11 +201,6 @@ body {
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
-}
-.layout3__left .recommendations {
-  width: 100%;
-  max-width: none;
-  text-align: left;
 }
 
 .wheel { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: help; }
@@ -347,4 +318,118 @@ body {
 .app__footer-citation {
   font-size: 10px;
   opacity: 0.75;
+}
+
+.rec-panel {
+  width: 100%;
+  max-width: none;
+  text-align: left;
+}
+
+.rec-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 640px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rec-circle {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.rec-circle--primary {
+  border-color: rgba(110, 231, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(110, 231, 255, 0.12);
+}
+
+.rec-circle__header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.rec-circle__badge {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.rec-circle__title {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rec-angle + .rec-angle {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rec-angle__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+.rec-angle__row--clickable {
+  cursor: pointer;
+}
+.rec-angle__row--clickable:hover .rec-angle__item-title {
+  color: var(--accent);
+}
+
+.rec-angle__deg {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 34px;
+  flex-shrink: 0;
+}
+.rec-angle__item-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  transition: color 120ms ease;
+}
+.rec-angle__chevron {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 200ms ease;
+  flex-shrink: 0;
+}
+.rec-angle__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Elegant height-animated accordion (grid-template-rows trick - no JS
+   measuring, no jump). */
+.rec-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.rec-more--open {
+  grid-template-rows: 1fr;
+}
+.rec-more__inner {
+  overflow: hidden;
+}
+.rec-more__list {
+  margin: 2px 0 8px 44px;
+  padding: 0;
+  list-style: decimal;
+}
+.rec-more__item {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 0;
 }

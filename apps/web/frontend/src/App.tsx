@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import SearchBar from "./components/SearchBar";
 import Wheel from "./components/Wheel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import RecommendationsPanel from "./components/RecommendationsPanel";
 import {
   MovieHit,
   RecommendCircle,
@@ -90,7 +91,6 @@ export default function App() {
       : circles;
 
   const [primary, ...secondary] = displayCircles;
-  const primaryRecCircle = recs?.circles.find((c) => c.primary);
 
   return (
     <div className="app">
@@ -126,25 +126,7 @@ export default function App() {
 
       <div className="layout3">
         <aside className="layout3__left">
-          {primaryRecCircle && (
-            <div className="recommendations">
-              <h2 className="recommendations__title">{t("recommendations.title")}</h2>
-              {primaryRecCircle.angles.map((a, gi) => (
-                <div key={gi} className="recommendations__angle">
-                  <div className="recommendations__angle-head">
-                    {t("recommendations.angle", { angle: a.angle_deg })}
-                  </div>
-                  <ol className="recommendations__list">
-                    {a.items.map((it) => (
-                      <li key={it.item_id} className="recommendations__item">
-                        {it.title}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ))}
-            </div>
-          )}
+          {recs && !recError && <RecommendationsPanel circles={recs.circles} />}
         </aside>
 
         <main className="layout3__center">

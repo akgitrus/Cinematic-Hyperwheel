@@ -26,7 +26,7 @@
     },
     "labels": {
       "en": {
-        "positive": "Popcorn Entertainment",
+        "positive": "Action",
         "negative": "Art-house"
       },
       "ru": {
@@ -59,7 +59,7 @@
     "labels": {
       "en": {
         "negative": "Crime Thriller",
-        "positive": "Visual Epic"
+        "positive": "Visually Stunning Sci-Fi"
       },
       "ru": {
         "negative": "КриминКриминальный триллер",
@@ -164,22 +164,24 @@
     }
   },
   "11": {
+    "excluded_from_hue": false,
     "colors": {
-      "negative": "#764156",
-      "positive": "#B2462D"
+      "negative": "#9A9734",
+      "positive": "#C25B7E"
     },
     "labels": {
       "en": {
-        "negative": "Romantic",
-        "positive": "Political Satire"
+        "negative": "Romance",
+        "positive": "Conceptual"
       },
       "ru": {
         "negative": "Романтика",
-        "positive": "Политическая сатира"
+        "positive": "Концептуальное кино"
       }
     }
   },
   "12": {
+    "excluded_from_hue": true,
     "colors": {
       "negative": "#764156",
       "positive": "#B2462D"
@@ -196,6 +198,7 @@
     }
   },
   "13": {
+    "excluded_from_hue": true,
     "colors": {
       "negative": "#764156",
       "positive": "#B2462D"
@@ -212,6 +215,7 @@
     }
   },
   "14": {
+    "excluded_from_hue": true,
     "colors": {
       "negative": "#764156",
       "positive": "#B2462D"

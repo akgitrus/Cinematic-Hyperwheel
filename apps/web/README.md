@@ -106,6 +106,19 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   entry per circle (see below), each with `axis_x`/`axis_y` (pc index,
   colors, labels per language, explained variance), `z_x`/`z_y`, `angle_deg`,
   `radius`, and `primary` (true for the main circle).
+- `GET /api/movie/{item_id}` — basic metadata (`title`, `genres`) for a
+  single movie. Used to resolve a reference item passed via URL or
+  clicked from the Recommendations panel, where only an `item_id` is
+  available.
+
+## Linking directly to a reference movie
+
+Visiting `/{item_id}` (e.g. `http://localhost:8000/567` in production,
+or `http://localhost:5173/567` in dev) loads that movie as the reference
+on page load, the same as picking it via search. Selecting a movie -
+via search, or by clicking a title in the Recommendations panel - keeps
+the URL in sync (`window.history.pushState`), so the current reference
+is always shareable and survives a page reload.
 
 ## PCA component config (`pc_config.json`)
 

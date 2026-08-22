@@ -10,6 +10,7 @@ import {
   RecommendCircle,
   RecommendResponse,
   WheelCircle,
+  getMovieById,
   getRecommendations,
   getWheelCircles,
 } from "./api";
@@ -72,6 +73,13 @@ export default function App() {
     setError(null);
     setRecError(null);
     setRecs(null);
+    // Keep the URL in sync with the current reference movie, so it's
+    // shareable/bookmarkable and survives a page reload (see the
+    // /{item_id} route on the backend and the sync effect below).
+    const path = `/${movie.item_id}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, "", path);
+    }
     try {
       const res = await getWheelCircles(movie.item_id);
       setCircles(res.circles);
@@ -81,6 +89,39 @@ export default function App() {
     }
     await fetchRecommendations(movie.item_id, scheme);
   };
+
+  // Resolve a reference movie from just its item_id - used both for the
+  // initial /{item_id} deep link and for clicking a recommendation's
+  // title (which only carries an item_id, not a full MovieHit).
+  const selectById = async (itemId: number) => {
+    try {
+      const movie = await getMovieById(itemId);
+      await handleSelect(movie);
+    } catch {
+      setError(t("errors.wheelLookup"));
+    }
+  };
+
+  // Deep-linking: load the reference movie encoded in the URL (e.g.
+  // /567) on first render, and keep it in sync with browser back/forward.
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const match = window.location.pathname.match(/^\/(\d+)$/);
+      if (match) {
+        void selectById(Number(match[1]));
+      } else {
+        setSelected(null);
+        setCircles([]);
+        setRecs(null);
+        setRecError(null);
+        setError(null);
+      }
+    };
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSchemeChange = (sch: string) => {
     setScheme(sch);
@@ -116,7 +157,7 @@ export default function App() {
         <p>{t("app.tagline")}</p>
       </header>
 
-      <SearchBar onSelect={handleSelect} />
+      <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} />
 
       <div className="rec-form">
         <label className="rec-form__label" htmlFor="scheme">
@@ -141,7 +182,9 @@ export default function App() {
 
       <div className="layout3">
         <aside className="layout3__left">
-          {recs && !recError && <RecommendationsPanel circles={recs.circles} />}
+          {recs && !recError && (
+            <RecommendationsPanel circles={recs.circles} onSelectItem={selectById} />
+          )}
         </aside>
 
         <main className="layout3__center">

@@ -7,8 +7,9 @@ import { imdbSearchUrl } from "../utils/imdb";
 interface Props {
   circles: RecommendCircle[];
   /**
-   * Placeholder for the future "open this movie as the wheel's
-   * reference" action. No-op by default until that navigation exists.
+   * Called when a recommendation's title is clicked, to load that movie
+   * as the new reference (see App.tsx's selectById). Defaults to a no-op
+   * if the caller doesn't wire up navigation.
    */
   onSelectItem?: (itemId: number) => void;
   /**
@@ -158,7 +159,7 @@ interface RecRowProps {
 }
 
 // A single recommendation row: rank, scheme-angle swatch, a title link
-// (future: navigates to this movie's own wheel), an external IMDb link,
+// (loads this movie as the new reference via onSelectItem), an external IMDb link,
 // and an optional trailing control (the expand/collapse chevron - only
 // ever passed for the top-ranked row of an angle). Each interactive zone
 // is its own element, not one big clickable row - the title link, the

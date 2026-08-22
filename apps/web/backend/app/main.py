@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import METADATA_PATH
@@ -25,6 +26,7 @@ app.add_middleware(
 )
 
 _records = load_metadata(METADATA_PATH)
+_records_by_id = {r.item_id: r for r in _records}
 _index = MovieIndex(_records)
 _engine = build_engine()
 _titles = {r.item_id: r.title for r in _records}
@@ -33,6 +35,17 @@ _titles = {r.item_id: r.title for r in _records}
 @app.get("/api/search")
 def search(q: str = Query(..., min_length=1), limit: int = 8):
     return {"results": _index.search(q, limit=limit)}
+
+
+@app.get("/api/movie/{item_id}")
+def movie_metadata(item_id: int):
+    """Basic metadata (title, genres) for one movie - used to resolve a
+    reference item passed via URL (e.g. /567) or clicked from the
+    Recommendations panel, where only an item_id is available."""
+    record = _records_by_id.get(item_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"item_id": record.item_id, "title": record.title, "genres": record.genres}
 
 
 @app.get("/api/movie/{item_id}/wheel")
@@ -239,4 +252,13 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
 # whole app is a single Render web service on one origin.
 _FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _FRONTEND_DIST.exists():
+    # Client-side deep link: GET /<item_id> (e.g. /567) should load the
+    # SPA, which then reads the id from window.location and selects that
+    # movie as the reference (see App.tsx). This route only matches a
+    # bare numeric path segment, so it never shadows /api/... routes or
+    # hashed asset paths served by the StaticFiles mount below.
+    @app.get("/{item_id:int}")
+    def spa_item_route(item_id: int):
+        return FileResponse(_FRONTEND_DIST / "index.html")
+    
     app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")

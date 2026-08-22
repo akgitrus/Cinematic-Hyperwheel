@@ -91,3 +91,15 @@ export async function getWheelCircles(itemId: number): Promise<WheelResponse> {
   if (!res.ok) throw new Error("wheel lookup failed");
   return res.json();
 }
+
+export async function getMovieById(itemId: number): Promise<MovieHit> {
+  const res = await fetch(`/api/movie/${itemId}`);
+  if (!res.ok) throw new Error("movie lookup failed");
+  const data = await res.json();
+  return {
+    item_id: data.item_id,
+    title: data.title,
+    titleHighlights: [],
+    genres: data.genres,
+  };
+}

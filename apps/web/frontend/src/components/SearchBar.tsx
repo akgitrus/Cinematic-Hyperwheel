@@ -4,6 +4,13 @@ import { MovieHit, Span, searchMovies } from "../api";
 
 interface Props {
   onSelect: (movie: MovieHit) => void;
+  /**
+   * Title of the currently selected reference movie, if any. Keeps the
+   * input in sync when the reference changes through a path other than
+   * this search box itself - e.g. clicking a recommendation's title, or
+   * loading a deep-linked /{item_id} URL.
+   */
+  selectedTitle?: string | null;
 }
 
 // Renders `text` with the given character spans wrapped in <mark>.
@@ -27,7 +34,7 @@ function renderHighlighted(text: string, spans: Span[]) {
   return parts;
 }
 
-export default function SearchBar({ onSelect }: Props) {
+export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MovieHit[]>([]);
@@ -44,6 +51,18 @@ export default function SearchBar({ onSelect }: Props) {
   // so the search effect can recognize "this change came from picking a
   // result, not from typing" and skip re-searching/reopening for it.
   const suppressNextSearchRef = useRef<string | null>(null);
+
+  // Keep the input in sync with the reference movie set externally (a
+  // recommendation title click, or a deep-linked /{item_id} URL) - those
+  // paths never touch this component's own query state, so without this
+  // the box would keep showing whatever was last typed/picked here.
+  useEffect(() => {
+    if (selectedTitle == null || selectedTitle === query) return;
+    suppressNextSearchRef.current = selectedTitle;
+    setQuery(selectedTitle);
+    setOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTitle]);
 
   useEffect(() => {
     window.clearTimeout(debounceRef.current);

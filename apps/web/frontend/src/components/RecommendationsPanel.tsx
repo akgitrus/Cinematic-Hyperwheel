@@ -2,7 +2,8 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { RecItem, RecommendCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
-import { imdbSearchUrl } from "../utils/imdb";
+import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
+import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
 
 interface Props {
   circles: RecommendCircle[];
@@ -13,10 +14,17 @@ interface Props {
    */
   onSelectItem?: (itemId: number) => void;
   /**
-   * Placeholder for a real per-item IMDb link. Defaults to an IMDb
-   * title search, since we don't carry an imdbId yet.
+   * Link builder for the IMDb button. Defaults to a direct title-page
+   * link when the dataset has a matching imdbId (see
+   * tools/filter_metadata_to_artifact.py's --links merge), falling back
+   * to an IMDb title search when it doesn't.
    */
   imdbUrlFor?: (item: RecItem) => string;
+  /**
+   * Link builder for the TMDB button - same direct-link-with-fallback
+   * shape as imdbUrlFor, backed by tmdbId instead of imdbId.
+   */
+  tmdbUrlFor?: (item: RecItem) => string;
 }
 
 function circleKey(c: RecommendCircle): string {
@@ -40,7 +48,8 @@ function refCompassBearing(refX: number, refY: number): number {
 export default function RecommendationsPanel({
   circles,
   onSelectItem = () => {},
-  imdbUrlFor = (item) => imdbSearchUrl(item.title),
+  imdbUrlFor = (item) => (item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)),
+  tmdbUrlFor = (item) => (item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)),
 }: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "en";
@@ -105,6 +114,7 @@ export default function RecommendationsPanel({
                         swatchColor={swatch}
                         onSelectItem={onSelectItem}
                         imdbUrlFor={imdbUrlFor}
+                        tmdbUrlFor={tmdbUrlFor}
                         trailing={
                           hasMore ? (
                             <button
@@ -132,6 +142,7 @@ export default function RecommendationsPanel({
                                 swatchColor={swatch}
                                 onSelectItem={onSelectItem}
                                 imdbUrlFor={imdbUrlFor}
+                                tmdbUrlFor={tmdbUrlFor}
                                 compact
                               />
                             ))}
@@ -154,18 +165,19 @@ interface RecRowProps {
   swatchColor: string;
   onSelectItem: (itemId: number) => void;
   imdbUrlFor: (item: RecItem) => string;
+  tmdbUrlFor: (item: RecItem) => string;
   trailing?: ReactNode;
   compact?: boolean;
 }
 
 // A single recommendation row: rank, scheme-angle swatch, a title link
-// (loads this movie as the new reference via onSelectItem), an external IMDb link,
-// and an optional trailing control (the expand/collapse chevron - only
-// ever passed for the top-ranked row of an angle). Each interactive zone
-// is its own element, not one big clickable row - the title link, the
-// IMDb link, and the chevron all need to be independently clickable once
-// the wheel-navigation link is real.
-function RecRow({ item, swatchColor, onSelectItem, imdbUrlFor, trailing, compact }: RecRowProps) {
+// (loads this movie as the new reference via onSelectItem), external
+// IMDb/TMDB links, and an optional trailing control (the expand/collapse
+// chevron - only ever passed for the top-ranked row of an angle). Each
+// interactive zone is its own element, not one big clickable row - the
+// title link, the two external links, and the chevron are all
+// independently clickable.
+function RecRow({ item, swatchColor, onSelectItem, imdbUrlFor, tmdbUrlFor, trailing, compact }: RecRowProps) {
   const { t } = useTranslation();
   return (
     <div className={"rec-row" + (compact ? " rec-row--compact" : "")}>
@@ -194,7 +206,7 @@ function RecRow({ item, swatchColor, onSelectItem, imdbUrlFor, trailing, compact
         )}
       </div>
       <a
-        className="rec-row__imdb"
+        className="rec-row__extlink rec-row__extlink--imdb"
         href={imdbUrlFor(item)}
         target="_blank"
         rel="noopener noreferrer"
@@ -202,7 +214,18 @@ function RecRow({ item, swatchColor, onSelectItem, imdbUrlFor, trailing, compact
         title={t("recommendations.openImdb")}
         onClick={(e) => e.stopPropagation()}
       >
-        ↗
+        IMDb
+      </a>
+      <a
+        className="rec-row__extlink rec-row__extlink--tmdb"
+        href={tmdbUrlFor(item)}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={t("recommendations.openTmdb")}
+        title={t("recommendations.openTmdb")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        TMDB
       </a>
       {trailing}
     </div>

@@ -19,7 +19,9 @@ Expected under `/data/ml-latest/` by default (overridable via env vars):
   via `tools/filter_metadata_to_artifact.py` (see below); pointing
   `HYPERWHEEL_METADATA_PATH` at the raw, unfiltered `movies.csv` works
   but wastes search time on ~86k movies where the ~13k with genome data
-  would do, and surfaces movies that will 404 on `/wheel`.
+  would do, and surfaces movies that will 404 on `/wheel`. Optionally
+  also carries `imdbId`/`tmdbId` columns (see "External ids" below) if
+  the filtering step was run with `--links`.
 - `artifact.npz` — pre-built once, by hand, via the engine's CLI:
 
   ```bash
@@ -41,6 +43,19 @@ Expected under `/data/ml-latest/` by default (overridable via env vars):
 
 Paths are overridable via `HYPERWHEEL_DATA_DIR`, `HYPERWHEEL_METADATA_PATH`,
 `HYPERWHEEL_ARTIFACT_PATH`.
+
+### External ids (`imdbId`/`tmdbId`)
+
+`tools/filter_metadata_to_artifact.py` optionally accepts `--links
+data/ml-latest/links.csv` (`movieId,imdbId,tmdbId`, as downloaded) and
+merges those two columns into the filtered `movies.csv` on `movieId`
+(1:1 - see the script's docstring for why this is a merge rather than a
+separate file). When present, the backend uses them to build direct
+IMDb/TMDB links in the Recommendations panel instead of falling back to
+a title search - see `imdb_id`/`tmdb_id` in the API section below and
+`frontend/src/utils/imdb.ts` / `frontend/src/utils/tmdb.ts`. Entirely
+optional: without `--links`, everything works exactly as before, just
+without direct links (title search is used for both IMDb and TMDB).
 
 ## Local development
 
@@ -82,7 +97,8 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   token present as a substring, in any order) - see
   `apps/web/backend/app/search.py` for the full tiering rationale. No
   typo tolerance: unlike the previous rapidfuzz-based version, a
-  misspelled query will not match.
+  misspelled query will not match. Results do not include
+  `imdb_id`/`tmdb_id` (see `/api/movie/{item_id}` for those).
 - `GET /api/movie/{item_id}/recommend?scheme=...` — color-wheel
   recommendations (complementary/triadic/analogous/split-complementary/tetradic),
   computed **independently for each circle** shown on `/wheel` for this
@@ -100,16 +116,19 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   Response shape: `{ item_id, scheme, circles: [...] }`, one entry per
   circle (same `axis_x`/`axis_y`/`primary` as `/wheel`), each carrying
   its own `reference` coordinate and, per scheme angle, its own top-5
-  matches (`rank`, `title`, `z_x`/`z_y`, `angle_deg`, `distance_to_target`,
-  `angular_error_deg`, `radius_ratio`).
+  matches (`rank`, `title`, `imdb_id`, `tmdb_id`, `z_x`/`z_y`, `angle_deg`,
+  `distance_to_target`, `angular_error_deg`, `radius_ratio`). `imdb_id`/
+  `tmdb_id` are `null` when the dataset has no matching `links.csv` row
+  for that movie, or `movies.csv` wasn't built with `--links` at all
+  (see "External ids" above).
 - `GET /api/movie/{item_id}/wheel` — `{ item_id, circles: [...] }`, one
   entry per circle (see below), each with `axis_x`/`axis_y` (pc index,
   colors, labels per language, explained variance), `z_x`/`z_y`, `angle_deg`,
   `radius`, and `primary` (true for the main circle).
-- `GET /api/movie/{item_id}` — basic metadata (`title`, `genres`) for a
-  single movie. Used to resolve a reference item passed via URL or
-  clicked from the Recommendations panel, where only an `item_id` is
-  available.
+- `GET /api/movie/{item_id}` — basic metadata (`title`, `genres`,
+  `imdb_id`, `tmdb_id`) for a single movie. Used to resolve a reference
+  item passed via URL or clicked from the Recommendations panel, where
+  only an `item_id` is available.
 
 ## Linking directly to a reference movie
 
@@ -124,7 +143,7 @@ is always shareable and survives a page reload.
 
 `apps/web/backend/app/pc_config.json` is hand-curated, one component at a
 time: run `diagnose`, read a component's criteria weights and the real
-items at each pole (docs/math.md section 4), decide what it represents,
+items at each pole (docs/math.md section 4), then decide what it represents,
 then add an entry:
 
 ```json
@@ -198,7 +217,10 @@ The left-hand "Recommendations" panel intentionally stays tied to the
 **main circle only** (its titles list is not repeated per secondary
 circle); the secondary circles still show their own, independently
 computed points as overlays with a hover tooltip, they just aren't
-duplicated as text in the side panel.
+duplicated as text in the side panel. Each row also links out to that
+movie's IMDb and TMDB pages (direct title-page links when the dataset
+has a matching `imdb_id`/`tmdb_id`, falling back to a title search on
+the respective site otherwise - see "External ids" above).
 
 ## Localization
 

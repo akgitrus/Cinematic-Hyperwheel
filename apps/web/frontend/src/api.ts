@@ -5,6 +5,11 @@ export interface MovieHit {
   title: string;
   titleHighlights: Span[];
   genres: string[];
+  // Only populated by getMovieById() (backed by /api/movie/{id}, which
+  // always includes them, possibly as null); search() results omit
+  // these fields entirely, since /api/search doesn't return them.
+  imdb_id?: string | null;
+  tmdb_id?: string | null;
 }
 
 export interface AxisLabels {
@@ -45,6 +50,12 @@ export async function searchMovies(q: string): Promise<MovieHit[]> {
 export interface RecItem {
   item_id: number;
   title: string;
+  // null when the dataset has no matching links.csv row for this movie,
+  // or movies.csv wasn't built with --links at all - see
+  // tools/filter_metadata_to_artifact.py and utils/imdb.ts / utils/tmdb.ts
+  // for the title-search fallback used in that case.
+  imdb_id: string | null;
+  tmdb_id: string | null;
   rank: number;
   distance_to_target: number;
   angular_error_deg: number | null;
@@ -101,5 +112,7 @@ export async function getMovieById(itemId: number): Promise<MovieHit> {
     title: data.title,
     titleHighlights: [],
     genres: data.genres,
+    imdb_id: data.imdb_id ?? null,
+    tmdb_id: data.tmdb_id ?? null,
   };
 }

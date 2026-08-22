@@ -9,6 +9,14 @@ Genres are shown to the user but are NOT part of the match. Matching is
 intentionally literal, not typo-tolerant: the query's normalized tokens
 must each occur as a substring of the normalized title.
 
+movies.csv may optionally also carry imdbId/tmdbId columns (added by
+tools/filter_metadata_to_artifact.py's --links merge of links.csv) -
+these are external ids used to build direct IMDb/TMDB links instead of
+falling back to a title search (see the /api/movie/{item_id} and
+/api/movie/{item_id}/recommend endpoints in main.py). They are purely
+passthrough metadata here, same as genres: not matched against, only
+carried on MovieRecord for callers that need them.
+
 Two data quirks that plain substring-on-raw-title gets wrong (carried
 over from the previous version, still true for this dataset):
 
@@ -141,15 +149,27 @@ class MovieRecord:
     item_id: int
     title: str
     genres: list[str] = field(default_factory=list)
+    # External ids for building direct IMDb/TMDB links (see main.py).
+    # None when movies.csv wasn't built with --links (see
+    # tools/filter_metadata_to_artifact.py), or when this specific movie
+    # had no matching row in links.csv. imdb_id keeps its original
+    # zero-padded string form (e.g. "0114709", NOT an int) - the leading
+    # zeros are significant for building https://www.imdb.com/title/tt<id>/.
+    imdb_id: str | None = None
+    tmdb_id: str | None = None
 
 
 def load_metadata(path: Path) -> list[MovieRecord]:
     """
-    Reads movies.csv (movieId,title,genres) - the MovieLens ml-latest
-    catalog file. Expected to already be filtered down to movies that
-    have Tag Genome data (see tools/filter_metadata_to_artifact.py) -
-    this function itself does not filter against the artifact, it just
-    parses whatever file it's pointed at.
+    Reads movies.csv (movieId,title,genres[,imdbId,tmdbId]) - the
+    MovieLens ml-latest catalog file, optionally merged with links.csv by
+    tools/filter_metadata_to_artifact.py. Expected to already be filtered
+    down to movies that have Tag Genome data (see
+    tools/filter_metadata_to_artifact.py) - this function itself does not
+    filter against the artifact, it just parses whatever file it's
+    pointed at. imdbId/tmdbId are read if present; their absence (either
+    the columns are missing entirely, or a specific row's value is blank)
+    is not an error - callers get None and fall back to a title search.
     """
     records: list[MovieRecord] = []
     with open(path, "r", encoding="utf-8", newline="") as f:
@@ -157,6 +177,7 @@ def load_metadata(path: Path) -> list[MovieRecord]:
         missing_cols = {"movieId", "title"} - set(reader.fieldnames or [])
         if missing_cols:
             raise ValueError(f"{path} is missing required column(s): {missing_cols}")
+        has_links = {"imdbId", "tmdbId"} <= set(reader.fieldnames or [])
         for row in reader:
             raw_id = (row.get("movieId") or "").strip()
             if not raw_id:
@@ -166,10 +187,16 @@ def load_metadata(path: Path) -> list[MovieRecord]:
             except ValueError:
                 print(f"[warning] skipping row with non-numeric movieId: {raw_id!r}", file=sys.stderr)
                 continue
+            imdb_id = tmdb_id = None
+            if has_links:
+                imdb_id = (row.get("imdbId") or "").strip() or None
+                tmdb_id = (row.get("tmdbId") or "").strip() or None
             records.append(MovieRecord(
                 item_id=item_id,
                 title=row.get("title") or "",
                 genres=_parse_genres(row.get("genres") or ""),
+                imdb_id=imdb_id,
+                tmdb_id=tmdb_id,
             ))
     return records
 

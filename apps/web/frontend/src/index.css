@@ -389,12 +389,11 @@ body {
 }
 
 /* One recommendation row: rank | swatch | title+meta | imdb link |
-   optional chevron. Grid, not a <button> - each zone is independently
-   interactive (title link, IMDb link, chevron), unlike the old
-   whole-row button. */
+   tmdb link | optional chevron. Grid, not a <button> - each zone is
+   independently interactive (title link, both external links, chevron). */
 .rec-row {
   display: grid;
-  grid-template-columns: 18px 8px 1fr auto auto;
+  grid-template-columns: 18px 8px 1fr auto auto auto;
   align-items: center;
   column-gap: 10px;
   padding: 6px 2px;
@@ -439,19 +438,26 @@ body {
   color: var(--muted);
 }
 
-.rec-row__imdb {
+/* External link badges (IMDb/TMDB) - short text labels rather than
+   icons, since two generic arrow glyphs side by side wouldn't be
+   distinguishable. Same interaction style for both, differentiated only
+   by their label text. */
+.rec-row__extlink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
   height: 20px;
+  padding: 0 7px;
   border-radius: 6px;
   color: var(--muted);
   text-decoration: none;
-  font-size: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
   transition: color 120ms ease, background-color 120ms ease;
 }
-.rec-row__imdb:hover {
+.rec-row__extlink:hover {
   color: var(--accent);
   background: rgba(110, 231, 255, 0.1);
 }

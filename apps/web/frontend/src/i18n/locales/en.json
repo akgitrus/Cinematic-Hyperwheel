@@ -27,7 +27,8 @@
     "angle": "Angle {{angle}}°",
     "error": "Could not fetch recommendations.",
     "showMore": "Show more",
-    "openImdb": "Open on IMDb"
+    "openImdb": "Open on IMDb",
+    "openTmdb": "Open on TMDB"
   },
   "errors": {
     "wheelLookup": "Could not fetch the movie's coordinates in PCA space."

@@ -18,7 +18,7 @@ full, unfiltered movies.csv has two costs:
     results just leads to a dead end for the user.
 
 Optionally also merges in links.csv (movieId,imdbId,tmdbId) - external
-ids for building a direct IMDb/TMDb link instead of falling back to an
+ids for building a direct IMDb/TMDB link instead of falling back to an
 IMDb title search (see frontend/src/utils/imdb.ts). This is a 1:1 merge
 on movieId, done here rather than shipped as a separate file: imdbId/
 tmdbId are just more display metadata for the same movie record, needed
@@ -83,7 +83,7 @@ def load_links(path: str) -> dict[int, tuple[str, str]]:
     string here - this script only ever passes it through to a CSV
     column, never does arithmetic with it, and treats it the same as
     imdbId for consistency; it's also occasionally empty in links.csv
-    (not every movie has a TMDb match), which a plain string preserves as
+    (not every movie has a TMDB match), which a plain string preserves as
     "" rather than needing a sentinel.
     """
     links: dict[int, tuple[str, str]] = {}
@@ -119,7 +119,7 @@ def main() -> None:
     parser.add_argument(
         "--links", default=None,
         help="Optional links.csv (movieId,imdbId,tmdbId) to merge in - adds "
-             "imdbId/tmdbId columns to --out for building direct IMDb/TMDb "
+             "imdbId/tmdbId columns to --out for building direct IMDb/TMDB "
              "links instead of falling back to an IMDb title search.",
     )
     parser.add_argument("--out", required=True, help="Where to write the filtered movies.csv")

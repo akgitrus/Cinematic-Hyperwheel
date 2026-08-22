@@ -39,13 +39,23 @@ def search(q: str = Query(..., min_length=1), limit: int = 8):
 
 @app.get("/api/movie/{item_id}")
 def movie_metadata(item_id: int):
-    """Basic metadata (title, genres) for one movie - used to resolve a
-    reference item passed via URL (e.g. /567) or clicked from the
-    Recommendations panel, where only an item_id is available."""
+    """Basic metadata (title, genres, external ids) for one movie - used
+    to resolve a reference item passed via URL (e.g. /567) or clicked
+    from the Recommendations panel, where only an item_id is available.
+    imdb_id/tmdb_id are None when movies.csv wasn't built with --links
+    (see tools/filter_metadata_to_artifact.py) or this movie had no
+    matching row in links.csv - the frontend falls back to a title
+    search in that case (see utils/imdb.ts, utils/tmdb.ts)."""
     record = _records_by_id.get(item_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    return {"item_id": record.item_id, "title": record.title, "genres": record.genres}
+    return {
+        "item_id": record.item_id,
+        "title": record.title,
+        "genres": record.genres,
+        "imdb_id": record.imdb_id,
+        "tmdb_id": record.tmdb_id,
+    }
 
 
 @app.get("/api/movie/{item_id}/wheel")
@@ -157,6 +167,11 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
     circle's top-k items are generally a DIFFERENT set of movies, not the
     same 5 movies viewed from different axes.
 
+    Each returned item also carries imdb_id/tmdb_id (same source as
+    /api/movie/{item_id} - see MovieRecord in search.py), so the frontend
+    can link straight to IMDb/TMDB instead of a title search wherever the
+    dataset has a match.
+
     Final ordering (and therefore which circle is `primary`) is NOT the
     same as /wheel's plain z-score order: after every circle's own
     recommendations are computed, _combined_order() blends that z-score
@@ -212,9 +227,12 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
                 if idx is None:
                     continue
                 zx, zy = z(idx, pc_x), z(idx, pc_y)
+                record = _records_by_id.get(iid)
                 items.append({
                     "item_id": iid,
                     "title": _titles.get(iid, str(iid)),
+                    "imdb_id": record.imdb_id if record else None,
+                    "tmdb_id": record.tmdb_id if record else None,
                     "rank": r["rank"],
                     "distance_to_target": r["distance_to_target"],
                     "angular_error_deg": r.get("angular_error_deg"),

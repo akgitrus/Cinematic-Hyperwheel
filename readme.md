@@ -768,6 +768,13 @@ GroupLens (see License below for the specific conditions). The dataset
 itself is not redistributed with this repository; users should obtain it 
 directly from the official GroupLens source.
 
+### TMDB API
+
+The web application (`apps/web`) optionally also uses
+[TMDB](https://www.themoviedb.org/) for a decorative movie backdrop -
+see `apps/web/README.md` for setup and attribution. TMDB is not used
+by the recommendation engine itself.
+
 ---
 
 ## License

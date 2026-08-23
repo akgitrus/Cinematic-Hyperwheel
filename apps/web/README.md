@@ -58,6 +58,11 @@ optional: without `--links`, everything works exactly as before, just
 without direct links (title search is used for both IMDb and TMDB).
 
 ## Local development
+ 
+Optional: copy `/.env.example` to
+`/.env` and set `TMDB_API_KEY` there to enable the hero
+backdrop locally (see "Hero backdrop (TMDB)" below) - not required for
+anything else to work.
 
 ```bash
 # backend
@@ -70,6 +75,37 @@ cd apps/web/frontend
 npm install
 npm run dev   # http://localhost:5173, proxies /api to :8000
 ```
+
+## Hero backdrop (TMDB)
+
+A full-bleed backdrop image behind the app, resolved per selected movie
+via [TMDB](https://www.themoviedb.org/) and shown with a soft crossfade
+(`frontend/src/components/HeroBackdrop.tsx`). Purely decorative -
+without a TMDB key configured, the app works exactly the same, just
+without the backdrop.
+
+Requires a TMDB API key
+([themoviedb.org/settings/api](https://www.themoviedb.org/settings/api)),
+set via `TMDB_API_KEY` (see `.env.example` above). Optional:
+`TMDB_BACKDROP_SIZE` (default `w1280`) - see TMDB's
+[image basics](https://developer.themoviedb.org/docs/image-basics) for
+available sizes.
+
+Without a key, `GET /api/movie/{item_id}/backdrop` always returns
+`{ "backdrop_url": null }` - not an error, the frontend just shows no
+backdrop (see `apps/web/backend/app/tmdb.py`). Resolved URLs are cached
+in-process per `tmdb_id`; failed lookups are not cached, so a fixed key
+or a resolved outage takes effect on the next request without a
+restart.
+
+### Attribution
+
+Per TMDB's API terms, this project displays the required notice ("This
+product uses the TMDB API but is not endorsed or certified by TMDB.")
+in the app's About modal, under Credits & data sources. See
+[TMDB's attribution requirements](https://www.themoviedb.org/about/logos-attribution)
+before extending this (e.g. adding the official logo, which has its own
+usage rules).
 
 ## Production build / deploying to Render
 
@@ -129,6 +165,10 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   `imdb_id`, `tmdb_id`) for a single movie. Used to resolve a reference
   item passed via URL or clicked from the Recommendations panel, where
   only an `item_id` is available.
+- `GET /api/movie/{item_id}/backdrop` — resolves a backdrop image URL
+  for the hero background via TMDB, from the movie's `tmdb_id`. `null`
+  - never a 404 - when the movie has no `tmdb_id`, TMDB isn't
+  configured, or the lookup failed.
 
 ## Linking directly to a reference movie
 
@@ -236,6 +276,25 @@ To add a new UI language:
 2. register it in the `resources` map in `frontend/src/i18n/index.ts`
 3. add `{ code: "<code>", label: "..." }` to `LANGUAGES` in `frontend/src/components/LanguageSwitcher.tsx`
 4. add a `"<code>"` entry under `labels` for each component in `pc_config.json`
+
+## About modal links (source / author)
+
+The two optional links in the About modal's top section
+(`frontend/src/components/AboutModal.tsx`) are set via frontend env
+vars, resolved at **build time** (Vite bakes `VITE_`-prefixed vars into
+the static bundle - unlike the backend's `TMDB_API_KEY`, there's no
+server involved to read these per-request, so changing a value needs a
+rebuild, not just a restart):
+
+VITE_GITHUB_URL=https://github.com/<your-org>/cinematic-hyperwheel
+VITE_AUTHOR_URL=https://your-link-of-choice
+
+Set in `apps/web/frontend/.env` for local dev (Vite loads this
+automatically - see `.env.example`), or as build-time env vars on your
+deploy platform. `VITE_AUTHOR_URL` isn't tied to any specific
+platform - point it at a personal site, any social profile, etc. Each
+button only renders when its URL is set; leaving one (or both) unset
+simply omits it.
 
 ## Next (stage 2, not in this build)
 

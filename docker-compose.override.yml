@@ -1,3 +1,8 @@
 services:
   hyperwheel:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_GITHUB_URL: ${VITE_GITHUB_URL}
+        VITE_AUTHOR_URL: ${VITE_AUTHOR_URL}

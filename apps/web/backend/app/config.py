@@ -8,9 +8,18 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # apps/web/backend/app/config.py -> repo root is 4 levels up
 REPO_ROOT = Path(__file__).resolve().parents[4]
+
+# Repo root .env - shared with the frontend (see vite.config.ts's
+# envDir) and with Docker Compose (see docker-compose.yml), so there's
+# one canonical .env location for the whole project instead of each
+# tool defaulting to a different directory. No-op if the file doesn't
+# exist, which is the normal case on Render/in Docker, where env vars
+# are set directly by the platform/compose instead.
+load_dotenv(REPO_ROOT / ".env")
 
 DATA_DIR = Path(os.environ.get("HYPERWHEEL_DATA_DIR", REPO_ROOT / "data" / "ml-latest"))
 # movies.csv (movieId,title,genres) - the ml-latest catalog file, expected
@@ -29,3 +38,15 @@ STANDARDIZE = os.environ.get("HYPERWHEEL_NO_STANDARDIZE", "") == ""
 PC_CONFIG_PATH = Path(
     os.environ.get("HYPERWHEEL_PC_CONFIG_PATH", Path(__file__).resolve().parent / "pc_config.json")
 )
+
+# TMDB (The Movie Database) API - currently used only to resolve a
+# movie's backdrop image for the hero background (see tmdb.py and
+# /api/movie/{item_id}/backdrop in main.py). Get a free v3 API key at
+# https://www.themoviedb.org/settings/api. Entirely optional: without
+# it, the backdrop feature just degrades to "no backdrop" (see
+# tmdb.py's fetch_backdrop_url) - same graceful-degradation pattern as
+# the missing imdb_id/tmdb_id case in search.py.
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
+# w1280 balances quality against payload size for a full-bleed page
+# background; TMDB also offers w780/w1920/original if this needs tuning.
+TMDB_BACKDROP_SIZE = os.environ.get("TMDB_BACKDROP_SIZE", "w1280")

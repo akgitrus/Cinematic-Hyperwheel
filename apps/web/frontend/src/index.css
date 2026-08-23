@@ -662,14 +662,6 @@ body {
   box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.12);
 }
 
-.about__linkbtn--support {
-  background: linear-gradient(90deg, rgba(110, 231, 255, 0.12), rgba(180, 107, 255, 0.12));
-  border-color: rgba(180, 107, 255, 0.35);
-}
-.about__linkbtn--support:hover {
-  box-shadow: 0 0 0 3px rgba(180, 107, 255, 0.18);
-}
-
 /* slimmed-down footer */
 .app__footer--slim {
   text-align: center;
@@ -684,4 +676,78 @@ body {
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
+}
+
+/* --- Hero backdrop --- */
+/* Sibling of .app, not a child - deliberately outside .app's
+   max-width:1120px so the image bleeds full page width. No z-index
+   tricks needed: it's earlier in the DOM than .app, and neither
+   establishes a stacking context, so .app's content paints on top of
+   it purely by document order. */
+.hero-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 64vh;
+  min-height: 420px;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.55) 35%, transparent 75%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.55) 35%, transparent 75%);
+}
+.hero-backdrop__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+.hero-backdrop__img--visible {
+  opacity: 1;
+}
+
+/* --- Credits accordion (About modal) --- */
+.about__credits-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+.about__heading--inline { margin: 0; }
+.about__credits-chevron {
+  color: var(--muted);
+  font-size: 11px;
+  transition: transform 200ms ease, color 120ms ease;
+}
+.about__credits-chevron--open { transform: rotate(180deg); }
+.about__credits-toggle:hover .about__credits-chevron { color: var(--accent); }
+
+/* Same height-animated accordion trick as .rec-more (RecommendationsPanel) */
+.about__credits-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.about__credits-body--open { grid-template-rows: 1fr; }
+.about__credits-inner { overflow: hidden; }
+.about__credits-item { padding-top: 12px; }
+.about__credits-item + .about__credits-item {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.about__credits-item-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text);
 }

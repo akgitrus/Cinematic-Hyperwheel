@@ -116,3 +116,14 @@ export async function getMovieById(itemId: number): Promise<MovieHit> {
     tmdb_id: data.tmdb_id ?? null,
   };
 }
+
+export interface BackdropResponse {
+  item_id: number;
+  backdrop_url: string | null;
+}
+
+export async function getBackdrop(itemId: number): Promise<BackdropResponse> {
+  const res = await fetch(`/api/movie/${itemId}/backdrop`);
+  if (!res.ok) throw new Error("backdrop lookup failed");
+  return res.json();
+}

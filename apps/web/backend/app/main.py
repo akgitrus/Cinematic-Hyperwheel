@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import METADATA_PATH
 from .search import MovieIndex, load_metadata
+from .tmdb import fetch_backdrop_url
 from hyperwheel_recommender import SCHEMES, recommend_many_planes
 
 from .wheel import build_engine
@@ -56,6 +57,21 @@ def movie_metadata(item_id: int):
         "imdb_id": record.imdb_id,
         "tmdb_id": record.tmdb_id,
     }
+
+
+@app.get("/api/movie/{item_id}/backdrop")
+async def movie_backdrop(item_id: int):
+    """Backdrop image URL for the hero background (see
+    frontend/src/components/HeroBackdrop.tsx), resolved from TMDB via
+    the movie's tmdb_id. backdrop_url is null - never a 404 for this
+    specific reason - when the movie has no tmdb_id, TMDB isn't
+    configured, or the lookup failed; a missing backdrop is not an
+    error, the UI just shows none (see tmdb.py)."""
+    record = _records_by_id.get(item_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    backdrop_url = await fetch_backdrop_url(record.tmdb_id) if record.tmdb_id else None
+    return {"item_id": item_id, "backdrop_url": backdrop_url}
 
 
 @app.get("/api/movie/{item_id}/wheel")

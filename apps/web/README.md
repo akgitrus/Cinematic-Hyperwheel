@@ -152,7 +152,7 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   Response shape: `{ item_id, scheme, circles: [...] }`, one entry per
   circle (same `axis_x`/`axis_y`/`primary` as `/wheel`), each carrying
   its own `reference` coordinate and, per scheme angle, its own top-5
-  matches (`rank`, `title`, `imdb_id`, `tmdb_id`, `z_x`/`z_y`, `angle_deg`,
+  matches (`rank`, `title`, `genres`, `imdb_id`, `tmdb_id`, `z_x`/`z_y`, `angle_deg`,
   `distance_to_target`, `angular_error_deg`, `radius_ratio`). `imdb_id`/
   `tmdb_id` are `null` when the dataset has no matching `links.csv` row
   for that movie, or `movies.csv` wasn't built with `--links` at all
@@ -169,6 +169,11 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   for the hero background via TMDB, from the movie's `tmdb_id`. `null`
   - never a 404 - when the movie has no `tmdb_id`, TMDB isn't
   configured, or the lookup failed.
+- `GET /api/movie/{item_id}/poster` — resolves a small poster image URL
+  via TMDB, from the movie's `tmdb_id` - used by the Recommendations
+  panel's hover/tap info card (see below). Same graceful-degradation
+  shape as `/backdrop`: `null` - never a 404 - when the movie has no
+  `tmdb_id`, TMDB isn't configured, or the lookup failed.
 
 ## Linking directly to a reference movie
 
@@ -261,6 +266,23 @@ duplicated as text in the side panel. Each row also links out to that
 movie's IMDb and TMDB pages (direct title-page links when the dataset
 has a matching `imdb_id`/`tmdb_id`, falling back to a title search on
 the respective site otherwise - see "External ids" above).
+
+### Hover/tap info card
+
+Hovering a recommendation row (desktop) or tapping it (touch/mobile)
+opens a small info card next to it: a mini poster resolved from TMDB
+(`/api/movie/{item_id}/poster`, fetched lazily and cached client-side
+per `item_id` - see `RecommendationsPanel.tsx`), the title, genres, and
+the same IMDb/TMDB links as the row itself. Without a TMDB key
+configured (or when TMDB has no poster for that title), the card still
+opens - it just doesn't show an image, the same graceful-degradation
+pattern already used for the hero backdrop and the row's own IMDb/TMDB
+fallback links.
+
+On narrow viewports the card renders as a bottom sheet (full width,
+pinned to the bottom of the screen, with a close button and a
+tap-to-dismiss backdrop) instead of a small popover next to the row, so
+it stays comfortable to read and to dismiss with a thumb.
 
 ## Localization
 

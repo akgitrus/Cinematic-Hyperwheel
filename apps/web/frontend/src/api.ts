@@ -50,6 +50,7 @@ export async function searchMovies(q: string): Promise<MovieHit[]> {
 export interface RecItem {
   item_id: number;
   title: string;
+  genres: string[];
   // null when the dataset has no matching links.csv row for this movie,
   // or movies.csv wasn't built with --links at all - see
   // tools/filter_metadata_to_artifact.py and utils/imdb.ts / utils/tmdb.ts
@@ -125,5 +126,18 @@ export interface BackdropResponse {
 export async function getBackdrop(itemId: number): Promise<BackdropResponse> {
   const res = await fetch(`/api/movie/${itemId}/backdrop`);
   if (!res.ok) throw new Error("backdrop lookup failed");
+  return res.json();
+}
+
+export interface PosterResponse {
+  item_id: number;
+  // null when the movie has no tmdb_id, TMDB isn't configured, or the
+  // lookup failed - see apps/web/backend/app/tmdb.py.
+  poster_url: string | null;
+}
+
+export async function getPoster(itemId: number): Promise<PosterResponse> {
+  const res = await fetch(`/api/movie/${itemId}/poster`);
+  if (!res.ok) throw new Error("poster lookup failed");
   return res.json();
 }

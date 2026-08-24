@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import METADATA_PATH
 from .search import MovieIndex, load_metadata
-from .tmdb import fetch_backdrop_url
+from .tmdb import fetch_backdrop_url, fetch_poster_url
 from hyperwheel_recommender import SCHEMES, recommend_many_planes
 
 from .wheel import build_engine
@@ -72,6 +72,22 @@ async def movie_backdrop(item_id: int):
         raise HTTPException(status_code=404, detail="Item not found")
     backdrop_url = await fetch_backdrop_url(record.tmdb_id) if record.tmdb_id else None
     return {"item_id": item_id, "backdrop_url": backdrop_url}
+
+
+@app.get("/api/movie/{item_id}/poster")
+async def movie_poster(item_id: int):
+    """Small poster image URL for the Recommendations panel's hover/tap
+    info card (see frontend/src/components/RecommendationsPanel.tsx),
+    resolved from TMDB via the movie's tmdb_id. Same graceful-
+    degradation shape as /backdrop: poster_url is null - never a 404 for
+    this specific reason - when the movie has no tmdb_id, TMDB isn't
+    configured, or the lookup failed; the frontend just renders the card
+    without an image in that case."""
+    record = _records_by_id.get(item_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    poster_url = await fetch_poster_url(record.tmdb_id) if record.tmdb_id else None
+    return {"item_id": item_id, "poster_url": poster_url}
 
 
 @app.get("/api/movie/{item_id}/wheel")
@@ -247,6 +263,7 @@ def recommend(item_id: int, scheme: str = Query("complementary")):
                 items.append({
                     "item_id": iid,
                     "title": _titles.get(iid, str(iid)),
+                    "genres": record.genres if record else [],
                     "imdb_id": record.imdb_id if record else None,
                     "tmdb_id": record.tmdb_id if record else None,
                     "rank": r["rank"],

@@ -50,3 +50,8 @@ TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
 # w1280 balances quality against payload size for a full-bleed page
 # background; TMDB also offers w780/w1920/original if this needs tuning.
 TMDB_BACKDROP_SIZE = os.environ.get("TMDB_BACKDROP_SIZE", "w1280")
+# w185 is a small poster suited to the Recommendations panel's hover/tap
+# info card (see RecommendationsPanel.tsx) - large enough to read on a
+# phone screen, small enough to load instantly on hover. TMDB also
+# offers w92/w154/w342/w500/w780/original if this needs tuning.
+TMDB_POSTER_SIZE = os.environ.get("TMDB_POSTER_SIZE", "w185")

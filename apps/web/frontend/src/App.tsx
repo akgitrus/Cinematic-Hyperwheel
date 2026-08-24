@@ -45,7 +45,7 @@ export default function App() {
   const [selected, setSelected] = useState<MovieHit | null>(null);
   const [circles, setCircles] = useState<WheelCircle[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [scheme, setScheme] = useState<string>(SCHEMES[0]);
+  const [scheme, setScheme] = useState<string>(SCHEMES[2]);
   const [recs, setRecs] = useState<RecommendResponse | null>(null);
   const [recError, setRecError] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -225,7 +225,7 @@ export default function App() {
         <div className="layout3">
           <aside className="layout3__left">
             {recs && !recError && (
-              <RecommendationsPanel circles={recs.circles} onSelectItem={selectById} />
+              <RecommendationsPanel circles={recs.circles} />
             )}
           </aside>
 

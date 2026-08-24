@@ -24,9 +24,10 @@
   },
   "recommendations": {
     "title": "Рекомендации",
-    "angle": "Угол {{angle}}°",
+    "more": "Показать ещё {{count}}",
+    "hide": "Скрыть",
+    "getRecommendations": "Получить рекомендации",
     "error": "Не удалось получить рекомендации.",
-    "showMore": "Показать ещё",
     "openImdb": "Открыть на IMDb",
     "openTmdb": "Открыть на TMDB",
     "close": "Закрыть"

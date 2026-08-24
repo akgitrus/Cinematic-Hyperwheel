@@ -329,30 +329,28 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
           </div>
         )}
       </div>
-      <div className="wheel__readout">
-        {!compact && title && <div className="wheel__readout-title">{title}</div>}
-        <div className="wheel__readout-axis">
-          PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
+      {!compact && (
+        <div className="wheel__readout">
+          {title && <div className="wheel__readout-title">{title}</div>}
+          <div className="wheel__readout-axis">
+            PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
+          </div>
+          <div>
+            {t("wheel.readout", {
+              pcX: circle.axis_x.pc,
+              zX: circle.z_x.toFixed(2),
+              pcY: circle.axis_y.pc,
+              zY: circle.z_y.toFixed(2),
+            })}
+          </div>
+          <div>
+            {t("wheel.readoutAngle", {
+              angle: circle.angle_deg.toFixed(1),
+              radius: circle.radius.toFixed(2),
+            })}
+          </div>
         </div>
-        {!compact && (
-          <>
-            <div>
-              {t("wheel.readout", {
-                pcX: circle.axis_x.pc,
-                zX: circle.z_x.toFixed(2),
-                pcY: circle.axis_y.pc,
-                zY: circle.z_y.toFixed(2),
-              })}
-            </div>
-            <div>
-              {t("wheel.readoutAngle", {
-                angle: circle.angle_deg.toFixed(1),
-                radius: circle.radius.toFixed(2),
-              })}
-            </div>
-          </>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -24,9 +24,10 @@
   },
   "recommendations": {
     "title": "Recommendations",
-    "angle": "Angle {{angle}}°",
+    "more": "Show {{count}} more",
+    "hide": "Hide",
+    "getRecommendations": "Get recommendations",
     "error": "Could not fetch recommendations.",
-    "showMore": "Show more",
     "openImdb": "Open on IMDb",
     "openTmdb": "Open on TMDB",
     "close": "Close"

@@ -387,34 +387,15 @@ body {
   min-width: 0;
 }
 
-.rec-circle__header {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.rec-circle__badge {
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-  opacity: 0.85;
-  white-space: nowrap;
-}
-.rec-circle__title {
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .rec-angle + .rec-angle {
   margin-top: 2px;
 }
 
-/* One recommendation row: rank | swatch | title+meta | imdb link |
-   tmdb link | optional chevron. Grid, not a <button> - each zone is
-   independently interactive (title link, both external links, chevron). */
+/* rec-row: auto column width for the first cell, since it now holds
+   either an 8px dot or a 34px angle badge, plus a dedicated wand column. */
 .rec-row {
   display: grid;
-  grid-template-columns: /*18px */8px 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   column-gap: 10px;
   padding: 6px 2px;
@@ -443,20 +424,86 @@ body {
   flex-direction: column;
   gap: 1px;
 }
+
+/* Angle-section badge - ring in the section's overlay color with the
+   scheme angle text inside (e.g. "-30°"). Only rendered on the first
+   row of each rec-angle section; other rows keep the plain dot. */
+.rec-row__anglebadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: var(--panel);
+  box-shadow: 0 0 8px currentColor;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
 .rec-row__title {
   font-size: 13px;
-  color: var(--accent);
-  text-decoration: none;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rec-row__title:hover {
-  text-decoration: underline;
-}
 .rec-row__meta {
   font-size: 10px;
   color: var(--muted);
+}
+
+/* "Get recommendations" wand button - opens the movie as a new
+   reference in a new tab (see GetRecommendationsButton). */
+.rec-row__wand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+.rec-row__wand:hover {
+  color: var(--accent);
+  background: rgba(110, 231, 255, 0.1);
+  border-color: rgba(110, 231, 255, 0.25);
+}
+
+/* Expand/collapse button - bigger, labeled pill instead of a tiny bare
+   chevron, so its shape and state are actually legible. */
+.rec-row__expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  min-width: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+.rec-row__expand:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.rec-row__expand--open {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(110, 231, 255, 0.08);
 }
 
 /* External link badges (IMDb/TMDB) - short text labels rather than
@@ -481,26 +528,6 @@ body {
 .rec-row__extlink:hover {
   color: var(--accent);
   background: rgba(110, 231, 255, 0.1);
-}
-
-.rec-row__chevron {
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 10px;
-  cursor: pointer;
-  transition: transform 200ms ease, color 120ms ease;
-}
-.rec-row__chevron:hover {
-  color: var(--accent);
-}
-.rec-row__chevron--open {
-  transform: rotate(180deg);
 }
 
 /* Elegant height-animated accordion (grid-template-rows trick - no JS
@@ -882,15 +909,16 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+.rec-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .rec-card__title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  text-decoration: none;
   line-height: 1.3;
-}
-.rec-card__title:hover {
-  color: var(--accent);
 }
 
 .rec-card__genres {

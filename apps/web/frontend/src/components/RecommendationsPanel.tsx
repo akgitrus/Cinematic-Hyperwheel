@@ -10,12 +10,6 @@ import Wheel from "./Wheel";
 interface Props {
   circles: RecommendCircle[];
   /**
-   * Called when a recommendation's title is clicked, to load that movie
-   * as the new reference (see App.tsx's selectById). Defaults to a no-op
-   * if the caller doesn't wire up navigation.
-   */
-  onSelectItem?: (itemId: number) => void;
-  /**
    * Link builder for the IMDb button. Defaults to a direct title-page
    * link when the dataset has a matching imdbId (see
    * tools/filter_metadata_to_artifact.py's --links merge), falling back
@@ -33,10 +27,62 @@ function circleKey(c: RecommendCircle): string {
   return `${c.axis_x.pc}-${c.axis_y.pc}`;
 }
 
-function circleTitle(c: RecommendCircle, lang: string): string {
-  const lx = c.axis_x.labels[lang] ?? c.axis_x.labels.en;
-  const ly = c.axis_y.labels[lang] ?? c.axis_y.labels.en;
-  return `${lx.axis} · ${ly.axis}`;
+// Compact label for a scheme angle, shown inside the angle badge on the
+// first row of each rec-angle section, e.g. "+30°" / "-120°". Angles are
+// always whole numbers (see rotation.ts SCHEMES) and the format itself
+// (sign + number + degree symbol) doesn't need localization.
+function formatAngle(angleDeg: number): string {
+  const rounded = Math.round(angleDeg);
+  return `${rounded > 0 ? "+" : ""}${rounded}°`;
+}
+
+// Simple hand-drawn "magic wand" glyph - not tied to any specific icon
+// library, just a diagonal wand with a sparkle at the tip, matching the
+// project's "Get recommendations" action.
+function WandIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 20 L14 10" />
+      <path d="M16 4 L17.5 7.5 L21 9 L17.5 10.5 L16 14 L14.5 10.5 L11 9 L14.5 7.5 Z" />
+      <path d="M19 15 V17" />
+      <path d="M18 16 H20" />
+    </svg>
+  );
+}
+
+/**
+ * Replaces the old title hyperlink (which navigated the CURRENT tab to
+ * this movie as the new reference) - instead opens the same deep link
+ * (/{item_id}, see App.tsx's URL sync) in a NEW tab, so browsing
+ * recommendations never loses the reference the user is currently
+ * looking at.
+ */
+function GetRecommendationsButton({ itemId, label }: { itemId: number; label: string }) {
+  return (
+    <button
+      type="button"
+      className="rec-row__wand"
+      title={label}
+      aria-label={label}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(`/${itemId}`, "_blank", "noopener,noreferrer");
+      }}
+    >
+      <WandIcon />
+    </button>
+  );
 }
 
 // Pixel size for the small wheel drawn next to each section (including
@@ -121,7 +167,6 @@ function anchoredStyle(rect: DOMRect): CSSProperties {
 interface RecInfoCardProps {
   target: RecCardTarget;
   onClose: () => void;
-  onSelectItem: (itemId: number) => void;
   imdbUrlFor: (item: RecItem) => string;
   tmdbUrlFor: (item: RecItem) => string;
   onMouseEnter: () => void;
@@ -138,7 +183,6 @@ interface RecInfoCardProps {
 function RecInfoCard({
   target,
   onClose,
-  onSelectItem,
   imdbUrlFor,
   tmdbUrlFor,
   onMouseEnter,
@@ -195,17 +239,13 @@ function RecInfoCard({
             />
           )}
           <div className="rec-card__info">
-            <a
-              className="rec-card__title"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                onSelectItem(target.item.item_id);
-                onClose();
-              }}
-            >
-              {target.item.title}
-            </a>
+            <div className="rec-card__title-row">
+              <span className="rec-card__title">{target.item.title}</span>
+              <GetRecommendationsButton
+                itemId={target.item.item_id}
+                label={t("recommendations.getRecommendations")}
+              />
+            </div>
             {target.item.genres.length > 0 && (
               <div className="rec-card__genres">
                 {target.item.genres.map((g) => (
@@ -250,12 +290,10 @@ function RecInfoCard({
 
 export default function RecommendationsPanel({
   circles,
-  onSelectItem = () => {},
   imdbUrlFor = (item) => (item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)),
   tmdbUrlFor = (item) => (item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)),
 }: Props) {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.resolvedLanguage ?? "en";
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
@@ -360,12 +398,6 @@ export default function RecommendationsPanel({
                   </div>
                 )}
                 <div className="rec-circle__content">
-                  <div className="rec-circle__header">
-                    <span className="rec-circle__badge">
-                      PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
-                    </span>
-                    <span className="rec-circle__title">{circleTitle(circle, lang)}</span>
-                  </div>
 
                   {circle.angles
                     .filter((a) => a.items.length > 0)
@@ -388,7 +420,7 @@ export default function RecommendationsPanel({
                           <RecRow
                             item={top}
                             swatchColor={swatch}
-                            onSelectItem={onSelectItem}
+                            angleLabel={formatAngle(angle.angle_deg)}
                             imdbUrlFor={imdbUrlFor}
                             tmdbUrlFor={tmdbUrlFor}
                             cardKey={topCardKey}
@@ -401,16 +433,25 @@ export default function RecommendationsPanel({
                                 <button
                                   type="button"
                                   className={
-                                    "rec-row__chevron" + (isOpen ? " rec-row__chevron--open" : "")
+                                    "rec-row__expand" + (isOpen ? " rec-row__expand--open" : "")
                                   }
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggle(key);
                                   }}
                                   aria-expanded={isOpen}
-                                  aria-label={t("recommendations.showMore")}
+                                  aria-label={
+                                    isOpen
+                                      ? t("recommendations.hide")
+                                      : t("recommendations.more", { count: rest.length })
+                                  }
+                                  title={
+                                    isOpen
+                                      ? t("recommendations.hide")
+                                      : t("recommendations.more", { count: rest.length })
+                                  }
                                 >
-                                  ▾
+                                  {isOpen ? "−" : `+${rest.length}`}
                                 </button>
                               ) : null
                             }
@@ -426,7 +467,6 @@ export default function RecommendationsPanel({
                                       key={it.item_id}
                                       item={it}
                                       swatchColor={swatch}
-                                      onSelectItem={onSelectItem}
                                       imdbUrlFor={imdbUrlFor}
                                       tmdbUrlFor={tmdbUrlFor}
                                       cardKey={cardKey}
@@ -455,7 +495,6 @@ export default function RecommendationsPanel({
         <RecInfoCard
           target={activeCard}
           onClose={closeCardNow}
-          onSelectItem={onSelectItem}
           imdbUrlFor={imdbUrlFor}
           tmdbUrlFor={tmdbUrlFor}
           onMouseEnter={cancelPendingClose}
@@ -469,14 +508,13 @@ export default function RecommendationsPanel({
 interface RecRowProps {
   item: RecItem;
   swatchColor: string;
-  onSelectItem: (itemId: number) => void;
+  /** Present only on the first row of a rec-angle section - renders a
+   * bigger badge with the scheme angle text instead of a plain dot. */
+  angleLabel?: string;
   imdbUrlFor: (item: RecItem) => string;
   tmdbUrlFor: (item: RecItem) => string;
   trailing?: ReactNode;
   compact?: boolean;
-  /** Unique id for this row's info card, used to track which card (if
-   * any) is currently open across the whole panel - see
-   * RecommendationsPanel's activeCard state. */
   cardKey: string;
   isCardOpen: boolean;
   onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
@@ -501,7 +539,7 @@ interface RecRowProps {
 function RecRow({
   item,
   swatchColor,
-  onSelectItem,
+  angleLabel,
   imdbUrlFor,
   tmdbUrlFor,
   trailing,
@@ -524,24 +562,23 @@ function RecRow({
       onMouseLeave={onCardLeave}
       onClick={(e) => onCardToggle(cardKey, item, e.currentTarget)}
     >
-      {/* <span className="rec-row__rank">{item.rank}</span> */}
-      <span
-        className="rec-row__swatch"
-        style={{ background: swatchColor, color: swatchColor }}
-        aria-hidden="true"
-      />
-      <div className="rec-row__body">
-      <a
-          className="rec-row__title"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onSelectItem(item.item_id);
-          }}
+      {angleLabel ? (
+        <span
+          className="rec-row__anglebadge"
+          style={{ borderColor: swatchColor, color: swatchColor }}
+          aria-hidden="true"
         >
-          {item.title}
-        </a>
+          {angleLabel}
+        </span>
+      ) : (
+        <span
+          className="rec-row__swatch"
+          style={{ background: swatchColor, color: swatchColor }}
+          aria-hidden="true"
+        />
+      )}
+      <div className="rec-row__body">
+        <span className="rec-row__title">{item.title}</span>
         {item.angular_error_deg != null && (
           <span className="rec-row__meta">
             Δangle: {item.angular_error_deg.toFixed(1)}°
@@ -549,28 +586,7 @@ function RecRow({
           </span>
         )}
       </div>
-      {/* <a
-        className="rec-row__extlink rec-row__extlink--imdb"
-        href={imdbUrlFor(item)}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={t("recommendations.openImdb")}
-        title={t("recommendations.openImdb")}
-        onClick={(e) => e.stopPropagation()}
-      >
-        IMDb
-      </a>
-      <a
-        className="rec-row__extlink rec-row__extlink--tmdb"
-        href={tmdbUrlFor(item)}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={t("recommendations.openTmdb")}
-        title={t("recommendations.openTmdb")}
-        onClick={(e) => e.stopPropagation()}
-      >
-        TMDB
-      </a> */}
+      <GetRecommendationsButton itemId={item.item_id} label={t("recommendations.getRecommendations")} />
       {trailing}
     </div>
   );

@@ -92,6 +92,28 @@ export interface RecommendResponse {
   circles: RecommendCircle[];
 }
 
+/**
+ * Converts a RecommendCircle (server's per-circle recommend payload,
+ * carrying the reference point under `reference`) into the plain
+ * WheelCircle shape the Wheel component renders - shared by the main
+ * wheel (App.tsx) and the small per-section wheels in
+ * RecommendationsPanel.tsx, so both draw the reference point the same
+ * way. Returns null only if the server had no basis index for the
+ * reference item (reference: null in the API response).
+ */
+export function toWheelCircle(rc: RecommendCircle): WheelCircle | null {
+  if (!rc.reference) return null;
+  return {
+    primary: rc.primary,
+    axis_x: rc.axis_x,
+    axis_y: rc.axis_y,
+    z_x: rc.reference.z_x,
+    z_y: rc.reference.z_y,
+    angle_deg: rc.reference.angle_deg,
+    radius: rc.reference.radius,
+  };
+}
+
 export async function getRecommendations(itemId: number, scheme: string): Promise<RecommendResponse> {
   const res = await fetch(`/api/movie/${itemId}/recommend?scheme=${encodeURIComponent(scheme)}`);
   if (!res.ok) throw new Error("recommend lookup failed");

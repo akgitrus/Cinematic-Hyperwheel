@@ -35,12 +35,6 @@ body {
   gap: 28px;
   flex-wrap: wrap;
 }
-.wheel-row__secondary {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 8px;
-}
 
 .topbar {
   width: 100%;
@@ -187,26 +181,37 @@ body {
 .layout3 {
   display: flex;
   flex-wrap: wrap;
-  gap: 28px;
+  gap: 32px;
   align-items: flex-start;
   justify-content: center;
   width: 100%;
 }
+/* Two even halves - Recommendations (with its inline per-circle wheels)
+   on the left, the large main wheel + reference card on the right. Both
+   get the same flex-basis/min/max so the split stays close to 50/50
+   across a wide range of viewport widths, and wraps to a single column
+   below that. */
 .layout3__left {
-  flex: 0 0 auto;
-  width: 300px;
+  flex: 1 1 0;
+  min-width: 360px;
+  max-width: 640px;
   display: flex;
   justify-content: center;
 }
 .layout3__center {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 320px;
+  max-width: 640px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
 }
-.layout3__right {
-  flex: 0 0 auto;
+/* Measured by App.tsx's ResizeObserver to size the main wheel to fill
+   this column's actual width (see MIN_WHEEL_SIZE/MAX_WHEEL_SIZE in
+   App.tsx and RING_PAD in Wheel.tsx). */
+.layout3__wheel-wrap {
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -364,6 +369,22 @@ body {
 }
 .rec-circle--primary .rec-circle__title {
   color: var(--text);
+}
+
+/* Small per-circle wheel (left) + recommendations text (right), so each
+   section's wheel sits right next to the rows it belongs to instead of
+   in a separate column. */
+.rec-circle__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.rec-circle__wheel {
+  flex: 0 0 auto;
+}
+.rec-circle__content {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .rec-circle__header {

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SearchBar from "./components/SearchBar";
-import Wheel from "./components/Wheel";
+import Wheel, { RING_PAD } from "./components/Wheel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import RecommendationsPanel from "./components/RecommendationsPanel";
 import AboutModal from "./components/AboutModal";
@@ -15,6 +15,7 @@ import {
   getMovieById,
   getRecommendations,
   getWheelCircles,
+  toWheelCircle,
 } from "./api";
 
 const SCHEMES = [
@@ -32,18 +33,12 @@ function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): Rec
   );
 }
 
-function toWheelCircle(rc: RecommendCircle): WheelCircle | null {
-  if (!rc.reference) return null;
-  return {
-    primary: rc.primary,
-    axis_x: rc.axis_x,
-    axis_y: rc.axis_y,
-    z_x: rc.reference.z_x,
-    z_y: rc.reference.z_y,
-    angle_deg: rc.reference.angle_deg,
-    radius: rc.reference.radius,
-  };
-}
+// Minimum/maximum pixel size for the main wheel - it fills its column
+// (see the ResizeObserver effect below), but is clamped so it never
+// shrinks into compact mode (COMPACT_BELOW in Wheel.tsx) nor grows
+// absurdly large on very wide screens.
+const MIN_WHEEL_SIZE = 260;
+const MAX_WHEEL_SIZE = 560;
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -55,10 +50,33 @@ export default function App() {
   const [recError, setRecError] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
+  // The main wheel is sized to fill the available width of its column
+  // (layout3__center) rather than a fixed pixel size, so the two-column
+  // Recommendations/wheel split (see index.css, .layout3) makes full use
+  // of whichever half of the screen the wheel gets.
+  const wheelWrapRef = useRef<HTMLDivElement>(null);
+  const [wheelSize, setWheelSize] = useState(320);
 
   useEffect(() => {
     document.documentElement.lang = i18n.resolvedLanguage ?? "en";
   }, [i18n.resolvedLanguage]);
+
+  useEffect(() => {
+    const el = wheelWrapRef.current;
+    if (!el) return;
+    const applyWidth = (width: number) => {
+      const target = Math.floor(width - RING_PAD * 2);
+      setWheelSize(Math.min(MAX_WHEEL_SIZE, Math.max(MIN_WHEEL_SIZE, target)));
+    };
+    applyWidth(el.clientWidth);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        applyWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const fetchRecommendations = async (itemId: number, sch: string) => {
     try {
@@ -151,7 +169,11 @@ export default function App() {
       ? recs.circles.map(toWheelCircle).filter((c): c is WheelCircle => c !== null)
       : circles;
 
-  const [primary, ...secondary] = displayCircles;
+  // Secondary circles no longer render here - they're shown inline next
+  // to their matching Recommendations section instead (see
+  // RecommendationsPanel.tsx). Only the top-ranked circle stays as the
+  // large centered wheel.
+  const [primary] = displayCircles;
 
   return (
     <>
@@ -208,15 +230,17 @@ export default function App() {
           </aside>
 
           <main className="layout3__center">
-            {primary && (
-              <Wheel
-                key={`${primary.axis_x.pc}-${primary.axis_y.pc}`}
-                circle={primary}
-                size={320}
-                title={selected?.title}
-                overlays={findRecCircle(primary, recs)?.angles}
-              />
-            )}
+            <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
+              {primary && (
+                <Wheel
+                  key={`${primary.axis_x.pc}-${primary.axis_y.pc}`}
+                  circle={primary}
+                  size={wheelSize}
+                  title={selected?.title}
+                  overlays={findRecCircle(primary, recs)?.angles}
+                />
+              )}
+            </div>
             {selected && (
               <div className="card">
                 <div className="card__title">{selected.title}</div>
@@ -236,21 +260,6 @@ export default function App() {
               </div>
             )}
           </main>
-
-          <aside className="layout3__right">
-            {secondary.length > 0 && (
-              <div className="wheel-row__secondary">
-                {secondary.map((c) => (
-                  <Wheel
-                    key={`${c.axis_x.pc}-${c.axis_y.pc}`}
-                    circle={c}
-                    size={140}
-                    overlays={findRecCircle(c, recs)?.angles}
-                  />
-                ))}
-              </div>
-            )}
-          </aside>
         </div>
 
         <footer className="app__footer app__footer--slim">

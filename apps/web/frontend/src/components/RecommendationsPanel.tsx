@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { getPoster, RecItem, RecommendCircle } from "../api";
+import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
 import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
+import Wheel from "./Wheel";
 
 interface Props {
   circles: RecommendCircle[];
@@ -37,6 +38,13 @@ function circleTitle(c: RecommendCircle, lang: string): string {
   const ly = c.axis_y.labels[lang] ?? c.axis_y.labels.en;
   return `${lx.axis} · ${ly.axis}`;
 }
+
+// Pixel size for the small wheel drawn next to each section (including
+// the section for the primary/main circle, which otherwise would be the
+// only one without its own wheel here - the large centered wheel in
+// App.tsx shows the same point, just bigger). Matches the old
+// secondary-wheel size from the wheel-row layout this replaced.
+const SECTION_WHEEL_SIZE = 140;
 
 // Same bearing math as Wheel.tsx's recPoints: the reference's own compass
 // bearing (0 = top/north, clockwise) plus this scheme angle's relative
@@ -333,101 +341,111 @@ export default function RecommendationsPanel({
     <div className="rec-panel">
       <h2 className="recommendations__title">{t("recommendations.title")}</h2>
       <div className="rec-panel__list scroll-fade" ref={listRef}>
-        {populated.map((circle) => {
+                {populated.map((circle) => {
           const cKey = circleKey(circle);
           const bearing = circle.reference
             ? refCompassBearing(circle.reference.z_x, circle.reference.z_y)
             : 0;
+          const wheelCircle = toWheelCircle(circle);
 
           return (
             <section
               className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
               key={cKey}
             >
-              <div className="rec-circle__header">
-                <span className="rec-circle__badge">
-                  PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
-                </span>
-                <span className="rec-circle__title">{circleTitle(circle, lang)}</span>
-              </div>
+              <div className="rec-circle__layout">
+                {wheelCircle && (
+                  <div className="rec-circle__wheel">
+                    <Wheel circle={wheelCircle} size={SECTION_WHEEL_SIZE} overlays={circle.angles} />
+                  </div>
+                )}
+                <div className="rec-circle__content">
+                  <div className="rec-circle__header">
+                    <span className="rec-circle__badge">
+                      PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
+                    </span>
+                    <span className="rec-circle__title">{circleTitle(circle, lang)}</span>
+                  </div>
 
-              {circle.angles
-                .filter((a) => a.items.length > 0)
-                .map((angle) => {
-                  const key = `${cKey}-${angle.angle_deg}`;
-                  const isOpen = expanded.has(key);
-                  const [top, ...rest] = angle.items;
-                  const hasMore = rest.length > 0;
-                  const swatch = colorOnWheel(
-                    bearing + angle.angle_deg,
-                    circle.axis_x.colors.positive,
-                    circle.axis_x.colors.negative,
-                    circle.axis_y.colors.positive,
-                    circle.axis_y.colors.negative
-                  );
-                  const topCardKey = `${key}:top:${top.item_id}`;
+                  {circle.angles
+                    .filter((a) => a.items.length > 0)
+                    .map((angle) => {
+                      const key = `${cKey}-${angle.angle_deg}`;
+                      const isOpen = expanded.has(key);
+                      const [top, ...rest] = angle.items;
+                      const hasMore = rest.length > 0;
+                      const swatch = colorOnWheel(
+                        bearing + angle.angle_deg,
+                        circle.axis_x.colors.positive,
+                        circle.axis_x.colors.negative,
+                        circle.axis_y.colors.positive,
+                        circle.axis_y.colors.negative
+                      );
+                      const topCardKey = `${key}:top:${top.item_id}`;
 
-                  return (
-                    <div className="rec-angle" key={key}>
-                      <RecRow
-                        item={top}
-                        swatchColor={swatch}
-                        onSelectItem={onSelectItem}
-                        imdbUrlFor={imdbUrlFor}
-                        tmdbUrlFor={tmdbUrlFor}
-                        cardKey={topCardKey}
-                        isCardOpen={activeCard?.key === topCardKey}
-                        onCardEnter={openCard}
-                        onCardLeave={scheduleCloseCard}
-                        onCardToggle={toggleCard}
-                        trailing={
-                          hasMore ? (
-                            <button
-                              type="button"
-                              className={
-                                "rec-row__chevron" + (isOpen ? " rec-row__chevron--open" : "")
-                              }
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggle(key);
-                              }}
-                              aria-expanded={isOpen}
-                              aria-label={t("recommendations.showMore")}
-                            >
-                              ▾
-                            </button>
-                          ) : null
-                        }
-                      />
+                      return (
+                        <div className="rec-angle" key={key}>
+                          <RecRow
+                            item={top}
+                            swatchColor={swatch}
+                            onSelectItem={onSelectItem}
+                            imdbUrlFor={imdbUrlFor}
+                            tmdbUrlFor={tmdbUrlFor}
+                            cardKey={topCardKey}
+                            isCardOpen={activeCard?.key === topCardKey}
+                            onCardEnter={openCard}
+                            onCardLeave={scheduleCloseCard}
+                            onCardToggle={toggleCard}
+                            trailing={
+                              hasMore ? (
+                                <button
+                                  type="button"
+                                  className={
+                                    "rec-row__chevron" + (isOpen ? " rec-row__chevron--open" : "")
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggle(key);
+                                  }}
+                                  aria-expanded={isOpen}
+                                  aria-label={t("recommendations.showMore")}
+                                >
+                                  ▾
+                                </button>
+                              ) : null
+                            }
+                          />
 
-                      {hasMore && (
-                        <div className={"rec-more" + (isOpen ? " rec-more--open" : "")}>
-                          <div className="rec-more__inner">
-                            {rest.map((it) => {
-                              const cardKey = `${key}:${it.item_id}`;
-                              return (
-                                <RecRow
-                                  key={it.item_id}
-                                  item={it}
-                                  swatchColor={swatch}
-                                  onSelectItem={onSelectItem}
-                                  imdbUrlFor={imdbUrlFor}
-                                  tmdbUrlFor={tmdbUrlFor}
-                                  cardKey={cardKey}
-                                  isCardOpen={activeCard?.key === cardKey}
-                                  onCardEnter={openCard}
-                                  onCardLeave={scheduleCloseCard}
-                                  onCardToggle={toggleCard}
-                                  compact
-                                />
-                              );
-                            })}
-                          </div>
+                          {hasMore && (
+                            <div className={"rec-more" + (isOpen ? " rec-more--open" : "")}>
+                              <div className="rec-more__inner">
+                                {rest.map((it) => {
+                                  const cardKey = `${key}:${it.item_id}`;
+                                  return (
+                                    <RecRow
+                                      key={it.item_id}
+                                      item={it}
+                                      swatchColor={swatch}
+                                      onSelectItem={onSelectItem}
+                                      imdbUrlFor={imdbUrlFor}
+                                      tmdbUrlFor={tmdbUrlFor}
+                                      cardKey={cardKey}
+                                      isCardOpen={activeCard?.key === cardKey}
+                                      onCardEnter={openCard}
+                                      onCardLeave={scheduleCloseCard}
+                                      onCardToggle={toggleCard}
+                                      compact
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                </div>
+              </div>
             </section>
           );
         })}

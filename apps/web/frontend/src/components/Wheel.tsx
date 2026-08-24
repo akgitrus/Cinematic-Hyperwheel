@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RecAngle, WheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
@@ -22,7 +22,10 @@ const COMPACT_BELOW = 220;
 // Otherwise the curved labels would overlap the "mood" conic gradient and
 // blend with it. Compact wheels use a smaller fixed margin because their
 // ring labels are shortened to a single "/" segment.
-const RING_PAD = 36;
+// Exported so callers (e.g. App.tsx, sizing the main wheel to fill its
+// column) can size a wheel wrapper knowing how much of it is ring
+// padding vs. the actual disc.
+export const RING_PAD = 36;
 
 // Ring geometry for the main (non-compact) wheel: all four pole labels
 // (axis X negative/positive, axis Y negative/positive) sit on a single ring
@@ -81,6 +84,14 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   const { t, i18n } = useTranslation();
   const [activeLabel, setActiveLabel] = useState<null | string>(null);
   const [activeOverlay, setActiveOverlay] = useState<number | null>(null);
+  // Unique per mounted Wheel instance - the axis pair alone (pid) is NOT
+  // enough: the same (pc_x, pc_y) can now render twice at once (the main
+  // wheel in App.tsx and its duplicate small wheel in the primary
+  // Recommendations section both show the primary circle), and SVG
+  // <path> ids must be unique per document or <textPath href="#..."> on
+  // one instance can resolve to the OTHER instance's (differently
+  // sized/positioned) arc.
+  const uid = useId();
   const compact = size < COMPACT_BELOW;
   const halfBox = size / 2;
   const pad = compact ? 20 : RING_PAD;
@@ -96,7 +107,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
   // compact (secondary) wheels the ring uses a shorter radius and shortened
   // labels (first "/" segment) so they fit the small disc.
   const ringR = halfBox + (compact ? 8 : 16);
-  const pid = `${circle.axis_x.pc}-${circle.axis_y.pc}`;
+  const pid = `${uid}-${circle.axis_x.pc}-${circle.axis_y.pc}`;
   const idXNeg = `ring-${pid}-xneg`;
   const idXPos = `ring-${pid}-xpos`;
   const idYNeg = `ring-${pid}-yneg`;

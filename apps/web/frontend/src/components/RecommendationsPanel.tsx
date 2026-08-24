@@ -280,7 +280,7 @@ export default function RecommendationsPanel({
 
   const scheduleCloseCard = () => {
     if (!canHover) return;
-    
+
     cancelPendingClose();
     closeTimerRef.current = window.setTimeout(() => setActiveCard(null), 200);
   };
@@ -506,7 +506,7 @@ function RecRow({
       onMouseLeave={onCardLeave}
       onClick={(e) => onCardToggle(cardKey, item, e.currentTarget)}
     >
-      <span className="rec-row__rank">{item.rank}</span>
+      {/* <span className="rec-row__rank">{item.rank}</span> */}
       <span
         className="rec-row__swatch"
         style={{ background: swatchColor, color: swatchColor }}
@@ -531,7 +531,7 @@ function RecRow({
           </span>
         )}
       </div>
-      <a
+      {/* <a
         className="rec-row__extlink rec-row__extlink--imdb"
         href={imdbUrlFor(item)}
         target="_blank"
@@ -552,7 +552,7 @@ function RecRow({
         onClick={(e) => e.stopPropagation()}
       >
         TMDB
-      </a>
+      </a> */}
       {trailing}
     </div>
   );

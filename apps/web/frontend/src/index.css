@@ -393,7 +393,7 @@ body {
    independently interactive (title link, both external links, chevron). */
 .rec-row {
   display: grid;
-  grid-template-columns: 18px 8px 1fr auto auto auto;
+  grid-template-columns: /*18px */8px 1fr auto auto auto;
   align-items: center;
   column-gap: 10px;
   padding: 6px 2px;

@@ -449,41 +449,10 @@ export default function RecommendationsPanel({
   const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
   const listRef = useRef<HTMLDivElement>(null);
-  // One ref per rendered <section>, keyed by circleKey - used only to
-  // preserve scroll position across a stack/unstack toggle (see
-  // handleToggleUnstack below), since that toggle changes every
-  // section's height at once and a plain "keep the same pixel offset"
-  // would otherwise land the user on a effectively random section.
-  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
-  // Stable ref callback per section key - without this, an inline arrow
-  // function passed to `ref` gets torn down and recreated on EVERY
-  // re-render (a well-known React gotcha), which meant sectionRefs (a
-  // Map) had its keys repeatedly deleted and re-set by unrelated
-  // re-renders (hover cards, poster loads, etc.) - and Map re-insertion
-  // moves a key to the END of iteration order. That silently scrambled
-  // "iterate the Map" as a stand-in for "iterate in document order",
-  // which only self-corrected once every section re-rendered together
-  // (i.e. after the first stack/unstack toggle) - see
-  // handleToggleUnstack below, which no longer relies on Map order at
-  // all, but this still avoids the pointless churn.
-  const sectionRefCallbacks = useRef<Map<string, (el: HTMLElement | null) => void>>(new Map());
-  const getSectionRef = (key: string) => {
-    let cb = sectionRefCallbacks.current.get(key);
-    if (!cb) {
-      cb = (el) => {
-        if (el) sectionRefs.current.set(key, el);
-        else sectionRefs.current.delete(key);
-      };
-      sectionRefCallbacks.current.set(key, cb);
-    }
-    return cb;
-  };
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
   // Only circles that actually turned up at least one recommendation
-  // anywhere across their angles are worth showing. Computed here
-  // (rather than just before the return) so handleToggleUnstack can
-  // walk sections in this exact order too.
+  // anywhere across their angles are worth showing.
   const populated = circles.filter((c) => c.angles.some((a) => a.items.length > 0));
   
   // Reactive version of the MOBILE_BREAKPOINT check (resize/orientation
@@ -496,67 +465,15 @@ export default function RecommendationsPanel({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Mobile-only: whether every section uses the wheel-above-list layout
-  // instead of the default wheel-with-list-overlaid-on-it. One switch
-  // for the whole panel, not per section (see .rec-panel__toolbar).
+  // Mobile-only: whether every section uses the "stacked" layout
+  // (list fully below the wheel) instead of the default "peek" layout
+  // (list pulled up over the wheel's lower edge). One switch for the
+  // whole panel (see .rec-panel__toolbar). The transition itself is a
+  // pure CSS animation (see .rec-circle__mobile--peek/--stacked in
+  // index.css) - overflow-anchor on the scroll container (also in
+  // index.css) is what keeps the user's scroll position visually
+  // stable while it plays
   const [unstacked, setUnstacked] = useState(false);
-
-  // Toggling `unstacked` changes every section's height at once (the
-  // overlay layout is much shorter than the stacked one) - if we just
-  // flip the state, the scroll container keeps its previous PIXEL
-  // offset, which after a height change generally points at a
-  // different section than the one the user was actually looking at.
-  // Instead: find whichever section is currently at (or just above) the
-  // top of the visible list, remember how far into it the user had
-  // scrolled, flip the layout, then in the next paint re-scroll so that
-  // same section sits at the same offset again.
-  const handleToggleUnstack = () => {
-    const listEl = listRef.current;
-    if (!listEl) {
-      setUnstacked((v) => !v);
-      return;
-    }
-
-    const listTop = listEl.getBoundingClientRect().top;
-    let anchorKey: string | null = null;
-    let anchorOffset = 0;
-    // Walk sections in their actual document order (`populated`), NOT
-    // sectionRefs.current's own iteration order - see the comment on
-    // sectionRefCallbacks above for why the Map's order can't be
-    // trusted for this.
-    for (const circle of populated) {
-      const key = circleKey(circle);
-      const el = sectionRefs.current.get(key);
-      if (!el) continue;
-      const offset = el.getBoundingClientRect().top - listTop;
-      // Last section whose top is at or above the list's own top edge -
-      // i.e. the section currently "in view" at the top of the list.
-      if (offset <= 0 || anchorKey === null) {
-        anchorKey = key;
-        anchorOffset = offset;
-      } else {
-        break;
-      }
-    }
-
-    setUnstacked((v) => !v);
-
-    if (anchorKey !== null) {
-      const key = anchorKey;
-      const offset = anchorOffset;
-      // Wait for the toggled layout to actually paint before measuring
-      // the section's new position - a single rAF after the state
-      // update is enough since this is a synchronous layout change, not
-      // something waiting on images/network.
-      requestAnimationFrame(() => {
-        const el = sectionRefs.current.get(key);
-        const list = listRef.current;
-        if (!el || !list) return;
-        const newTop = el.getBoundingClientRect().top - list.getBoundingClientRect().top;
-        list.scrollTop += newTop - offset;
-      });
-    }
-  };
 
   // Fill-width sizing for the per-section wheel: measures the
   // scrollable list's own width and sizes the wheel to match it,
@@ -580,16 +497,14 @@ export default function RecommendationsPanel({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  // Reset UI state tied to a specific movie/scheme selection. Does NOT
-  // touch sectionRefs/sectionRefCallbacks: those stay in sync with the
-  // DOM automatically via each section's own mount/unmount ref callback,
-  // and clearing them here - since this effect runs AFTER the commit
-  // that just populated them (useEffect fires post-paint) - was wiping
-  // out freshly-attached refs before the user could ever use them,
-  // making the very first stack/unstack toggle after any selection run
-  // with no anchor at all (see handleToggleUnstack) and jump
-  // unpredictably; only a later, unrelated re-render (the toggle itself)
-  // would repopulate the map and mask the bug from then on.
+
+  // Overlap amount for the "peek" layout - how far the list rides up
+  // over the wheel's lower edge, as a fraction of the wheel's own
+  // current size (fillWheelSize) rather than a fixed pixel constant, so
+  // it scales sensibly across viewport widths.
+  const wheelPeek = Math.round(fillWheelSize * 0.34);
+
+  // Reset UI state tied to a specific movie/scheme selection.
   useEffect(() => {
     closeCardNow();
     setUnstacked(false);
@@ -676,7 +591,7 @@ export default function RecommendationsPanel({
           <button
             type="button"
             className="rec-circle__stack-toggle"
-            onClick={handleToggleUnstack}
+            onClick={() => setUnstacked((v) => !v)}
             title={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
             aria-label={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
           >
@@ -716,7 +631,6 @@ export default function RecommendationsPanel({
               <section
                 className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
                 key={cKey}
-                ref={getSectionRef(cKey)}
               >
                 <div className="rec-circle__layout">
                   {wheelCircle && (
@@ -730,36 +644,32 @@ export default function RecommendationsPanel({
             );
           }
 
-          // Mobile: driven by the single panel-wide `unstacked` switch
-          // (see the toggle button in the JSX below, rendered once above .rec-panel__list)
+          // Mobile: same DOM in both states, only a modifier class (and
+          // --wheel-peek) changes - see .rec-circle__mobile* in
+          // index.css for why this needs to stay structurally identical
+          // (it's what makes the switch an actual CSS transition).
           return (
             <section
               className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
               key={cKey}
-              ref={getSectionRef(cKey)}
             >
-              {unstacked ? (
-                <div className="rec-circle__stacked">
-                  {wheelCircle && (
-                    <div className="rec-circle__wheel">
-                      <Wheel circle={wheelCircle} size={fillWheelSize} overlays={circle.angles} />
-                    </div>
-                  )}
-                  <div className="rec-circle__content">{angleSections}</div>
-                </div>
-              ) : (
-                <div className="rec-circle__overlay">
-                  {wheelCircle && (
-                    <Wheel
-                      circle={wheelCircle}
-                      size={fillWheelSize}
-                      overlays={circle.angles}
-                      showReadout={false}
-                    />
-                  )}
-                  <div className="rec-circle__overlay-list">{angleSections}</div>
-                </div>
-              )}
+              <div
+                className={
+                  "rec-circle__mobile" +
+                  (unstacked ? " rec-circle__mobile--stacked" : " rec-circle__mobile--peek")
+                }
+                style={{ "--wheel-peek": `${wheelPeek}px` } as CSSProperties}
+              >
+                {wheelCircle && (
+                  <Wheel
+                    circle={wheelCircle}
+                    size={fillWheelSize}
+                    overlays={circle.angles}
+                    showReadout={false}
+                  />
+                )}
+                <div className="rec-circle__mobile-list">{angleSections}</div>
+              </div>
             </section>
           );
         })}

@@ -356,6 +356,14 @@ body {
   max-height: 640px;
   overflow-y: auto;
   padding-right: 4px;
+  /* Native scroll anchoring: keeps whatever section is currently
+     visible in place while sections ABOVE it in the list change height
+     (e.g. during the stack/unstack margin-top transition below) -
+     without this, a layout change above the viewport just silently
+     shifts everything the user is looking at. `auto` is actually the
+     browser default already, set explicitly so it can't be silently
+     disabled by an ancestor's `overflow-anchor: none`. */
+  overflow-anchor: auto;
 }
 
 /* Flat sections, no border/background box - separated only by a hairline
@@ -402,33 +410,6 @@ body {
   border-color: var(--accent);
 }
 
-/* --- Default layout: wheel fills the section, angle list overlaid on
-   its lower edge with a semi-transparent scrim --- */
-.rec-circle__overlay {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-.rec-circle__overlay-list {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 14px 10px;
-  border-radius: 16px 16px 0 0;
-  background: linear-gradient(
-    to top,
-    rgba(10, 13, 20, 0.88) 0%,
-    rgba(10, 13, 20, 0.8) 55%,
-    rgba(10, 13, 20, 0) 100%
-  );
-}
-
 /* Primary circle is marked by a colored rule on the left and a brighter
    title, not by a surrounding box. */
 .rec-circle--primary {
@@ -455,16 +436,63 @@ body {
   min-width: 0;
 }
 
-/* Mobile "unstacked" layout only (see isUnstacked branch) - wheel above
-   a full-width list, both filling the section's width. */
-.rec-circle__stacked {
+/* Mobile-only (see isNarrow in RecommendationsPanel.tsx): wheel on top,
+   list below, ALWAYS in normal document flow - both the "peek" (list
+   pulled up over the wheel's lower edge, default) and "stacked" (list
+   pushed fully below the wheel) states use the exact same DOM/classes,
+   just a modifier class - so switching between them is a genuine,
+   continuous CSS transition (margin-top + a scrim's opacity), not a
+   discrete layout swap. position:absolute can't be interpolated by a
+   transition at all, which is why the list never uses it here. */
+.rec-circle__mobile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-}
-.rec-circle__stacked .rec-circle__content {
   width: 100%;
+}
+.rec-circle__mobile-list {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px 10px;
+  border-radius: 16px 16px 0 0;
+  transition: margin-top 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Scrim as a separate layer so its visibility fades via `opacity`
+   (smoothly animatable) instead of trying to transition the
+   `background` shorthand itself between a gradient and transparent -
+   browsers don't interpolate gradients meaningfully, so that would just
+   pop instead of fade. */
+.rec-circle__mobile-list::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    to top,
+    rgba(10, 13, 20, 0.88) 0%,
+    rgba(10, 13, 20, 0.8) 55%,
+    rgba(10, 13, 20, 0) 100%
+  );
+  opacity: 1;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+.rec-circle__mobile--peek .rec-circle__mobile-list {
+  /* --wheel-peek is set inline per render from fillWheelSize (see
+     RecommendationsPanel.tsx) - the overlap should scale with the
+     wheel's own current size, not be a fixed pixel constant. */
+  margin-top: calc(-1 * var(--wheel-peek, 90px));
+}
+.rec-circle__mobile--stacked .rec-circle__mobile-list {
+  margin-top: 10px;
+}
+.rec-circle__mobile--stacked .rec-circle__mobile-list::before {
+  opacity: 0;
 }
 
 .rec-angle + .rec-angle {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
@@ -21,6 +21,13 @@ interface Props {
    * shape as imdbUrlFor, backed by tmdbId instead of imdbId.
    */
   tmdbUrlFor?: (item: RecItem) => string;
+  /**
+   * Called whenever the scroll-synced "current" circle changes (see the
+   * scrollspy effect below) - lets a parent mirror that circle's data
+   * into a wheel rendered elsewhere (App.tsx's central wheel). Only
+   * fires on the desktop layout, where that wheel actually exists.
+   */
+  onActiveCircleChange?: (circle: RecommendCircle | null) => void;
 }
 
 function circleKey(c: RecommendCircle): string {
@@ -443,6 +450,7 @@ export default function RecommendationsPanel({
   circles,
   imdbUrlFor = (item) => (item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)),
   tmdbUrlFor = (item) => (item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)),
+  onActiveCircleChange,
 }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -452,8 +460,13 @@ export default function RecommendationsPanel({
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
   // Only circles that actually turned up at least one recommendation
-  // anywhere across their angles are worth showing.
-  const populated = circles.filter((c) => c.angles.some((a) => a.items.length > 0));
+  // anywhere across their angles are worth showing. Memoized so the
+  // scrollspy effect below only re-runs when `circles` itself changes,
+  // not on every render.
+  const populated = useMemo(
+    () => circles.filter((c) => c.angles.some((a) => a.items.length > 0)),
+    [circles]
+  );
   
   // Reactive version of the MOBILE_BREAKPOINT check (resize/orientation
   // change matter here, unlike the one-off canHover capability check
@@ -464,6 +477,92 @@ export default function RecommendationsPanel({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+  
+  // --- Scroll-synced "active" circle (desktop only) --------------------
+  // sectionRefs: DOM node for each rendered .rec-circle section, keyed by
+  // circleKey - populated via the ref callback in the desktop render
+  // branch below.
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  // The viewport line (px from top) a section's own top edge must cross
+  // to count as "current". NOT a hardcoded constant matching some other
+  // element's CSS - see the layout effect below for where it comes from.
+  const activeLineRef = useRef<number | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+
+  // Captures the tracking line from the FIRST item's own on-screen
+  // position at the moment this list first renders for the current
+  // selection, and marks it active immediately. This is what guarantees,
+  // by construction rather than as a special case, that circle #1 is
+  // active right when the list appears: the line IS circle #1's own
+  // position at that instant, so nothing needs to coincidentally match a
+  // separate constant (e.g. the sticky wheel's own `top` offset).
+  // useLayoutEffect (not useEffect) so this runs before the browser
+  // paints - no one-frame flash of "no circle active".
+  useLayoutEffect(() => {
+    if (isNarrow || populated.length === 0) {
+      activeLineRef.current = null;
+      setActiveKey(null);
+      return;
+    }
+    const firstKey = circleKey(populated[0]);
+    const firstEl = sectionRefs.current.get(firstKey);
+    activeLineRef.current = firstEl ? firstEl.getBoundingClientRect().top : null;
+    setActiveKey(firstKey);
+  }, [populated, isNarrow]);
+
+  // On every scroll (rAF-throttled), find the LAST section whose top has
+  // crossed the captured line - i.e. whichever section is now sitting at
+  // (or above) the place circle #1 originally occupied. Falls back to
+  // circle #1 whenever nothing has crossed the line yet, which is
+  // exactly the case when the page is back at its starting scroll
+  // position - so scrolling back up re-activates circle #1 for free,
+  // without a separate "are we at the top?" check.
+  useEffect(() => {
+    if (isNarrow || populated.length === 0) return;
+
+    let scheduled = false;
+    const computeActive = () => {
+      scheduled = false;
+      const line = activeLineRef.current;
+      if (line == null) return;
+
+      let next: string | null = null;
+      for (const c of populated) {
+        const key = circleKey(c);
+        const el = sectionRefs.current.get(key);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) {
+          next = key;
+        } else {
+          break; // populated is already top-to-bottom document order
+        }
+      }
+      if (next == null) next = circleKey(populated[0]);
+      setActiveKey((prev) => (prev === next ? prev : next));
+    };
+
+    const onScroll = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(computeActive);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [populated, isNarrow]);
+
+  // Mirror the active circle up to the parent - drives the big central
+  // wheel in App.tsx. Separate effect (rather than calling the callback
+  // inline above) so it re-fires correctly regardless of which of the
+  // two effects above actually changed activeKey.
+  useEffect(() => {
+    if (!onActiveCircleChange) return;
+    onActiveCircleChange(populated.find((c) => circleKey(c) === activeKey) ?? null);
+  }, [activeKey, populated, onActiveCircleChange]);
 
   // Mobile-only: whether every section uses the "stacked" layout
   // (list fully below the wheel) instead of the default "peek" layout
@@ -604,6 +703,10 @@ export default function RecommendationsPanel({
       <div className="rec-panel__list scroll-fade" ref={listRef}>
         {populated.map((circle) => {
           const cKey = circleKey(circle);
+          // Desktop: driven by scroll position (activeKey). Mobile: the
+          // scrollspy above is a no-op there (isNarrow short-circuits both
+          // effects), so this stays exactly the old server-driven flag.
+          const isPrimaryStyle = isNarrow ? circle.primary : cKey === activeKey;
           const bearing = circle.reference
             ? refCompassBearing(circle.reference.z_x, circle.reference.z_y)
             : 0;
@@ -629,8 +732,12 @@ export default function RecommendationsPanel({
           if (!isNarrow) {
             return (
               <section
-                className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
+                className={"rec-circle" + (isPrimaryStyle ? " rec-circle--primary" : "")}
                 key={cKey}
+                ref={(el) => {
+                  if (el) sectionRefs.current.set(cKey, el);
+                  else sectionRefs.current.delete(cKey);
+                }}
               >
                 <div className="rec-circle__layout">
                   {wheelCircle && (
@@ -650,7 +757,7 @@ export default function RecommendationsPanel({
           // (it's what makes the switch an actual CSS transition).
           return (
             <section
-              className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
+              className={"rec-circle" + (isPrimaryStyle ? " rec-circle--primary" : "")}
               key={cKey}
             >
               <div

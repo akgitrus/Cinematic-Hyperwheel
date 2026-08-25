@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SearchBar from "./components/SearchBar";
-import Wheel, { RING_PAD } from "./components/Wheel";
+import { RING_PAD } from "./components/Wheel";
+import WheelStack from "./components/WheelStack";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import RecommendationsPanel from "./components/RecommendationsPanel";
 import AboutModal from "./components/AboutModal";
@@ -33,6 +34,12 @@ function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): Rec
   );
 }
 
+// Matches `@media (max-width: 640px) { .layout3__wheel-wrap { display: none; } }`
+// in index.css - below this width the central wheel duplicates what the
+// first Recommendations section already shows (see RecommendationsPanel.tsx),
+// so it's skipped at the JS level too, not just visually hidden by CSS.
+const WHEEL_WRAP_MOBILE_BREAKPOINT = 640;
+
 // Minimum/maximum pixel size for the main wheel - it fills its column
 // (see the ResizeObserver effect below), but is clamped so it never
 // shrinks into compact mode (COMPACT_BELOW in Wheel.tsx) nor grows
@@ -48,6 +55,12 @@ export default function App() {
   const [scheme, setScheme] = useState<string>(SCHEMES[2]);
   const [recs, setRecs] = useState<RecommendResponse | null>(null);
   const [recError, setRecError] = useState<string | null>(null);
+  // The circle currently scrolled into view in the Recommendations list
+  // (see RecommendationsPanel's scrollspy effect) - mirrored into the
+  // big central wheel. Null until that effect fires (or on mobile,
+  // where it never fires); the render below falls back to the top-ranked
+  // circle in that case, same as before this feature existed.
+  const [activeCircle, setActiveCircle] = useState<RecommendCircle | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
   // The main wheel is sized to fill the available width of its column
@@ -57,11 +70,22 @@ export default function App() {
   const wheelWrapRef = useRef<HTMLDivElement>(null);
   const [wheelSize, setWheelSize] = useState(320);
 
+  const [isWheelWrapHidden, setIsWheelWrapHidden] = useState(
+    () => window.innerWidth <= WHEEL_WRAP_MOBILE_BREAKPOINT
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsWheelWrapHidden(window.innerWidth <= WHEEL_WRAP_MOBILE_BREAKPOINT);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   useEffect(() => {
     document.documentElement.lang = i18n.resolvedLanguage ?? "en";
   }, [i18n.resolvedLanguage]);
 
   useEffect(() => {
+    if (isWheelWrapHidden) return; // wrap isn't mounted on mobile - nothing to observe
     const el = wheelWrapRef.current;
     if (!el) return;
     const applyWidth = (width: number) => {
@@ -76,7 +100,7 @@ export default function App() {
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [isWheelWrapHidden]);
 
   const fetchRecommendations = async (itemId: number, sch: string) => {
     try {
@@ -102,11 +126,21 @@ export default function App() {
     }
   };
 
-  const handleSelect = async (movie: MovieHit) => {
+    const handleSelect = async (movie: MovieHit) => {
     setSelected(movie);
     setError(null);
     setRecError(null);
     setRecs(null);
+    setActiveCircle(null);
+    // A fresh reference means an entirely new Recommendations list - jump
+    // back to the top of the page so the list (and the big wheel, which
+    // mirrors the list's scroll position - see RecommendationsPanel.tsx's
+    // scrollspy) both start from item #1, instead of staying wherever the
+    // PREVIOUS reference's list happened to be scrolled to. Instant, not
+    // smooth: the rest of the UI (wheel, list, backdrop) is about to
+    // change outright anyway, so an animated scroll here would just be
+    // one more, out-of-sync motion on top of that.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     void fetchBackdrop(movie.item_id);
     // Keep the URL in sync with the current reference movie, so it's
     // shareable/bookmarkable and survives a page reload (see the
@@ -151,6 +185,7 @@ export default function App() {
         setRecError(null);
         setError(null);
         setBackdropUrl(null);
+        setActiveCircle(null);
       }
     };
     syncFromUrl();
@@ -168,12 +203,17 @@ export default function App() {
     recs && !recError
       ? recs.circles.map(toWheelCircle).filter((c): c is WheelCircle => c !== null)
       : circles;
-
+  // The big central wheel mirrors whichever Recommendations section is
+  // currently scrolled into view (see RecommendationsPanel's scrollspy
+  // effect); until that fires - no data yet, or mobile, where it never
+  // fires - fall back to the top-ranked circle, same as before.
+  const activeWheelCircle = activeCircle ? toWheelCircle(activeCircle) : null;
+  const [fallbackPrimary] = displayCircles;
   // Secondary circles no longer render here - they're shown inline next
   // to their matching Recommendations section instead (see
   // RecommendationsPanel.tsx). Only the top-ranked circle stays as the
   // large centered wheel.
-  const [primary] = displayCircles;
+  const primary = activeWheelCircle ?? fallbackPrimary ?? null;
 
   return (
     <>
@@ -225,24 +265,23 @@ export default function App() {
         {recError && <div className="app__error">{recError}</div>}
 
         <div className="layout3">
-          <aside className="layout3__left">
+           <aside className="layout3__left">
             {recs && !recError && (
-              <RecommendationsPanel circles={recs.circles} />
+              <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />
             )}
           </aside>
 
           <main className="layout3__center">
-            <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
-              {primary && (
-                <Wheel
-                  key={`${primary.axis_x.pc}-${primary.axis_y.pc}`}
+            {!isWheelWrapHidden && (
+              <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
+                <WheelStack
                   circle={primary}
                   size={wheelSize}
                   title={selected?.title}
-                  overlays={findRecCircle(primary, recs)?.angles}
+                  overlays={primary ? findRecCircle(primary, recs)?.angles : undefined}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </main>
         </div>
 

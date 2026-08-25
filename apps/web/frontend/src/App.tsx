@@ -199,7 +199,7 @@ export default function App() {
           <p>{t("app.tagline")}</p>
         </header>
 
-        <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} />
+        <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
 
         <div className="rec-form">
           <label className="rec-form__label" htmlFor="scheme">
@@ -241,24 +241,6 @@ export default function App() {
                 />
               )}
             </div>
-            {selected && (
-              <div className="card">
-                <div className="card__title">{selected.title}</div>
-                {selected.genres.length > 0 ? (
-                  <div className="card__genres">
-                    {selected.genres.map((g) => (
-                      <span key={g} className="card__genre-badge">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="card__row">
-                    {t("card.genres")}: {t("card.unknown")}
-                  </div>
-                )}
-              </div>
-            )}
           </main>
         </div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MovieHit, Span, searchMovies } from "../api";
+import "./SearchBar.css";
 
 interface Props {
   onSelect: (movie: MovieHit) => void;
@@ -11,6 +12,7 @@ interface Props {
    * loading a deep-linked /{item_id} URL.
    */
   selectedTitle?: string | null;
+  selectedMovie?: MovieHit | null;
 }
 
 // Renders `text` with the given character spans wrapped in <mark>.
@@ -34,11 +36,31 @@ function renderHighlighted(text: string, spans: Span[]) {
   return parts;
 }
 
-export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
+function SearchIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="6.5" />
+      <line x1="16" y1="16" x2="21" y2="21" />
+    </svg>
+  );
+}
+
+export default function SearchBar({ onSelect, selectedTitle = null, selectedMovie = null }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MovieHit[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(selectedMovie == null);
   const debounceRef = useRef<number | undefined>(undefined);
   // FIX: monotonically increasing id per fired request, so that when
   // several searches are in flight at once (typing faster than the
@@ -61,8 +83,18 @@ export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
     suppressNextSearchRef.current = selectedTitle;
     setQuery(selectedTitle);
     setOpen(false);
+    setEditing(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTitle]);
+
+  useEffect(() => {
+    if (selectedMovie) {
+      setQuery(selectedMovie.title);
+      setEditing(false);
+    } else {
+      setEditing(true);
+    }
+  }, [selectedMovie?.item_id, selectedMovie?.title]);
 
   useEffect(() => {
     window.clearTimeout(debounceRef.current);
@@ -76,7 +108,7 @@ export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
       return;
     }
 
-    if (query.trim().length < 2) {
+    if (query.trim().length < 2 || !editing) {
       setResults([]);
       return;
     }
@@ -95,7 +127,7 @@ export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
       }
     }, 250);
     return () => window.clearTimeout(debounceRef.current);
-  }, [query]);
+  }, [query, editing]);
 
   const handleSelect = (r: MovieHit) => {
     onSelect(r);
@@ -103,53 +135,137 @@ export default function SearchBar({ onSelect, selectedTitle = null }: Props) {
     // triggering it, so the effect above ignores it.
     suppressNextSearchRef.current = r.title;
     setQuery(r.title);
+    setEditing(false);
     setOpen(false);
   };
 
-  return (
-    <div className="search">
-      <input
-        className="search__input"
-        placeholder={t("search.placeholder")}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={(e) => {
-          // Select-all on focus, so clicking/tabbing into an already-filled
-          // field (e.g. after picking a result) lets the user immediately
-          // retype instead of having to manually clear it first.
-          e.target.select();
-          if (results.length) setOpen(true);
-        }}
-        onBlur={() => window.setTimeout(() => setOpen(false), 150)}
-      />
-      {open && results.length > 0 && (
-        <ul className="search__results">
-          {results.map((r) => (
-            <li
-              key={r.item_id}
-              className="search__result"
-              onMouseDown={() => handleSelect(r)}
-            >
-              <div className="search__result-main">
-                <span className="search__title">
-                  {renderHighlighted(r.title, r.titleHighlights)}
-                </span>
-              </div>
-              {/* Genres are shown but never highlighted - they aren't
-                  part of the match, only the title is (see search.py). */}
-              {r.genres.length > 0 && (
-                <div className="search__genres">
-                  {r.genres.map((g) => (
-                    <span key={g} className="search__genre-badge">
-                      {g}
+  const beginEditing = () => {
+    suppressNextSearchRef.current = query;
+    setEditing(true);
+    requestAnimationFrame(() => {
+      document.getElementById("reference-search-input")?.focus();
+      (document.getElementById("reference-search-input") as HTMLInputElement | null)?.select();
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setQuery(selectedMovie?.title ?? query);
+    setResults([]);
+    setOpen(false);
+  };
+
+  const renderSelectedContent = () => (
+    <div className="search__selected">
+      {editing ? (
+        <div className="search__editor">
+          <input
+            id="reference-search-input"
+            className="search__input search__selected-input"
+            placeholder={t("search.placeholder")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={(e) => {
+              // Select-all on focus, so clicking/tabbing into an already-filled
+              // field (e.g. after picking a result) lets the user immediately
+              // retype instead of having to manually clear it first.
+              e.target.select();
+              if (results.length) setOpen(true);
+            }}
+            onBlur={() => {
+              window.setTimeout(() => {
+                setOpen(false);
+                if (!selectedMovie) return;
+                if (document.activeElement?.closest(".search__editor")) return;
+                cancelEditing();
+              }, 150);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && selectedMovie) {
+                e.preventDefault();
+                cancelEditing();
+              }
+            }}
+          />
+          {open && results.length > 0 && (
+            <ul className="search__results">
+              {results.map((r) => (
+                <li
+                  key={r.item_id}
+                  className="search__result"
+                  onMouseDown={() => handleSelect(r)}
+                >
+                  <div className="search__result-main">
+                    <span className="search__title">
+                      {renderHighlighted(r.title, r.titleHighlights)}
                     </span>
-                  ))}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                  </div>
+                  {/* Genres are shown but never highlighted - they aren't
+                      part of the match, only the title is (see search.py). */}
+                  {r.genres.length > 0 && (
+                    <div className="search__genres">
+                      {r.genres.map((g) => (
+                        <span key={g} className="search__genre-badge">
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="search__selected-title"
+            onClick={beginEditing}
+            aria-label={t("search.placeholder")}
+          >
+            {selectedMovie?.title ?? query}
+          </button>
+          <button
+            type="button"
+            className="search__selected-search"
+            onClick={beginEditing}
+            aria-label={t("search.placeholder")}
+            title={t("search.placeholder")}
+          >
+            <SearchIcon />
+          </button>
+        </>
       )}
+      {selectedMovie && (
+        selectedMovie.genres.length > 0 ? (
+          <div className="search__selected-genres">
+            {selectedMovie.genres.map((g) => (
+              <span key={g} className="card__genre-badge">
+                {g}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="search__selected-row">
+            {t("card.genres")}: {t("card.unknown")}
+          </div>
+        )
+      )}
+    </div>
+  );
+
+  if (!selectedMovie) {
+    return (
+      <div className="search">
+        {renderSelectedContent()}
+      </div>
+    );
+  }
+
+  return (
+    <div className="search card search--selected">
+      {renderSelectedContent()}
     </div>
   );
 }

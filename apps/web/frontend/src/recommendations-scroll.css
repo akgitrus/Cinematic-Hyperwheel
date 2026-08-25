@@ -1,0 +1,4 @@
+.rec-panel__list {
+  max-height: none;
+  overflow-y: visible;
+}

@@ -5,7 +5,7 @@ import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
 import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
-import Wheel from "./Wheel";
+import Wheel, { RING_PAD } from "./Wheel";
 
 interface Props {
   circles: RecommendCircle[];
@@ -60,6 +60,34 @@ function WandIcon() {
   );
 }
 
+// Two small rectangles - overlapping in "stacked" (default: list
+// overlaid on the wheel) state, pulled apart in "unstacked" state -
+// mirrors what the button actually does to the layout.
+function StackToggleIcon({ unstacked }: { unstacked: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect
+        x={unstacked ? 1.5 : 3.5}
+        y={unstacked ? 2 : 3.5}
+        width="8"
+        height="8"
+        rx="1.5"
+        fill="currentColor"
+        opacity="0.55"
+      />
+      <rect
+        x={unstacked ? 6.5 : 4.5}
+        y={unstacked ? 7 : 4.5}
+        width="8"
+        height="8"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+    </svg>
+  );
+}
+
 /**
  * Replaces the old title hyperlink (which navigated the CURRENT tab to
  * this movie as the new reference) - instead opens the same deep link
@@ -85,12 +113,135 @@ function GetRecommendationsButton({ itemId, label }: { itemId: number; label: st
   );
 }
 
-// Pixel size for the small wheel drawn next to each section (including
-// the section for the primary/main circle, which otherwise would be the
-// only one without its own wheel here - the large centered wheel in
-// App.tsx shows the same point, just bigger). Matches the old
-// secondary-wheel size from the wheel-row layout this replaced.
-const SECTION_WHEEL_SIZE = 140;
+interface AngleSectionsProps {
+  circle: RecommendCircle;
+  cKey: string;
+  bearing: number;
+  expanded: Set<string>;
+  onToggleExpand: (key: string) => void;
+  activeCardKey: string | null;
+  onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
+  onCardLeave: () => void;
+  onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
+  imdbUrlFor: (item: RecItem) => string;
+  tmdbUrlFor: (item: RecItem) => string;
+}
+
+// The per-angle rows for one circle - factored out of RecommendationsPanel
+// so the exact same list can be dropped into either the default overlay
+// layout or the "unstacked" side-by-side/stacked layout without
+// duplicating this block.
+function AngleSections({
+  circle,
+  cKey,
+  bearing,
+  expanded,
+  onToggleExpand,
+  activeCardKey,
+  onCardEnter,
+  onCardLeave,
+  onCardToggle,
+  imdbUrlFor,
+  tmdbUrlFor,
+}: AngleSectionsProps) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {circle.angles
+        .filter((a) => a.items.length > 0)
+        .map((angle) => {
+          const key = `${cKey}-${angle.angle_deg}`;
+          const isOpen = expanded.has(key);
+          const [top, ...rest] = angle.items;
+          const hasMore = rest.length > 0;
+          const swatch = colorOnWheel(
+            bearing + angle.angle_deg,
+            circle.axis_x.colors.positive,
+            circle.axis_x.colors.negative,
+            circle.axis_y.colors.positive,
+            circle.axis_y.colors.negative
+          );
+          const topCardKey = `${key}:top:${top.item_id}`;
+
+          return (
+            <div className="rec-angle" key={key}>
+              <RecRow
+                item={top}
+                swatchColor={swatch}
+                angleLabel={formatAngle(angle.angle_deg)}
+                imdbUrlFor={imdbUrlFor}
+                tmdbUrlFor={tmdbUrlFor}
+                cardKey={topCardKey}
+                isCardOpen={activeCardKey === topCardKey}
+                onCardEnter={onCardEnter}
+                onCardLeave={onCardLeave}
+                onCardToggle={onCardToggle}
+                trailing={
+                  hasMore ? (
+                    <button
+                      type="button"
+                      className={"rec-row__expand" + (isOpen ? " rec-row__expand--open" : "")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleExpand(key);
+                      }}
+                      aria-expanded={isOpen}
+                      aria-label={
+                        isOpen ? t("recommendations.hide") : t("recommendations.more", { count: rest.length })
+                      }
+                      title={
+                        isOpen ? t("recommendations.hide") : t("recommendations.more", { count: rest.length })
+                      }
+                    >
+                      {isOpen ? "−" : `+${rest.length}`}
+                    </button>
+                  ) : null
+                }
+              />
+
+              {hasMore && (
+                <div className={"rec-more" + (isOpen ? " rec-more--open" : "")}>
+                  <div className="rec-more__inner">
+                    {rest.map((it) => {
+                      const itemCardKey = `${key}:${it.item_id}`;
+                      return (
+                        <RecRow
+                          key={it.item_id}
+                          item={it}
+                          swatchColor={swatch}
+                          imdbUrlFor={imdbUrlFor}
+                          tmdbUrlFor={tmdbUrlFor}
+                          cardKey={itemCardKey}
+                          isCardOpen={activeCardKey === itemCardKey}
+                          onCardEnter={onCardEnter}
+                          onCardLeave={onCardLeave}
+                          onCardToggle={onCardToggle}
+                          compact
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+    </>
+  );
+}
+
+// Default per-section wheel size: fills the available column width (see
+// the fillWheelSize ResizeObserver effect below) - used both by the
+// default overlay layout (angle-section list drawn over the wheel's
+// lower edge) and by the "unstacked" layout on narrow viewports (wheel
+// stacked above a full-width list, see .rec-circle__layout in
+// index.css). Clamped so it never shrinks below legibility nor grows
+// large enough to make a long list of sections unreasonably tall.
+const SECTION_WHEEL_MIN = 170;
+const SECTION_WHEEL_MAX = 380;
+// Fixed small wheel size for the "unstacked" layout on wide viewports,
+// where the wheel sits beside the list rather than above/behind it.
+const SECTION_WHEEL_UNSTACKED = 140;
 
 // Same bearing math as Wheel.tsx's recPoints: the reference's own compass
 // bearing (0 = top/north, clockwise) plus this scheme angle's relative
@@ -298,7 +449,152 @@ export default function RecommendationsPanel({
   const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
   const listRef = useRef<HTMLDivElement>(null);
+  // One ref per rendered <section>, keyed by circleKey - used only to
+  // preserve scroll position across a stack/unstack toggle (see
+  // handleToggleUnstack below), since that toggle changes every
+  // section's height at once and a plain "keep the same pixel offset"
+  // would otherwise land the user on a effectively random section.
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  // Stable ref callback per section key - without this, an inline arrow
+  // function passed to `ref` gets torn down and recreated on EVERY
+  // re-render (a well-known React gotcha), which meant sectionRefs (a
+  // Map) had its keys repeatedly deleted and re-set by unrelated
+  // re-renders (hover cards, poster loads, etc.) - and Map re-insertion
+  // moves a key to the END of iteration order. That silently scrambled
+  // "iterate the Map" as a stand-in for "iterate in document order",
+  // which only self-corrected once every section re-rendered together
+  // (i.e. after the first stack/unstack toggle) - see
+  // handleToggleUnstack below, which no longer relies on Map order at
+  // all, but this still avoids the pointless churn.
+  const sectionRefCallbacks = useRef<Map<string, (el: HTMLElement | null) => void>>(new Map());
+  const getSectionRef = (key: string) => {
+    let cb = sectionRefCallbacks.current.get(key);
+    if (!cb) {
+      cb = (el) => {
+        if (el) sectionRefs.current.set(key, el);
+        else sectionRefs.current.delete(key);
+      };
+      sectionRefCallbacks.current.set(key, cb);
+    }
+    return cb;
+  };
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
+  // Only circles that actually turned up at least one recommendation
+  // anywhere across their angles are worth showing. Computed here
+  // (rather than just before the return) so handleToggleUnstack can
+  // walk sections in this exact order too.
+  const populated = circles.filter((c) => c.angles.some((a) => a.items.length > 0));
+  
+  // Reactive version of the MOBILE_BREAKPOINT check (resize/orientation
+  // change matter here, unlike the one-off canHover capability check
+  // above) - drives the section wheel's fill-width sizing below.
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth <= MOBILE_BREAKPOINT);
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth <= MOBILE_BREAKPOINT);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Mobile-only: whether every section uses the wheel-above-list layout
+  // instead of the default wheel-with-list-overlaid-on-it. One switch
+  // for the whole panel, not per section (see .rec-panel__toolbar).
+  const [unstacked, setUnstacked] = useState(false);
+
+  // Toggling `unstacked` changes every section's height at once (the
+  // overlay layout is much shorter than the stacked one) - if we just
+  // flip the state, the scroll container keeps its previous PIXEL
+  // offset, which after a height change generally points at a
+  // different section than the one the user was actually looking at.
+  // Instead: find whichever section is currently at (or just above) the
+  // top of the visible list, remember how far into it the user had
+  // scrolled, flip the layout, then in the next paint re-scroll so that
+  // same section sits at the same offset again.
+  const handleToggleUnstack = () => {
+    const listEl = listRef.current;
+    if (!listEl) {
+      setUnstacked((v) => !v);
+      return;
+    }
+
+    const listTop = listEl.getBoundingClientRect().top;
+    let anchorKey: string | null = null;
+    let anchorOffset = 0;
+    // Walk sections in their actual document order (`populated`), NOT
+    // sectionRefs.current's own iteration order - see the comment on
+    // sectionRefCallbacks above for why the Map's order can't be
+    // trusted for this.
+    for (const circle of populated) {
+      const key = circleKey(circle);
+      const el = sectionRefs.current.get(key);
+      if (!el) continue;
+      const offset = el.getBoundingClientRect().top - listTop;
+      // Last section whose top is at or above the list's own top edge -
+      // i.e. the section currently "in view" at the top of the list.
+      if (offset <= 0 || anchorKey === null) {
+        anchorKey = key;
+        anchorOffset = offset;
+      } else {
+        break;
+      }
+    }
+
+    setUnstacked((v) => !v);
+
+    if (anchorKey !== null) {
+      const key = anchorKey;
+      const offset = anchorOffset;
+      // Wait for the toggled layout to actually paint before measuring
+      // the section's new position - a single rAF after the state
+      // update is enough since this is a synchronous layout change, not
+      // something waiting on images/network.
+      requestAnimationFrame(() => {
+        const el = sectionRefs.current.get(key);
+        const list = listRef.current;
+        if (!el || !list) return;
+        const newTop = el.getBoundingClientRect().top - list.getBoundingClientRect().top;
+        list.scrollTop += newTop - offset;
+      });
+    }
+  };
+
+  // Fill-width sizing for the per-section wheel: measures the
+  // scrollable list's own width and sizes the wheel to match it,
+  // accounting for RING_PAD (the pole-label ring drawn OUTSIDE the
+  // disc) plus a small buffer, so the ring is never clipped. Used by
+  // the default overlay layout on every viewport, and by the
+  // "unstacked" layout specifically on narrow ones (see
+  // .rec-circle__layout in index.css).
+  const [fillWheelSize, setFillWheelSize] = useState(SECTION_WHEEL_UNSTACKED);
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const apply = (width: number) => {
+      const target = Math.floor(width - RING_PAD * 2 - 12);
+      setFillWheelSize(Math.max(SECTION_WHEEL_MIN, Math.min(SECTION_WHEEL_MAX, target)));
+    };
+    apply(el.clientWidth);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) apply(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  // Reset UI state tied to a specific movie/scheme selection. Does NOT
+  // touch sectionRefs/sectionRefCallbacks: those stay in sync with the
+  // DOM automatically via each section's own mount/unmount ref callback,
+  // and clearing them here - since this effect runs AFTER the commit
+  // that just populated them (useEffect fires post-paint) - was wiping
+  // out freshly-attached refs before the user could ever use them,
+  // making the very first stack/unstack toggle after any selection run
+  // with no anchor at all (see handleToggleUnstack) and jump
+  // unpredictably; only a later, unrelated re-render (the toggle itself)
+  // would repopulate the map and mask the bug from then on.
+  useEffect(() => {
+    closeCardNow();
+    setUnstacked(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [circles]);
 
   const toggle = (key: string) => {
     setExpanded((prev) => {
@@ -369,123 +665,101 @@ export default function RecommendationsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCard]);
 
-  // Only circles that actually turned up at least one recommendation
-  // anywhere across their angles are worth showing.
-  const populated = circles.filter((c) => c.angles.some((a) => a.items.length > 0));
-
   if (populated.length === 0) return null;
 
   return (
     <div className="rec-panel">
-      <h2 className="recommendations__title">{t("recommendations.title")}</h2>
+      {/* <h2 className="recommendations__title">{t("recommendations.title")}</h2> */}
+
+      {isNarrow && (
+        <div className="rec-panel__toolbar">
+          <button
+            type="button"
+            className="rec-circle__stack-toggle"
+            onClick={handleToggleUnstack}
+            title={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
+            aria-label={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
+          >
+            <StackToggleIcon unstacked={unstacked} />
+            {unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
+          </button>
+        </div>
+      )}
+
       <div className="rec-panel__list scroll-fade" ref={listRef}>
-                {populated.map((circle) => {
+        {populated.map((circle) => {
           const cKey = circleKey(circle);
           const bearing = circle.reference
             ? refCompassBearing(circle.reference.z_x, circle.reference.z_y)
             : 0;
           const wheelCircle = toWheelCircle(circle);
 
+          const angleSections = (
+            <AngleSections
+              circle={circle}
+              cKey={cKey}
+              bearing={bearing}
+              expanded={expanded}
+              onToggleExpand={toggle}
+              activeCardKey={activeCard?.key ?? null}
+              onCardEnter={openCard}
+              onCardLeave={scheduleCloseCard}
+              onCardToggle={toggleCard}
+              imdbUrlFor={imdbUrlFor}
+              tmdbUrlFor={tmdbUrlFor}
+            />
+          );
+
+          // Desktop: fixed small wheel beside the list,
+          if (!isNarrow) {
+            return (
+              <section
+                className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
+                key={cKey}
+                ref={getSectionRef(cKey)}
+              >
+                <div className="rec-circle__layout">
+                  {wheelCircle && (
+                    <div className="rec-circle__wheel">
+                      <Wheel circle={wheelCircle} size={SECTION_WHEEL_UNSTACKED} overlays={circle.angles} />
+                    </div>
+                  )}
+                  <div className="rec-circle__content">{angleSections}</div>
+                </div>
+              </section>
+            );
+          }
+
+          // Mobile: driven by the single panel-wide `unstacked` switch
+          // (see the toggle button in the JSX below, rendered once above .rec-panel__list)
           return (
             <section
               className={"rec-circle" + (circle.primary ? " rec-circle--primary" : "")}
               key={cKey}
+              ref={getSectionRef(cKey)}
             >
-              <div className="rec-circle__layout">
-                {wheelCircle && (
-                  <div className="rec-circle__wheel">
-                    <Wheel circle={wheelCircle} size={SECTION_WHEEL_SIZE} overlays={circle.angles} />
-                  </div>
-                )}
-                <div className="rec-circle__content">
-
-                  {circle.angles
-                    .filter((a) => a.items.length > 0)
-                    .map((angle) => {
-                      const key = `${cKey}-${angle.angle_deg}`;
-                      const isOpen = expanded.has(key);
-                      const [top, ...rest] = angle.items;
-                      const hasMore = rest.length > 0;
-                      const swatch = colorOnWheel(
-                        bearing + angle.angle_deg,
-                        circle.axis_x.colors.positive,
-                        circle.axis_x.colors.negative,
-                        circle.axis_y.colors.positive,
-                        circle.axis_y.colors.negative
-                      );
-                      const topCardKey = `${key}:top:${top.item_id}`;
-
-                      return (
-                        <div className="rec-angle" key={key}>
-                          <RecRow
-                            item={top}
-                            swatchColor={swatch}
-                            angleLabel={formatAngle(angle.angle_deg)}
-                            imdbUrlFor={imdbUrlFor}
-                            tmdbUrlFor={tmdbUrlFor}
-                            cardKey={topCardKey}
-                            isCardOpen={activeCard?.key === topCardKey}
-                            onCardEnter={openCard}
-                            onCardLeave={scheduleCloseCard}
-                            onCardToggle={toggleCard}
-                            trailing={
-                              hasMore ? (
-                                <button
-                                  type="button"
-                                  className={
-                                    "rec-row__expand" + (isOpen ? " rec-row__expand--open" : "")
-                                  }
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggle(key);
-                                  }}
-                                  aria-expanded={isOpen}
-                                  aria-label={
-                                    isOpen
-                                      ? t("recommendations.hide")
-                                      : t("recommendations.more", { count: rest.length })
-                                  }
-                                  title={
-                                    isOpen
-                                      ? t("recommendations.hide")
-                                      : t("recommendations.more", { count: rest.length })
-                                  }
-                                >
-                                  {isOpen ? "−" : `+${rest.length}`}
-                                </button>
-                              ) : null
-                            }
-                          />
-
-                          {hasMore && (
-                            <div className={"rec-more" + (isOpen ? " rec-more--open" : "")}>
-                              <div className="rec-more__inner">
-                                {rest.map((it) => {
-                                  const cardKey = `${key}:${it.item_id}`;
-                                  return (
-                                    <RecRow
-                                      key={it.item_id}
-                                      item={it}
-                                      swatchColor={swatch}
-                                      imdbUrlFor={imdbUrlFor}
-                                      tmdbUrlFor={tmdbUrlFor}
-                                      cardKey={cardKey}
-                                      isCardOpen={activeCard?.key === cardKey}
-                                      onCardEnter={openCard}
-                                      onCardLeave={scheduleCloseCard}
-                                      onCardToggle={toggleCard}
-                                      compact
-                                    />
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+              {unstacked ? (
+                <div className="rec-circle__stacked">
+                  {wheelCircle && (
+                    <div className="rec-circle__wheel">
+                      <Wheel circle={wheelCircle} size={fillWheelSize} overlays={circle.angles} />
+                    </div>
+                  )}
+                  <div className="rec-circle__content">{angleSections}</div>
                 </div>
-              </div>
+              ) : (
+                <div className="rec-circle__overlay">
+                  {wheelCircle && (
+                    <Wheel
+                      circle={wheelCircle}
+                      size={fillWheelSize}
+                      overlays={circle.angles}
+                      showReadout={false}
+                    />
+                  )}
+                  <div className="rec-circle__overlay-list">{angleSections}</div>
+                </div>
+              )}
             </section>
           );
         })}

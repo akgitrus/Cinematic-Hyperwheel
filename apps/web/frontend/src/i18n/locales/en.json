@@ -24,6 +24,8 @@
   },
   "recommendations": {
     "title": "Recommendations",
+    "unstackAll": "Unstack",
+    "stackAll": "Stack",
     "more": "Show {{count}} more",
     "hide": "Hide",
     "getRecommendations": "Get recommendations",

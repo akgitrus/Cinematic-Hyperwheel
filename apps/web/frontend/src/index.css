@@ -207,6 +207,17 @@ body {
   align-items: center;
   gap: 16px;
 }
+
+/* The large main wheel duplicates what the first Recommendations
+   section already shows (see App.tsx) - on narrow viewports there's no
+   room for it next to the now full-width section wheels, so it's
+   dropped entirely rather than shrunk. The reference card stays. */
+@media (max-width: 640px) {
+  .layout3__wheel-wrap {
+    display: none;
+  }
+}
+
 /* Measured by App.tsx's ResizeObserver to size the main wheel to fill
    this column's actual width (see MIN_WHEEL_SIZE/MAX_WHEEL_SIZE in
    App.tsx and RING_PAD in Wheel.tsx). */
@@ -350,7 +361,6 @@ body {
 /* Flat sections, no border/background box - separated only by a hairline
    above each section (except the first) and generous vertical spacing,
    in the spirit of a plain editorial list rather than stacked cards. */
-
 .rec-circle {
   padding: 14px 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -358,6 +368,65 @@ body {
 .rec-circle:first-child {
   border-top: none;
   padding-top: 0;
+}
+
+/* Non-scrolling toolbar row between the "Recommendations" heading and
+   the scrollable section list - stays visible without scrolling back up,
+   unlike a per-section control would. Mobile only (see isNarrow in
+   RecommendationsPanel.tsx). */
+.rec-panel__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* --- Stack/unstack toggle --- */
+.rec-circle__stack-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+.rec-circle__stack-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- Default layout: wheel fills the section, angle list overlaid on
+   its lower edge with a semi-transparent scrim --- */
+.rec-circle__overlay {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.rec-circle__overlay-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px 10px;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(
+    to top,
+    rgba(10, 13, 20, 0.88) 0%,
+    rgba(10, 13, 20, 0.8) 55%,
+    rgba(10, 13, 20, 0) 100%
+  );
 }
 
 /* Primary circle is marked by a colored rule on the left and a brighter
@@ -371,9 +440,8 @@ body {
   color: var(--text);
 }
 
-/* Small per-circle wheel (left) + recommendations text (right), so each
-   section's wheel sits right next to the rows it belongs to instead of
-   in a separate column. */
+/* Desktop only (see !isNarrow branch in RecommendationsPanel.tsx) -
+   fixed small wheel beside the list. */
 .rec-circle__layout {
   display: flex;
   align-items: flex-start;
@@ -385,6 +453,18 @@ body {
 .rec-circle__content {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Mobile "unstacked" layout only (see isUnstacked branch) - wheel above
+   a full-width list, both filling the section's width. */
+.rec-circle__stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.rec-circle__stacked .rec-circle__content {
+  width: 100%;
 }
 
 .rec-angle + .rec-angle {
@@ -451,6 +531,20 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Stacked layout (see .rec-circle__overlay-list / .rec-circle__stacked above) frees up the row's
+   full width for text - let long titles wrap onto a second line
+   instead of truncating, now that there's room to actually read them. */
+@media (max-width: 640px) {
+  .rec-row__title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 .rec-row__meta {
   font-size: 10px;
   color: var(--muted);

@@ -24,6 +24,8 @@
   },
   "recommendations": {
     "title": "Рекомендации",
+    "unstackAll": "Разъединить",
+    "stackAll": "Наложить",
     "more": "Показать ещё {{count}}",
     "hide": "Скрыть",
     "getRecommendations": "Получить рекомендации",

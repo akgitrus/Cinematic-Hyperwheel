@@ -7,8 +7,12 @@ interface Props {
   circle: WheelCircle;
   size?: number;
   title?: string;
-  /** Optional recommendation overlay points (one per scheme angle). */
   overlays?: RecAngle[];
+  /** When false, suppresses the title/readout block below the disc even
+   * in non-compact mode - used when the wheel is a backdrop for an
+   * overlaid UI element (see RecommendationsPanel's angle-section
+   * overlay), where that text would just sit hidden underneath it. */
+  showReadout?: boolean;
 }
 
 // z-scores are unbounded in principle; clamp to a comfortable display range
@@ -80,7 +84,7 @@ function shortLabel(text: string): string {
   return (cut >= 0 ? text.slice(0, cut) : text).trim();
 }
 
-export default function Wheel({ circle, size = 320, title, overlays = [] }: Props) {
+export default function Wheel({ circle, size = 320, title, overlays = [], showReadout = true }: Props) {
   const { t, i18n } = useTranslation();
   const [activeLabel, setActiveLabel] = useState<null | string>(null);
   const [activeOverlay, setActiveOverlay] = useState<number | null>(null);
@@ -329,7 +333,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [] }: Prop
           </div>
         )}
       </div>
-      {!compact && (
+      {!compact && showReadout && (
         <div className="wheel__readout">
           {title && <div className="wheel__readout-title">{title}</div>}
           <div className="wheel__readout-axis">

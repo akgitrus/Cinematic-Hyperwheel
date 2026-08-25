@@ -1,0 +1,43 @@
+.sticky-controls {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  align-self: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.sticky-controls .search {
+  position: relative;
+}
+
+.sticky-controls .rec-form {
+  position: static;
+  transform: none;
+  background: transparent;
+}
+
+.layout3__center {
+  position: sticky;
+  top: 112px;
+  align-self: flex-start;
+  z-index: 18;
+}
+
+.hero-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-backdrop__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

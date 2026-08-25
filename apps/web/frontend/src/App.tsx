@@ -199,24 +199,26 @@ export default function App() {
           <p>{t("app.tagline")}</p>
         </header>
 
-        <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+        <div className="sticky-controls">
+          <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
 
-        <div className="rec-form">
-          <label className="rec-form__label" htmlFor="scheme">
-            {t("scheme.label")}
-          </label>
-          <select
-            id="scheme"
-            className="rec-form__select"
-            value={scheme}
-            onChange={(e) => handleSchemeChange(e.target.value)}
-          >
-            {SCHEMES.map((s) => (
-              <option key={s} value={s}>
-                {t(`scheme.${s}`)}
-              </option>
-            ))}
-          </select>
+          <div className="rec-form">
+            <label className="rec-form__label" htmlFor="scheme">
+              {t("scheme.label")}
+            </label>
+            <select
+              id="scheme"
+              className="rec-form__select"
+              value={scheme}
+              onChange={(e) => handleSchemeChange(e.target.value)}
+            >
+              {SCHEMES.map((s) => (
+                <option key={s} value={s}>
+                  {t(`scheme.${s}`)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {error && <div className="app__error">{error}</div>}

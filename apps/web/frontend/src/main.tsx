@@ -4,6 +4,7 @@ import App from "./App";
 import "./i18n";
 import "./index.css";
 import "./recommendations-scroll.css";
+import "./sticky-layout.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -1,3 +1,4 @@
+import "./WheelPointLabels.css";
 import { useMemo, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
 
@@ -250,6 +251,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               r={placement.reference ? 15 : 12}
               fill="transparent"
               stroke="none"
+              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
               style={{ pointerEvents: "auto", cursor: "default" }}
               onMouseEnter={() => setHoveredIndex(placement.index)}
               onMouseLeave={() => setHoveredIndex(null)}

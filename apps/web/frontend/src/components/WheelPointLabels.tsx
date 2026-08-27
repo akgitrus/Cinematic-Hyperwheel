@@ -259,7 +259,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 strokeWidth={1.5}
                 opacity={0.95}
                 style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${glowColor})`, pointerEvents: "none" }}
-              />
+              >
+                <animate attributeName="opacity" values="0.55;1;0.55" dur="1.4s" repeatCount="indefinite" />
+              </circle>
             )}
             {hovered && (
               <circle
@@ -269,7 +271,26 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 fill={glowColor}
                 opacity={0.95}
                 style={{ filter: `drop-shadow(0 0 7px ${glowColor})`, pointerEvents: "none" }}
-              />
+              >
+                <animate attributeName="opacity" values="0.65;1;0.65" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            )}
+            {hovered && (
+              <text
+                x={labelX}
+                y={labelY + LABEL_FONT}
+                fill={glowColor}
+                fontFamily="Inter, system-ui, sans-serif"
+                fontSize={LABEL_FONT}
+                fontWeight={placement.reference ? 650 : 450}
+                textAnchor="start"
+                dominantBaseline="alphabetic"
+                pointerEvents="none"
+                style={{ filter: `drop-shadow(0 0 7px ${glowColor})` }}
+              >
+                {point.title}
+                <animate attributeName="opacity" values="0.45;1;0.45" dur="1.4s" repeatCount="indefinite" />
+              </text>
             )}
             <text
               x={labelX}
@@ -281,8 +302,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               textAnchor="start"
               dominantBaseline="alphabetic"
               style={{
-                filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
-                transition: "fill 120ms ease, filter 120ms ease",
+                transition: "fill 120ms ease",
                 pointerEvents: "auto",
                 cursor: "default",
               }}

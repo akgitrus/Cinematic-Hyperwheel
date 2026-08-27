@@ -237,17 +237,17 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         return (
           <g
             key={placement.index}
-            onMouseEnter={() => setHoveredIndex(placement.index)}
-            onMouseLeave={() => setHoveredIndex(null)}
-            style={{ pointerEvents: "auto", cursor: "default" }}
+            style={{ pointerEvents: "none", cursor: "default" }}
           >
-            <rect
-              x={placement.x}
-              y={placement.y}
-              width={placement.width}
-              height={placement.height}
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={placement.reference ? 15 : 12}
               fill="transparent"
               stroke="none"
+              style={{ pointerEvents: "auto", cursor: "default" }}
+              onMouseEnter={() => setHoveredIndex(placement.index)}
+              onMouseLeave={() => setHoveredIndex(null)}
             />
             {hovered && (
               <circle
@@ -258,7 +258,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
                 strokeWidth={1.5}
                 opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${glowColor})` }}
+                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${glowColor})`, pointerEvents: "none" }}
               />
             )}
             {hovered && (
@@ -268,7 +268,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 r={4.5}
                 fill={glowColor}
                 opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 7px ${glowColor})` }}
+                style={{ filter: `drop-shadow(0 0 7px ${glowColor})`, pointerEvents: "none" }}
               />
             )}
             <text
@@ -283,7 +283,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               style={{
                 filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
                 transition: "fill 120ms ease, filter 120ms ease",
-                pointerEvents: "none",
+                pointerEvents: "auto",
+                cursor: "default",
               }}
             >
               {point.title}

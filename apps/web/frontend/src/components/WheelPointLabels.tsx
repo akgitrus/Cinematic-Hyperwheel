@@ -231,14 +231,12 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       {placements.map((placement) => {
         const point = points.find((item) => item.index === placement.index)!;
         const hovered = hoveredIndex === placement.index;
+        const dimmed = hoveredIndex !== null && !hovered;
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
         return (
-          <g
-            key={placement.index}
-            style={{ pointerEvents: "none", cursor: "default" }}
-          >
+          <g key={placement.index} style={{ pointerEvents: "none" }}>
             <circle
               cx={point.x}
               cy={point.y}
@@ -249,49 +247,68 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               onMouseEnter={() => setHoveredIndex(placement.index)}
               onMouseLeave={() => setHoveredIndex(null)}
             />
-            {hovered && (
+            {dimmed && (
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={placement.reference ? 14 : 11}
-                fill="none"
-                stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
-                strokeWidth={1.5}
-                opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${glowColor})`, pointerEvents: "none" }}
-              >
-                <animate attributeName="opacity" values="0.55;1;0.55" dur="1.4s" repeatCount="indefinite" />
-              </circle>
+                r={placement.reference ? 13 : 9}
+                fill="rgba(10, 13, 20, 0.48)"
+                style={{ pointerEvents: "none" }}
+              />
             )}
             {hovered && (
-              <circle
-                cx={point.x}
-                cy={point.y}
-                r={4.5}
-                fill={glowColor}
-                opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 7px ${glowColor})`, pointerEvents: "none" }}
-              >
-                <animate attributeName="opacity" values="0.65;1;0.65" dur="1.4s" repeatCount="indefinite" />
-              </circle>
+              <>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={placement.reference ? 14 : 11}
+                  fill="none"
+                  stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
+                  strokeWidth={1.5}
+                  opacity={0.95}
+                  style={{ filter: `drop-shadow(0 0 9px ${glowColor})`, pointerEvents: "none" }}
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.65;1;0.65"
+                    dur="1.4s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="r"
+                    values={placement.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
+                    dur="1.4s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={4.5}
+                  fill={glowColor}
+                  opacity={0.95}
+                  style={{ filter: `drop-shadow(0 0 7px ${glowColor})`, pointerEvents: "none" }}
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.65;1;0.65"
+                    dur="1.4s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </>
             )}
-            {hovered && (
-              <text
-                x={labelX}
-                y={labelY + LABEL_FONT}
-                fill={glowColor}
-                fontFamily="Inter, system-ui, sans-serif"
-                fontSize={LABEL_FONT}
-                fontWeight={placement.reference ? 650 : 450}
-                textAnchor="start"
-                dominantBaseline="alphabetic"
-                pointerEvents="none"
-                style={{ filter: `drop-shadow(0 0 7px ${glowColor})` }}
-              >
-                {point.title}
-                <animate attributeName="opacity" values="0.45;1;0.45" dur="1.4s" repeatCount="indefinite" />
-              </text>
-            )}
+            <rect
+              x={placement.x}
+              y={placement.y}
+              width={placement.width}
+              height={placement.height}
+              fill="transparent"
+              stroke="none"
+              style={{ pointerEvents: "auto", cursor: "default" }}
+              onMouseEnter={() => setHoveredIndex(placement.index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            />
             <text
               x={labelX}
               y={labelY + LABEL_FONT}
@@ -302,12 +319,10 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               textAnchor="start"
               dominantBaseline="alphabetic"
               style={{
-                transition: "fill 120ms ease",
-                pointerEvents: "auto",
-                cursor: "default",
+                filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
+                transition: "fill 120ms ease, filter 120ms ease",
+                pointerEvents: "none",
               }}
-              onMouseEnter={() => setHoveredIndex(placement.index)}
-              onMouseLeave={() => setHoveredIndex(null)}
             >
               {point.title}
             </text>

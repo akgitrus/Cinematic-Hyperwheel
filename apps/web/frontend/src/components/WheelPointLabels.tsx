@@ -221,6 +221,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
   const hoveredPlacement = hoveredIndex === null
     ? null
     : placements.find((placement) => placement.index === hoveredIndex) ?? null;
+  const hoveredPoint = hoveredIndex === null
+    ? null
+    : points.find((point) => point.index === hoveredIndex) ?? null;
 
   return (
     <svg
@@ -291,11 +294,11 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           </g>
         );
       })}
-      {hoveredPlacement && (
+      {hoveredPlacement && hoveredPoint && (
         <>
           <circle
-            cx={hoveredPlacement.x}
-            cy={hoveredPlacement.y}
+            cx={hoveredPoint.x}
+            cy={hoveredPoint.y}
             r={hoveredPlacement.reference ? 14 : 11}
             fill="none"
             stroke={hoveredPlacement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
@@ -320,8 +323,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
             />
           </circle>
           <circle
-            cx={hoveredPlacement.x}
-            cy={hoveredPlacement.y}
+            cx={hoveredPoint.x}
+            cy={hoveredPoint.y}
             r={4.5}
             fill={hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"}
             opacity={0.95}

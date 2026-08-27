@@ -1,3 +1,7 @@
 .wheel__rec-point {
   transition: opacity 180ms ease;
 }
+
+.wheel__point-label-text {
+  transition: opacity 180ms ease, fill 120ms ease, filter 120ms ease;
+}

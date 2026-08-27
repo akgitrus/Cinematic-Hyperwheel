@@ -286,6 +286,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 pointerEvents: "auto",
                 cursor: "default",
               }}
+              onMouseEnter={() => setHoveredIndex(placement.index)}
+              onMouseLeave={() => setHoveredIndex(null)}
             >
               {point.title}
             </text>

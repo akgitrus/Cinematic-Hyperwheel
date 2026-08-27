@@ -188,6 +188,13 @@ function layoutLabels(points: Point[], stageWidth: number, stageHeight: number):
   return placements;
 }
 
+function setRecommendationPointOpacity(stage: SVGSVGElement | null, activeIndex: number | null, count: number): void {
+  const points = stage?.parentElement?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
+  points.forEach((point, index) => {
+    point.style.opacity = activeIndex === null || count !== points.length || index === activeIndex ? "" : "0.24";
+  });
+}
+
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const compact = size < 220;
@@ -243,7 +250,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
-        const hitClass = !placement.reference ? "wheel__point-label-hit--recommendation" : undefined;
+        const recommendationIndex = placement.reference ? null : placement.index - (title ? 1 : 0);
         return (
           <g key={placement.index} style={{ pointerEvents: "none" }}>
             <circle
@@ -252,10 +259,26 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               r={placement.reference ? 15 : 12}
               fill="transparent"
               stroke="none"
-              className={hitClass}
+              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
               style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => setHoveredIndex(placement.index)}
-              onMouseLeave={() => setHoveredIndex(null)}
+              onMouseEnter={() => {
+                setHoveredIndex(placement.index);
+                if (recommendationIndex !== null) {
+                  setRecommendationPointOpacity(
+                    document.querySelector(".wheel__point-labels")?.parentElement?.querySelector("svg:not(.wheel__point-labels)") ?? null,
+                    recommendationIndex,
+                    overlays.reduce((total, angle) => total + angle.items.length, 0)
+                  );
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredIndex(null);
+                setRecommendationPointOpacity(
+                  document.querySelector(".wheel__point-labels")?.parentElement?.querySelector("svg:not(.wheel__point-labels)") ?? null,
+                  null,
+                  0
+                );
+              }}
             />
             <rect
               x={placement.x}
@@ -264,10 +287,26 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               height={placement.height}
               fill="transparent"
               stroke="none"
-              className={hitClass}
+              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
               style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => setHoveredIndex(placement.index)}
-              onMouseLeave={() => setHoveredIndex(null)}
+              onMouseEnter={() => {
+                setHoveredIndex(placement.index);
+                if (recommendationIndex !== null) {
+                  const stage = document.querySelector(".wheel__point-labels")?.parentElement;
+                  const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
+                  recPoints.forEach((recPoint, index) => {
+                    recPoint.style.opacity = index === recommendationIndex ? "" : "0.24";
+                  });
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredIndex(null);
+                const stage = document.querySelector(".wheel__point-labels")?.parentElement;
+                const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
+                recPoints.forEach((recPoint) => {
+                  recPoint.style.opacity = "";
+                });
+              }}
             />
             <text
               x={labelX}

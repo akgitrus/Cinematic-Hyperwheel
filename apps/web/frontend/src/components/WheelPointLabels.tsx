@@ -233,6 +233,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         const hovered = hoveredIndex === placement.index;
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
+        const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
         return (
           <g
             key={placement.index}
@@ -240,6 +241,14 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
             onMouseLeave={() => setHoveredIndex(null)}
             style={{ pointerEvents: "auto", cursor: "default" }}
           >
+            <rect
+              x={placement.x}
+              y={placement.y}
+              width={placement.width}
+              height={placement.height}
+              fill="transparent"
+              stroke="none"
+            />
             {hovered && (
               <circle
                 cx={point.x}
@@ -249,7 +258,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
                 strokeWidth={1.5}
                 opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${placement.reference ? "#6ee7ff" : "#e8ecf4"})` }}
+                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${glowColor})` }}
               />
             )}
             {hovered && (
@@ -257,39 +266,25 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 cx={point.x}
                 cy={point.y}
                 r={4.5}
-                fill={placement.reference ? "#6ee7ff" : "#e8ecf4"}
+                fill={glowColor}
                 opacity={0.95}
-                style={{ filter: `drop-shadow(0 0 7px ${placement.reference ? "#6ee7ff" : "#e8ecf4"})` }}
+                style={{ filter: `drop-shadow(0 0 7px ${glowColor})` }}
               />
             )}
-            <rect
-              x={placement.x}
-              y={placement.y}
-              width={placement.width}
-              height={placement.height}
-              rx={4}
-              fill={hovered
-                ? (placement.reference ? "rgba(10, 13, 20, 0.96)" : "rgba(10, 13, 20, 0.9)")
-                : (placement.reference ? "rgba(10, 13, 20, 0.86)" : "rgba(10, 13, 20, 0.72)")}
-              stroke={hovered
-                ? (placement.reference ? "rgba(110, 231, 255, 0.85)" : "rgba(232, 236, 244, 0.6)")
-                : (placement.reference ? "rgba(110, 231, 255, 0.4)" : "rgba(232, 236, 244, 0.12)")}
-              strokeWidth={hovered ? 1.2 : placement.reference ? 1 : 0.7}
-              vectorEffect="non-scaling-stroke"
-              style={{ filter: hovered
-                ? `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${placement.reference ? "rgba(110, 231, 255, 0.7)" : "rgba(232, 236, 244, 0.5)"})`
-                : undefined }}
-            />
             <text
               x={labelX}
               y={labelY + LABEL_FONT}
               fill={hovered ? "#ffffff" : placement.reference ? "#e8ecf4" : "#cdd4e2"}
               fontFamily="Inter, system-ui, sans-serif"
               fontSize={LABEL_FONT}
-              fontWeight={hovered || placement.reference ? 650 : 450}
+              fontWeight={placement.reference ? 650 : 450}
               textAnchor="start"
               dominantBaseline="alphabetic"
-              style={{ transition: "fill 120ms ease", pointerEvents: "none" }}
+              style={{
+                filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
+                transition: "fill 120ms ease, filter 120ms ease",
+                pointerEvents: "none",
+              }}
             >
               {point.title}
             </text>

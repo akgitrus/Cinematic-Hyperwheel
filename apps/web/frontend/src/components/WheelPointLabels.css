@@ -1,0 +1,7 @@
+.wheel__rec-point {
+  transition: opacity 180ms ease;
+}
+
+.wheel__stage:has(.wheel__point-label-hit--recommendation:hover) .wheel__rec-point {
+  opacity: 0.24;
+}

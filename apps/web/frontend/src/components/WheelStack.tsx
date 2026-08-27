@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Wheel from "./Wheel";
+import WheelPointLabels from "./WheelPointLabels";
 import { RecAngle, WheelCircle } from "../api";
 
 interface Props {
@@ -117,13 +118,21 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
           className={"wheel-stack__layer" + (l.visible ? " wheel-stack__layer--visible" : "")}
           onTransitionEnd={() => handleTransitionEnd(l.id)}
         >
-          <Wheel
-            circle={l.circle}
-            size={l.size}
-            title={l.title}
-            overlays={l.overlays}
-            onReadoutHeight={i === layers.length - 1 ? onReadoutHeight : undefined}
-          />
+          <div style={{ position: "relative" }}>
+            <Wheel
+              circle={l.circle}
+              size={l.size}
+              title={l.title}
+              overlays={l.overlays}
+              onReadoutHeight={i === layers.length - 1 ? onReadoutHeight : undefined}
+            />
+            <WheelPointLabels
+              circle={l.circle}
+              size={l.size}
+              title={l.title}
+              overlays={l.overlays}
+            />
+          </div>
         </div>
       ))}
     </div>

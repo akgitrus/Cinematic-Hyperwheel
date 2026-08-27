@@ -1,5 +1,5 @@
 .wheel__rec-point {
-  transition: opacity 180ms ease;
+  transition: opacity 580ms ease;
 }
 
 .wheel__stage:has(.wheel__point-labels circle:not(.wheel__point-label-hit--recommendation):hover) .wheel__rec-point {
@@ -7,5 +7,5 @@
 }
 
 .wheel__point-label-text {
-  transition: opacity 180ms ease, fill 120ms ease, filter 120ms ease;
+  transition: opacity 580ms ease, fill 120ms ease, filter 120ms ease;
 }

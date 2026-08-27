@@ -238,6 +238,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       {placements.map((placement) => {
         const point = points.find((item) => item.index === placement.index)!;
         const hovered = hoveredIndex === placement.index;
+        const dimmed = hoveredIndex !== null && !hovered;
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
@@ -268,6 +269,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               x={labelX}
               y={labelY + LABEL_FONT}
               fill={hovered ? "#ffffff" : placement.reference ? "#e8ecf4" : "#cdd4e2"}
+              opacity={dimmed ? 0.45 : 1}
               fontFamily="Inter, system-ui, sans-serif"
               fontSize={LABEL_FONT}
               fontWeight={placement.reference ? 650 : 450}
@@ -275,7 +277,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               dominantBaseline="alphabetic"
               style={{
                 filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
-                transition: "fill 120ms ease, filter 120ms ease",
+                transition: "fill 120ms ease, filter 120ms ease, opacity 180ms ease",
                 pointerEvents: "none",
               }}
             >
@@ -332,20 +334,6 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           </circle>
         </>
       )}
-      <style>{`
-        .wheel-stack__layer:has(.wheel__point-labels:hover) .wheel__rec-point {
-          opacity: 0.24;
-          transition: opacity 120ms ease;
-        }
-
-        .wheel-stack__layer .wheel__rec-point {
-          transition: opacity 120ms ease;
-        }
-
-        .wheel__rec-popup {
-          display: none !important;
-        }
-      `}</style>
     </svg>
   );
 }

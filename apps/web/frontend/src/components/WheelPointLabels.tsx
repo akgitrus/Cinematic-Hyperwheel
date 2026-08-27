@@ -29,6 +29,7 @@ interface Placement extends Point, Candidate {}
 const Z_CLAMP = 3;
 const GEOMETRY_SIZE = 460;
 const RING_PAD = 36;
+const GEOMETRY_WRAP = GEOMETRY_SIZE + RING_PAD * 2;
 const LABEL_GAP = 8;
 const LABEL_FONT = 10;
 const LABEL_PAD_X = 5;
@@ -195,7 +196,7 @@ function connectorPoint(placement: Placement, point: Point): { x: number; y: num
 
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
   const compact = size < 220;
-  const wrap = (compact ? size + 40 : GEOMETRY_SIZE + RING_PAD * 2);
+  const displayWrap = size + RING_PAD * 2;
 
   const points = useMemo<Point[]>(() => {
     if (compact) return [];
@@ -217,8 +218,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
   }, [circle, compact, overlays, title]);
 
   const placements = useMemo(
-    () => layoutLabels(points, wrap, wrap),
-    [points, wrap]
+    () => layoutLabels(points, GEOMETRY_WRAP, GEOMETRY_WRAP),
+    [points]
   );
 
   if (compact || placements.length === 0) return null;
@@ -226,9 +227,10 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
   return (
     <svg
       className="wheel__point-labels"
-      viewBox={`0 0 ${wrap} ${wrap}`}
-      width={wrap}
-      height={wrap}
+      viewBox={`0 0 ${GEOMETRY_WRAP} ${GEOMETRY_WRAP}`}
+      width={displayWrap}
+      height={displayWrap}
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
       style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "none" }}
     >
@@ -246,6 +248,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               y2={target.y}
               stroke={placement.reference ? "rgba(110, 231, 255, 0.55)" : "rgba(232, 236, 244, 0.28)"}
               strokeWidth={placement.reference ? 1.15 : 0.8}
+              vectorEffect="non-scaling-stroke"
             />
             <rect
               x={placement.x}
@@ -256,6 +259,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               fill={placement.reference ? "rgba(10, 13, 20, 0.86)" : "rgba(10, 13, 20, 0.72)"}
               stroke={placement.reference ? "rgba(110, 231, 255, 0.4)" : "rgba(232, 236, 244, 0.12)"}
               strokeWidth={placement.reference ? 1 : 0.7}
+              vectorEffect="non-scaling-stroke"
             />
             <text
               x={labelX}
@@ -266,7 +270,6 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               fontWeight={placement.reference ? 650 : 450}
               textAnchor="start"
               dominantBaseline="alphabetic"
-              style={{ paintOrder: "stroke", stroke: "rgba(0, 0, 0, 0.35)", strokeWidth: 1.5 }}
             >
               {placement.title}
             </text>

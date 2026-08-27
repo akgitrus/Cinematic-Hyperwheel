@@ -218,6 +218,10 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
 
   if (compact || placements.length === 0) return null;
 
+  const hoveredPlacement = hoveredIndex === null
+    ? null
+    : placements.find((placement) => placement.index === hoveredIndex) ?? null;
+
   return (
     <svg
       className="wheel__point-labels"
@@ -256,48 +260,6 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
                 style={{ pointerEvents: "none" }}
               />
             )}
-            {hovered && (
-              <>
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={placement.reference ? 14 : 11}
-                  fill="none"
-                  stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
-                  strokeWidth={1.5}
-                  opacity={0.95}
-                  style={{ filter: `drop-shadow(0 0 9px ${glowColor})`, pointerEvents: "none" }}
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0.65;1;0.65"
-                    dur="1.4s"
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="r"
-                    values={placement.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
-                    dur="1.4s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={4.5}
-                  fill={glowColor}
-                  opacity={0.95}
-                  style={{ filter: `drop-shadow(0 0 7px ${glowColor})`, pointerEvents: "none" }}
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0.65;1;0.65"
-                    dur="1.4s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              </>
-            )}
             <rect
               x={placement.x}
               y={placement.y}
@@ -329,6 +291,54 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           </g>
         );
       })}
+      {hoveredPlacement && (
+        <>
+          <circle
+            cx={hoveredPlacement.x}
+            cy={hoveredPlacement.y}
+            r={hoveredPlacement.reference ? 14 : 11}
+            fill="none"
+            stroke={hoveredPlacement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
+            strokeWidth={1.5}
+            opacity={0.95}
+            style={{
+              filter: `drop-shadow(0 0 9px ${hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              pointerEvents: "none",
+            }}
+          >
+            <animate
+              attributeName="opacity"
+              values="0.65;1;0.65"
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="r"
+              values={hoveredPlacement.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+          </circle>
+          <circle
+            cx={hoveredPlacement.x}
+            cy={hoveredPlacement.y}
+            r={4.5}
+            fill={hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"}
+            opacity={0.95}
+            style={{
+              filter: `drop-shadow(0 0 7px ${hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              pointerEvents: "none",
+            }}
+          >
+            <animate
+              attributeName="opacity"
+              values="0.65;1;0.65"
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </>
+      )}
     </svg>
   );
 }

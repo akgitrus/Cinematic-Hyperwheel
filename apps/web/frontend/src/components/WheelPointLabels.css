@@ -2,6 +2,10 @@
   transition: opacity 180ms ease;
 }
 
+.wheel__stage:has(.wheel__point-labels circle:not(.wheel__point-label-hit--recommendation):hover) .wheel__rec-point {
+  opacity: 0.24;
+}
+
 .wheel__point-label-text {
   transition: opacity 180ms ease, fill 120ms ease, filter 120ms ease;
 }

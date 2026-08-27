@@ -235,19 +235,31 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
 
   const setHovered = (index: number | null) => {
     setHoveredIndex(index);
-    const recommendationIndex = index === null
+    const placement = index === null
       ? null
-      : placements.find((placement) => placement.index === index && !placement.reference)?.index ?? null;
+      : placements.find((item) => item.index === index) ?? null;
     const stage = document.querySelector(".wheel__point-labels")?.parentElement;
     const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
-    recPoints.forEach((recPoint, i) => {
-      recPoint.style.opacity = recommendationIndex === null || i !== recommendationIndex - (title ? 1 : 0) ? "0.24" : "1";
-    });
-    if (recommendationIndex === null) {
+    const recommendationCount = overlays.reduce((total, angle) => total + angle.items.length, 0);
+
+    if (placement === null) {
       recPoints.forEach((recPoint) => {
         recPoint.style.opacity = "";
       });
+      return;
     }
+
+    if (placement.reference) {
+      recPoints.forEach((recPoint) => {
+        recPoint.style.opacity = "0.24";
+      });
+      return;
+    }
+
+    const recommendationIndex = placement.index - (title ? 1 : 0);
+    recPoints.forEach((recPoint, pointIndex) => {
+      recPoint.style.opacity = pointIndex === recommendationIndex && recommendationCount === recPoints.length ? "" : "0.24";
+    });
   };
 
   return (

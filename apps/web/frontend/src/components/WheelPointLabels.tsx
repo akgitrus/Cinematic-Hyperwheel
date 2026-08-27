@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
 
 interface Props {
@@ -187,14 +187,8 @@ function layoutLabels(points: Point[], stageWidth: number, stageHeight: number):
   return placements;
 }
 
-function connectorPoint(placement: Placement, point: Point): { x: number; y: number } {
-  return {
-    x: Math.max(placement.x, Math.min(point.x, placement.x + placement.width)),
-    y: Math.max(placement.y, Math.min(point.y, placement.y + placement.height)),
-  };
-}
-
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const compact = size < 220;
   const displayWrap = size + RING_PAD * 2;
 
@@ -236,42 +230,68 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     >
       {placements.map((placement) => {
         const point = points.find((item) => item.index === placement.index)!;
-        const target = connectorPoint(placement, point);
+        const hovered = hoveredIndex === placement.index;
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         return (
-          <g key={placement.index}>
-            <line
-              x1={point.x}
-              y1={point.y}
-              x2={target.x}
-              y2={target.y}
-              stroke={placement.reference ? "rgba(110, 231, 255, 0.55)" : "rgba(232, 236, 244, 0.28)"}
-              strokeWidth={placement.reference ? 1.15 : 0.8}
-              vectorEffect="non-scaling-stroke"
-            />
+          <g
+            key={placement.index}
+            onMouseEnter={() => setHoveredIndex(placement.index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            style={{ pointerEvents: "auto", cursor: "default" }}
+          >
+            {hovered && (
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={placement.reference ? 14 : 11}
+                fill="none"
+                stroke={placement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
+                strokeWidth={1.5}
+                opacity={0.95}
+                style={{ filter: `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${placement.reference ? "#6ee7ff" : "#e8ecf4"})` }}
+              />
+            )}
+            {hovered && (
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={4.5}
+                fill={placement.reference ? "#6ee7ff" : "#e8ecf4"}
+                opacity={0.95}
+                style={{ filter: `drop-shadow(0 0 7px ${placement.reference ? "#6ee7ff" : "#e8ecf4"})` }}
+              />
+            )}
             <rect
               x={placement.x}
               y={placement.y}
               width={placement.width}
               height={placement.height}
               rx={4}
-              fill={placement.reference ? "rgba(10, 13, 20, 0.86)" : "rgba(10, 13, 20, 0.72)"}
-              stroke={placement.reference ? "rgba(110, 231, 255, 0.4)" : "rgba(232, 236, 244, 0.12)"}
-              strokeWidth={placement.reference ? 1 : 0.7}
+              fill={hovered
+                ? (placement.reference ? "rgba(10, 13, 20, 0.96)" : "rgba(10, 13, 20, 0.9)")
+                : (placement.reference ? "rgba(10, 13, 20, 0.86)" : "rgba(10, 13, 20, 0.72)")}
+              stroke={hovered
+                ? (placement.reference ? "rgba(110, 231, 255, 0.85)" : "rgba(232, 236, 244, 0.6)")
+                : (placement.reference ? "rgba(110, 231, 255, 0.4)" : "rgba(232, 236, 244, 0.12)")}
+              strokeWidth={hovered ? 1.2 : placement.reference ? 1 : 0.7}
               vectorEffect="non-scaling-stroke"
+              style={{ filter: hovered
+                ? `drop-shadow(0 0 ${placement.reference ? 10 : 7}px ${placement.reference ? "rgba(110, 231, 255, 0.7)" : "rgba(232, 236, 244, 0.5)"})`
+                : undefined }}
             />
             <text
               x={labelX}
               y={labelY + LABEL_FONT}
-              fill={placement.reference ? "#e8ecf4" : "#cdd4e2"}
+              fill={hovered ? "#ffffff" : placement.reference ? "#e8ecf4" : "#cdd4e2"}
               fontFamily="Inter, system-ui, sans-serif"
               fontSize={LABEL_FONT}
-              fontWeight={placement.reference ? 650 : 450}
+              fontWeight={hovered || placement.reference ? 650 : 450}
               textAnchor="start"
               dominantBaseline="alphabetic"
+              style={{ transition: "fill 120ms ease", pointerEvents: "none" }}
             >
-              {placement.title}
+              {point.title}
             </text>
           </g>
         );

@@ -233,6 +233,23 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     ? null
     : points.find((point) => point.index === hoveredIndex) ?? null;
 
+  const setHovered = (index: number | null) => {
+    setHoveredIndex(index);
+    const recommendationIndex = index === null
+      ? null
+      : placements.find((placement) => placement.index === index && !placement.reference)?.index ?? null;
+    const stage = document.querySelector(".wheel__point-labels")?.parentElement;
+    const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
+    recPoints.forEach((recPoint, i) => {
+      recPoint.style.opacity = recommendationIndex === null || i !== recommendationIndex - (title ? 1 : 0) ? "0.24" : "1";
+    });
+    if (recommendationIndex === null) {
+      recPoints.forEach((recPoint) => {
+        recPoint.style.opacity = "";
+      });
+    }
+  };
+
   return (
     <svg
       className="wheel__point-labels"
@@ -250,7 +267,6 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
-        const recommendationIndex = placement.reference ? null : placement.index - (title ? 1 : 0);
         return (
           <g key={placement.index} style={{ pointerEvents: "none" }}>
             <circle
@@ -261,24 +277,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               stroke="none"
               className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
               style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => {
-                setHoveredIndex(placement.index);
-                if (recommendationIndex !== null) {
-                  setRecommendationPointOpacity(
-                    document.querySelector(".wheel__point-labels")?.parentElement?.querySelector("svg:not(.wheel__point-labels)") ?? null,
-                    recommendationIndex,
-                    overlays.reduce((total, angle) => total + angle.items.length, 0)
-                  );
-                }
-              }}
-              onMouseLeave={() => {
-                setHoveredIndex(null);
-                setRecommendationPointOpacity(
-                  document.querySelector(".wheel__point-labels")?.parentElement?.querySelector("svg:not(.wheel__point-labels)") ?? null,
-                  null,
-                  0
-                );
-              }}
+              onMouseEnter={() => setHovered(placement.index)}
+              onMouseLeave={() => setHovered(null)}
             />
             <rect
               x={placement.x}
@@ -289,24 +289,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               stroke="none"
               className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
               style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => {
-                setHoveredIndex(placement.index);
-                if (recommendationIndex !== null) {
-                  const stage = document.querySelector(".wheel__point-labels")?.parentElement;
-                  const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
-                  recPoints.forEach((recPoint, index) => {
-                    recPoint.style.opacity = index === recommendationIndex ? "" : "0.24";
-                  });
-                }
-              }}
-              onMouseLeave={() => {
-                setHoveredIndex(null);
-                const stage = document.querySelector(".wheel__point-labels")?.parentElement;
-                const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
-                recPoints.forEach((recPoint) => {
-                  recPoint.style.opacity = "";
-                });
-              }}
+              onMouseEnter={() => setHovered(placement.index)}
+              onMouseLeave={() => setHovered(null)}
             />
             <text
               x={labelX}
@@ -318,9 +302,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               fontWeight={placement.reference ? 650 : 450}
               textAnchor="start"
               dominantBaseline="alphabetic"
+              className="wheel__point-label-text"
               style={{
                 filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
-                transition: "fill 120ms ease, filter 120ms ease, opacity 180ms ease",
                 pointerEvents: "none",
               }}
             >

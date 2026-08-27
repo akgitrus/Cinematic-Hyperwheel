@@ -243,6 +243,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         const labelX = placement.x + LABEL_PAD_X;
         const labelY = placement.y + LABEL_PAD_Y;
         const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
+        const hitClass = !placement.reference ? "wheel__point-label-hit--recommendation" : undefined;
         return (
           <g key={placement.index} style={{ pointerEvents: "none" }}>
             <circle
@@ -251,7 +252,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               r={placement.reference ? 15 : 12}
               fill="transparent"
               stroke="none"
-              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
+              className={hitClass}
               style={{ pointerEvents: "auto", cursor: "default" }}
               onMouseEnter={() => setHoveredIndex(placement.index)}
               onMouseLeave={() => setHoveredIndex(null)}
@@ -263,6 +264,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               height={placement.height}
               fill="transparent"
               stroke="none"
+              className={hitClass}
               style={{ pointerEvents: "auto", cursor: "default" }}
               onMouseEnter={() => setHoveredIndex(placement.index)}
               onMouseLeave={() => setHoveredIndex(null)}

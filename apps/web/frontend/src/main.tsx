@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./i18n";
 import "./index.css";
+import "./header.css";
 import "./recommendations-scroll.css";
 import "./sticky-layout.css";
 

@@ -19,13 +19,46 @@ body {
 
 .app {
   min-height: 100vh;
-  max-width: 1120px;
+  /* No max-width here anymore - the big wheel (.layout3__center) is
+     meant to fill all genuinely available viewport space (see App.tsx's
+     width/height sizing effect), so nothing above it in the tree should
+     impose an artificial ceiling on how wide the content area can get.
+     Every OTHER child here already bounds its OWN width regardless of
+     this container's width (.search: max-width 480px; .app__footer:
+     max-width 720px; .app__header: intrinsically sized, centered text) -
+     so widening this only actually frees up room for .layout3__center,
+     nothing else visibly stretches. */
   margin: 0 auto;
-  padding: 48px 20px 32px;
+  /* Top padding moved OUT of here and into .appheader's own box (see
+     header.css) - required so the sticky header's natural, non-stuck
+     position is exactly y=0 and `position: sticky` engages immediately
+     on any scroll, rather than only after scrolling past this value
+     (see header.css's comment for the full mechanics). Restored
+     specifically for the mobile layout below, which still uses its own
+     separate, non-sticky header markup (.topbar + .app__header,
+     rendered by App.tsx's mobile branch). */
+  padding: 0 20px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 28px;
+  /* Anchor point for the two absolutely-positioned scroll sentinels
+     (see App.tsx / useHeaderMode.ts) that drive the hero<->compact
+     header switch. */
+  position: relative;
+}
+
+/* Invisible markers at fixed distances from the top of the page,
+   observed by useHeaderMode.ts to decide the header mode - see that
+   hook's own comment for the hysteresis rationale. Desktop only (see
+   App.tsx, only rendered outside the mobile branch). */
+.scroll-sentinel {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .wheel-row {
@@ -186,11 +219,17 @@ body {
   justify-content: center;
   width: 100%;
 }
-/* Two even halves - Recommendations (with its inline per-circle wheels)
-   on the left, the large main wheel + reference card on the right. Both
-   get the same flex-basis/min/max so the split stays close to 50/50
-   across a wide range of viewport widths, and wraps to a single column
-   below that. */
+/* Recommendations (left) keeps a comfortable, capped reading width.
+   The big wheel column (right) has NO max-width in this stylesheet -
+   its cap is computed and applied dynamically in JS instead (see
+   App.tsx's sizing effect), because the correct cap is "whatever a
+   round disc could ever use given the available viewport HEIGHT", a
+   number CSS alone has no way to know. Without that JS-applied cap this
+   column would behave like a plain flex:1 item and soak up literally
+   all leftover row width once .layout3__left hits ITS cap - which
+   pushes .layout3__left off toward the left edge for no visual benefit,
+   since a circular disc can't actually use width beyond its own height
+   budget anyway. */
 .layout3__left {
   flex: 1 1 0;
   min-width: 360px;
@@ -198,14 +237,39 @@ body {
   display: flex;
   justify-content: center;
 }
+/* Intentionally no max-width (unlike .layout3__left above): once
+   .layout3__left hits its own cap and stops growing, flexbox routes
+   every further pixel of extra row width into this column instead -
+   which is what lets the wheel keep growing on wide viewports while the
+   recommendations list stays a sane, readable width. This CSS only
+   controls how much of the row THIS column is ALLOWED to claim; the
+   actual pixel wheel size is computed in JS from this element's real
+   clientWidth (see App.tsx's sizing effect), then further bounded by
+   the real available viewport HEIGHT so the disc + its readout text
+   never overflow the screen vertically either. */
 .layout3__center {
   flex: 1 1 0;
   min-width: 320px;
-  max-width: 640px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  /* max-width is written directly (colEl.style.maxWidth) on every scroll
+     frame by App.tsx's sizing effect - capping this column to whatever a
+     round wheel can actually use given the current viewport HEIGHT
+     budget (see that effect's comment). Without a transition here, each
+     JS-driven update snapped instantly, and since this column shares a
+     flex row with .layout3__left (see .layout3, justify-content:
+     center), that snap forced an equally instant reflow of the WHOLE
+     row - including the left column, despite nothing there being
+     JS-driven directly. Animating max-width here is enough: the browser
+     recomputes the full flex layout on every frame of the transition
+     using the interpolated value, so .layout3__left's reflow rides
+     along smoothly for free - no separate transition needed on it.
+     Duration/easing matches the wheel's own internal transitions (see
+     .wheel__stage in this file) so the column and the disc inside it
+     resize in visual lockstep rather than drifting out of sync. */
+  transition: max-width 150ms ease-out;
 }
 
 /* The large main wheel duplicates what the first Recommendations
@@ -244,6 +308,7 @@ body {
   grid-row: 1;
   opacity: 0;
   transition: opacity 260ms ease;
+  isolation: isolate;
 }
 .wheel-stack__layer--visible {
   opacity: 1;
@@ -253,28 +318,55 @@ body {
 .wheel--compact { gap: 6px; }
 .wheel__stage {
   position: relative;
+  /* Lets the browser interpolate smoothly between successive JS-computed
+     target sizes (e.g. the big wheel adapting to available viewport
+     height while scrolling - see App.tsx) instead of hard-snapping every
+     time React sets a new inline width/height. */
+  transition: width 150ms ease-out, height 150ms ease-out;
 }
 .wheel__stage svg {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 1;
+  transition: width 150ms ease-out, height 150ms ease-out;
 }
 .wheel__disc {
   position: absolute;
   border-radius: 50%;
-  /* background is set inline per-circle (from axis colors) - decorative
-     "mood" gradient, not a literal encoding of the values; the point's
-     position + text readout are the source of truth */
   box-shadow: 0 0 40px rgba(110, 231, 255, 0.08), inset 0 0 60px rgba(0,0,0,0.55);
+  transition: width 150ms ease-out, height 150ms ease-out, left 150ms ease-out, top 150ms ease-out;
 }
 .wheel--compact .wheel__disc {
   box-shadow: 0 0 16px rgba(110, 231, 255, 0.06), inset 0 0 24px rgba(0,0,0,0.55);
 }
-.wheel__ring { fill: rgba(6,8,14,0.55); stroke: rgba(255,255,255,0.15); stroke-width: 1; }
-.wheel__axis { stroke: rgba(255,255,255,0.25); stroke-width: 1; stroke-dasharray: 3 4; }
-.wheel__vector { stroke: #fff; stroke-width: 1.5; opacity: 0.85; }
-.wheel__point { stroke: #fff; stroke-width: 2.5; }
+.wheel__ring {
+  fill: rgba(6,8,14,0.55);
+  stroke: rgba(255,255,255,0.15);
+  stroke-width: 1;
+  /* Keeps stroke thickness a constant number of screen pixels regardless
+     of the SVG's current viewport scale factor (see GEOMETRY_SIZE in
+     Wheel.tsx) - matches this wheel's original look, where line width
+     never depended on the wheel's overall size. */
+  vector-effect: non-scaling-stroke;
+}
+.wheel__axis {
+  stroke: rgba(255,255,255,0.25);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+.wheel__vector {
+  stroke: #fff;
+  stroke-width: 1.5;
+  opacity: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+.wheel__point {
+  stroke: #fff;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
 
 .wheel__readout { text-align: center; font-size: 12px; color: var(--muted); }
 .wheel__readout-title { color: var(--text); font-size: 14px; margin-bottom: 4px; }

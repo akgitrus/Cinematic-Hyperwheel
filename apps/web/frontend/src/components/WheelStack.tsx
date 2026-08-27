@@ -10,6 +10,11 @@ interface Props {
   size: number;
   title?: string;
   overlays?: RecAngle[];
+  /** Forwarded to the TOPMOST (newest) layer's Wheel only - see
+   * Wheel.tsx's onReadoutHeight doc comment. The outgoing layer's own
+   * readout is about to disappear anyway, so only the incoming/current
+   * one's height is relevant to a caller doing layout math with it. */
+  onReadoutHeight?: (height: number) => void;
 }
 
 interface Layer {
@@ -48,7 +53,7 @@ function layerKeyFor(circle: WheelCircle): string {
  * treated as a new layer - its data is updated in place, so unrelated
  * prop changes never trigger an unnecessary fade.
  */
-export default function WheelStack({ circle, size, title, overlays }: Props) {
+export default function WheelStack({ circle, size, title, overlays, onReadoutHeight }: Props) {
   const [layers, setLayers] = useState<Layer[]>([]);
   const nextId = useRef(0);
 
@@ -106,13 +111,19 @@ export default function WheelStack({ circle, size, title, overlays }: Props) {
 
   return (
     <div className="wheel-stack">
-      {layers.map((l) => (
+      {layers.map((l, i) => (
         <div
           key={l.id}
           className={"wheel-stack__layer" + (l.visible ? " wheel-stack__layer--visible" : "")}
           onTransitionEnd={() => handleTransitionEnd(l.id)}
         >
-          <Wheel circle={l.circle} size={l.size} title={l.title} overlays={l.overlays} />
+          <Wheel
+            circle={l.circle}
+            size={l.size}
+            title={l.title}
+            overlays={l.overlays}
+            onReadoutHeight={i === layers.length - 1 ? onReadoutHeight : undefined}
+          />
         </div>
       ))}
     </div>

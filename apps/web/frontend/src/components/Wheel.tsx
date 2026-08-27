@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RecAngle, WheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
@@ -13,6 +13,7 @@ interface Props {
    * overlaid UI element (see RecommendationsPanel's angle-section
    * overlay), where that text would just sit hidden underneath it. */
   showReadout?: boolean;
+  onReadoutHeight?: (height: number) => void;
 }
 
 // z-scores are unbounded in principle; clamp to a comfortable display range
@@ -30,7 +31,28 @@ const COMPACT_BELOW = 220;
 // column) can size a wheel wrapper knowing how much of it is ring
 // padding vs. the actual disc.
 export const RING_PAD = 36;
-
+export const WHEEL_GAP = 14;
+// Fixed reference size used to compute EVERYTHING drawn inside the <svg>
+// (ring, axis lines, point, arc-hosted label paths, overlay dots) - for
+// non-compact wheels only (see below). The SVG's `viewBox` stays pinned
+// to this constant while its actual on-screen CSS width/height instead
+// track the real, possibly continuously-changing `size` prop (e.g. the
+// big central wheel adapting to available viewport height on every
+// scroll frame - see App.tsx's sizing effect). The mismatch between a
+// fixed viewBox and a varying display size is exactly what the SVG
+// viewport mechanism exists for - the browser performs a single uniform
+// scale natively, the same way any vector icon resizes smoothly, with:
+//   - no per-frame recomputation of arc paths / canvas-measured label
+//     widths (only reruns when labels/title/circle actually change);
+//   - a plain CSS `width`/`height` transition (see index.css) that the
+//     browser can genuinely interpolate, instead of a full SVG geometry
+//     recompute + relayout snapping to a new value every frame - which
+//     is what produced the visibly distinct "stepped" frames during a
+//     single scroll gesture.
+// An arbitrary constant, unrelated to any specific rendered size -
+// chosen generously so label measurement stays proportionally accurate
+// whether the wheel ends up displayed smaller or larger than this.
+const GEOMETRY_SIZE = 460;
 // Ring geometry for the main (non-compact) wheel: all four pole labels
 // (axis X negative/positive, axis Y negative/positive) sit on a single ring
 // curving around the circle, so the text follows a radius around it instead
@@ -43,17 +65,32 @@ const HALF_PI = Math.PI / 2;
 // neighbouring labels while it has focus (that's intentional).
 const MAX_HALF_ANGLE = (150 * Math.PI) / 180;
 
+// Reused across every call instead of creating a fresh <canvas> per
+// label per render - canvas/context creation is the actually expensive
+// part of text measurement, not measureText() itself. Previously this
+// ran fresh on every resize frame (4 labels x a new canvas each); now
+// that geometry no longer depends on the continuously-changing `size`
+// (see GEOMETRY_SIZE above) it barely runs at all during a resize, but
+// caching the canvas is a correct, low-risk improvement regardless of
+// how often it's called.
+let _measureCtx: CanvasRenderingContext2D | null | undefined;
+function getMeasureCtx(): CanvasRenderingContext2D | null {
+  if (_measureCtx === undefined) {
+    _measureCtx = typeof document !== "undefined"
+      ? document.createElement("canvas").getContext("2d")
+      : null;
+  }
+  return _measureCtx;
+}
+
 // Approximate the on-screen pixel width of a label (uppercase, with the
 // rings' 0.06em letter-spacing) so we can size the host arc correctly.
 function measureTextWidth(text: string, fontPx: number): number {
   const spaced = (text.length - 1) * fontPx * 0.06;
-  if (typeof document !== "undefined") {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.font = `${fontPx}px Inter, system-ui, sans-serif`;
-      return ctx.measureText(text.toUpperCase()).width + spaced;
-    }
+  const ctx = getMeasureCtx();
+  if (ctx) {
+    ctx.font = `${fontPx}px Inter, system-ui, sans-serif`;
+    return ctx.measureText(text.toUpperCase()).width + spaced;
   }
   return text.length * fontPx * 0.72 + spaced;
 }
@@ -84,7 +121,14 @@ function shortLabel(text: string): string {
   return (cut >= 0 ? text.slice(0, cut) : text).trim();
 }
 
-export default function Wheel({ circle, size = 320, title, overlays = [], showReadout = true }: Props) {
+export default function Wheel({
+  circle,
+  size = 320,
+  title,
+  overlays = [],
+  showReadout = true,
+  onReadoutHeight,
+}: Props) {
   const { t, i18n } = useTranslation();
   const [activeLabel, setActiveLabel] = useState<null | string>(null);
   const [activeOverlay, setActiveOverlay] = useState<number | null>(null);
@@ -96,13 +140,43 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
   // one instance can resolve to the OTHER instance's (differently
   // sized/positioned) arc.
   const uid = useId();
+  const readoutRef = useRef<HTMLDivElement>(null);
+
   const compact = size < COMPACT_BELOW;
   const halfBox = size / 2;
   const pad = compact ? 20 : RING_PAD;
+  // REAL, current pixel dimensions - drive the outer CSS box (stage
+  // wrapper, svg's displayed width/height, the plain HTML disc div) and
+  // the external size/RING_PAD contract other components rely on
+  // (App.tsx, RecommendationsPanel.tsx). Unaffected by the geometry
+  // freeze below.
   const wrap = size + pad * 2;
   const center = wrap / 2;
   const discOffset = pad;
   const maxR = halfBox - (compact ? 10 : 28);
+
+  useEffect(() => {
+    if (!onReadoutHeight || compact || !showReadout) return;
+    const el = readoutRef.current;
+    if (!el) return;
+    const report = () => onReadoutHeight(el.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onReadoutHeight, compact, showReadout, title, circle]);
+
+  // Geometry used for EVERYTHING drawn inside the <svg> - see
+  // GEOMETRY_SIZE's doc comment above. Compact wheels (small, static
+  // previews that never resize continuously - see
+  // RecommendationsPanel.tsx) keep computing this directly from the
+  // real `size`, unchanged from before; only the big, continuously
+  // resized wheel (always non-compact - MIN_WHEEL_SIZE=260 >
+  // COMPACT_BELOW=220) actually uses the frozen reference.
+  const gHalfBox = compact ? halfBox : GEOMETRY_SIZE / 2;
+  const gWrap = compact ? wrap : GEOMETRY_SIZE + pad * 2;
+  const gCenter = gWrap / 2;
+  const gMaxR = gHalfBox - (compact ? 10 : 28);
 
   // A single label ring curving around and OUTSIDE the disc (radius >
   // halfBox, on the page background, so it never sits over the coloured
@@ -110,7 +184,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
   // left / positive right, axis Y negative top / positive bottom. On the
   // compact (secondary) wheels the ring uses a shorter radius and shortened
   // labels (first "/" segment) so they fit the small disc.
-  const ringR = halfBox + (compact ? 8 : 16);
+  const ringR = gHalfBox + (compact ? 8 : 16);
   const pid = `${uid}-${circle.axis_x.pc}-${circle.axis_y.pc}`;
   const idXNeg = `ring-${pid}-xneg`;
   const idXPos = `ring-${pid}-xpos`;
@@ -136,11 +210,11 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
   const hRight = labelArcHalf(ringR, labelsX.positive, fontPx);
   const hLeft = labelArcHalf(ringR, labelsX.negative, fontPx);
   // Left (negative) reads bottom->top, right (positive) top->bottom.
-  const dXNeg = ringArcPath(center, ringR, Math.PI - hLeft, Math.PI + hLeft, 1);
-  const dXPos = ringArcPath(center, ringR, -hRight, hRight, 1);
+  const dXNeg = ringArcPath(gCenter, ringR, Math.PI - hLeft, Math.PI + hLeft, 1);
+  const dXPos = ringArcPath(gCenter, ringR, -hRight, hRight, 1);
   // Top (negative) reads left->right, bottom (positive) left->right.
-  const dYNeg = ringArcPath(center, ringR, -HALF_PI - hTop, -HALF_PI + hTop, 1);
-  const dYPos = ringArcPath(center, ringR+6, HALF_PI + hBottom, HALF_PI - hBottom, 0);
+  const dYNeg = ringArcPath(gCenter, ringR, -HALF_PI - hTop, -HALF_PI + hTop, 1);
+  const dYPos = ringArcPath(gCenter, ringR + 6, HALF_PI + hBottom, HALF_PI - hBottom, 0);
 
   // Clamp by VECTOR MAGNITUDE, not per-axis - clamping z_x and z_y
   // independently would let a point near the diagonal (both axes close
@@ -155,8 +229,8 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
 
   // +x (right) = axis_x positive pole, +y (down) = axis_y positive pole -
   // screen y grows downward, so +z_y maps to +y directly.
-  const x = center + (zx / Z_CLAMP) * maxR;
-  const y = center + (zy / Z_CLAMP) * maxR;
+  const x = gCenter + (zx / Z_CLAMP) * gMaxR;
+  const y = gCenter + (zy / Z_CLAMP) * gMaxR;
 
   // Point color: same 4-stop interpolation as the disc's background, at
   // this point's own compass bearing - so the marker always reads as
@@ -207,8 +281,19 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
         circle.axis_y.colors.negative
       );
       return {
-        cx: center + ((it.z_x * rs) / Z_CLAMP) * maxR,
-        cy: center + ((it.z_y * rs) / Z_CLAMP) * maxR,
+        // Frozen SVG-space (see GEOMETRY_SIZE) - what the <circle> below
+        // is actually drawn at; the browser's own viewport scaling maps
+        // this to the correct on-screen spot regardless of the wheel's
+        // current displayed size.
+        cx: gCenter + ((it.z_x * rs) / Z_CLAMP) * gMaxR,
+        cy: gCenter + ((it.z_y * rs) / Z_CLAMP) * gMaxR,
+        // Real, CSS-pixel space (current actual displayed size) - the
+        // hover popup below is a plain HTML div positioned via left/top
+        // relative to `.wheel__stage`'s own REAL box, not the SVG's
+        // (possibly differently-scaled) internal viewport - so it needs
+        // coordinates in that same real space, not the frozen one.
+        popupX: center + ((it.z_x * rs) / Z_CLAMP) * maxR,
+        popupY: center + ((it.z_y * rs) / Z_CLAMP) * maxR,
         angle: o.angle_deg,
         item: it,
         color,
@@ -237,19 +322,19 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
             background: gradient,
           }}
         />
-        <svg width={wrap} height={wrap} viewBox={`0 0 ${wrap} ${wrap}`}>
-          <circle cx={center} cy={center} r={maxR} className="wheel__ring" />
+        <svg viewBox={`0 0 ${gWrap} ${gWrap}`} style={{ width: wrap, height: wrap }}>
+          <circle cx={gCenter} cy={gCenter} r={gMaxR} className="wheel__ring" />
           <line
-            x1={center} y1={center - maxR + 4}
-            x2={center} y2={center + maxR - 4}
+            x1={gCenter} y1={gCenter - gMaxR + 4}
+            x2={gCenter} y2={gCenter + gMaxR - 4}
             className="wheel__axis"
           />
           <line
-            x1={center - maxR + 4} y1={center}
-            x2={center + maxR - 4} y2={center}
+            x1={gCenter - gMaxR + 4} y1={gCenter}
+            x2={gCenter + gMaxR - 4} y2={gCenter}
             className="wheel__axis"
           />
-          <line x1={center} y1={center} x2={x} y2={y} className="wheel__vector" />
+          <line x1={gCenter} y1={gCenter} x2={x} y2={y} className="wheel__vector" />
           <circle
             cx={x} cy={y}
             r={compact ? 6 : 10.5}
@@ -317,7 +402,7 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
         {activeOverlay !== null && recPoints[activeOverlay] && (
           <div
             className="wheel__rec-popup"
-            style={{ left: recPoints[activeOverlay].cx + 12, top: recPoints[activeOverlay].cy }}
+            style={{ left: recPoints[activeOverlay].popupX + 12, top: recPoints[activeOverlay].popupY }}
           >
             <div className="wheel__rec-popup-title">
               Angle {recPoints[activeOverlay].angle}&deg; &middot; #{recPoints[activeOverlay].item.rank}
@@ -334,8 +419,8 @@ export default function Wheel({ circle, size = 320, title, overlays = [], showRe
         )}
       </div>
       {!compact && showReadout && (
-        <div className="wheel__readout">
-          {title && <div className="wheel__readout-title">{title}</div>}
+        <div className="wheel__readout" ref={readoutRef}>
+          {/* no need title here? {title && <div className="wheel__readout-title">{title}</div>} */}
           <div className="wheel__readout-axis">
             PC{circle.axis_x.pc}/PC{circle.axis_y.pc}
           </div>

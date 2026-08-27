@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SearchBar from "./components/SearchBar";
-import { RING_PAD } from "./components/Wheel";
+import AppHeader from "./components/AppHeader";
+import { RING_PAD, WHEEL_GAP } from "./components/Wheel";
 import WheelStack from "./components/WheelStack";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import RecommendationsPanel from "./components/RecommendationsPanel";
 import AboutModal from "./components/AboutModal";
 import HeroBackdrop from "./components/HeroBackdrop";
+import { useHeaderMode, ENTER_COMPACT_PX, EXIT_TO_HERO_PX } from "./hooks/useHeaderMode";
 import {
   MovieHit,
   RecommendCircle,
@@ -34,10 +36,11 @@ function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): Rec
   );
 }
 
-// Matches `@media (max-width: 640px) { .layout3__wheel-wrap { display: none; } }`
-// in index.css - below this width the central wheel duplicates what the
-// first Recommendations section already shows (see RecommendationsPanel.tsx),
-// so it's skipped at the JS level too, not just visually hidden by CSS.
+// Matches `@media (max-width: 640px)` in index.css/header.css - below
+// this width the app uses its separate, unchanged mobile header instead
+// of AppHeader's hero/compact switching (out of scope for mobile for
+// now, and the central wheel column
+// duplicates what the first Recommendations section already shows.
 const WHEEL_WRAP_MOBILE_BREAKPOINT = 640;
 
 // Minimum/maximum pixel size for the main wheel - it fills its column
@@ -45,7 +48,20 @@ const WHEEL_WRAP_MOBILE_BREAKPOINT = 640;
 // shrinks into compact mode (COMPACT_BELOW in Wheel.tsx) nor grows
 // absurdly large on very wide screens.
 const MIN_WHEEL_SIZE = 260;
-const MAX_WHEEL_SIZE = 560;
+// A defensive sanity ceiling only - in practice the real viewport HEIGHT
+// (see the sizing effect below) is almost always the binding constraint
+// once .layout3__center's own max-width is gone (index.css), so this
+// rarely if ever actually clamps anything.
+const MAX_WHEEL_SIZE = 1200;
+// Gap left between the wheel's readout text and the actual bottom edge
+// of the viewport, so it never touches the screen edge.
+const WHEEL_BOTTOM_MARGIN = 24;
+// Used only until the first real measurement comes in via
+// onReadoutHeight below (see Wheel.tsx) - a rough estimate for ~4 short
+// lines of text at .wheel__readout's font sizes, just so the very first
+// size computation doesn't wildly overshoot before that measurement
+// exists.
+const READOUT_HEIGHT_FALLBACK = 90;
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -59,7 +75,7 @@ export default function App() {
   // (see RecommendationsPanel's scrollspy effect) - mirrored into the
   // big central wheel. Null until that effect fires (or on mobile,
   // where it never fires); the render below falls back to the top-ranked
-  // circle in that case, same as before this feature existed.
+  // circle in that case.
   const [activeCircle, setActiveCircle] = useState<RecommendCircle | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
@@ -68,8 +84,9 @@ export default function App() {
   // Recommendations/wheel split (see index.css, .layout3) makes full use
   // of whichever half of the screen the wheel gets.
   const wheelWrapRef = useRef<HTMLDivElement>(null);
+  const wheelColumnRef = useRef<HTMLElement>(null);
   const [wheelSize, setWheelSize] = useState(320);
-
+  const [readoutHeight, setReadoutHeight] = useState(READOUT_HEIGHT_FALLBACK);
   const [isWheelWrapHidden, setIsWheelWrapHidden] = useState(
     () => window.innerWidth <= WHEEL_WRAP_MOBILE_BREAKPOINT
   );
@@ -84,23 +101,95 @@ export default function App() {
     document.documentElement.lang = i18n.resolvedLanguage ?? "en";
   }, [i18n.resolvedLanguage]);
 
+  // Desktop-only hero/compact header (see AppHeader.tsx / useHeaderMode.ts).
+  const { mode: headerMode, sentinelEnterRef, sentinelExitRef } = useHeaderMode();
+  const [headerHeight, setHeaderHeight] = useState(150); // fallback until AppHeader's own ResizeObserver reports
+  const stickyControlsRef = useRef<HTMLDivElement>(null);
+  const [controlsHeight, setControlsHeight] = useState(0);
+
+  // Publishes the header's and the scheme-selector row's real measured
+  // heights as CSS custom properties (see sticky-layout.css's
+  // calc()-based `top` offsets) - global on :root rather than scoped to
+  // a specific element, since both consuming selectors live in a
+  // different part of the tree than either measured element.
   useEffect(() => {
-    if (isWheelWrapHidden) return; // wrap isn't mounted on mobile - nothing to observe
-    const el = wheelWrapRef.current;
+    document.documentElement.style.setProperty("--app-header-height", `${headerHeight}px`);
+  }, [headerHeight]);
+  useEffect(() => {
+    document.documentElement.style.setProperty("--app-controls-height", `${controlsHeight}px`);
+  }, [controlsHeight]);
+
+  useEffect(() => {
+    const el = stickyControlsRef.current;
     if (!el) return;
-    const applyWidth = (width: number) => {
-      const target = Math.floor(width - RING_PAD * 2);
-      setWheelSize(Math.min(MAX_WHEEL_SIZE, Math.max(MIN_WHEEL_SIZE, target)));
-    };
-    applyWidth(el.clientWidth);
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        applyWidth(entry.contentRect.width);
-      }
-    });
+    const report = () => setControlsHeight(el.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isWheelWrapHidden]);
+  }, []);
+
+  // Sizes the big wheel to fill the available space on BOTH axes while
+  // staying fully within the visible viewport, readout text included -
+  // see Wheel.tsx (frozen viewBox) and WheelStack.tsx (crossfade) for
+  // how the result is actually rendered smoothly.
+  useEffect(() => {
+    if (isWheelWrapHidden) return; // wrap isn't mounted on mobile - nothing to observe
+    const wrapEl = wheelWrapRef.current;
+    const colEl = wheelColumnRef.current;
+    if (!wrapEl || !colEl) return;
+
+    let scheduled = false;
+    const recompute = () => {
+      scheduled = false;
+
+      const top = wrapEl.getBoundingClientRect().top;
+      const availableHeight = window.innerHeight - top - WHEEL_BOTTOM_MARGIN;
+      const heightBased = availableHeight - WHEEL_GAP - readoutHeight - RING_PAD * 2;
+
+      // Cap the COLUMN itself (index.css/header.css deliberately give it
+      // no max-width of its own) to what a round wheel could ever use
+      // height-wise, BEFORE measuring width below - a circular disc
+      // can't use width beyond its own height budget, so without this
+      // cap the column would soak up all leftover row width and push
+      // .layout3__left off toward the left edge for no visual benefit.
+      const heightCapPx = Math.max(MIN_WHEEL_SIZE, Math.floor(heightBased)) + RING_PAD * 2;
+      colEl.style.maxWidth = `${heightCapPx}px`;
+
+      // Forces a synchronous layout so this reads the width AFTER the
+      // cap above has taken effect, not the stale pre-cap value.
+      const widthBased = wrapEl.clientWidth - RING_PAD * 2;
+
+      const target = Math.floor(Math.min(widthBased, heightBased));
+      setWheelSize(Math.min(MAX_WHEEL_SIZE, Math.max(MIN_WHEEL_SIZE, target)));
+    };
+
+    const onFrame = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(recompute);
+    };
+
+    recompute();
+    const resizeObserver = new ResizeObserver(onFrame);
+    resizeObserver.observe(wrapEl);
+    window.addEventListener("resize", onFrame);
+    // The element's top can shift from plain page scroll (before it's
+    // "stuck", or near the end of its sticky range) AND, now, from the
+    // header's own height changing between hero and compact - neither
+    // of the two listeners above fires for that second case on its own,
+    // which is what headerMode/headerHeight/controlsHeight in the
+    // dependency array below are for (they force this whole effect,
+    // including its one immediate recompute() call, to re-run right
+    // when the header's real geometry changes).
+    window.addEventListener("scroll", onFrame, { passive: true });
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", onFrame);
+      window.removeEventListener("scroll", onFrame);
+      colEl.style.maxWidth = "";
+    };
+  }, [isWheelWrapHidden, readoutHeight, headerMode, headerHeight, controlsHeight]);
 
   const fetchRecommendations = async (itemId: number, sch: string) => {
     try {
@@ -126,20 +215,17 @@ export default function App() {
     }
   };
 
-    const handleSelect = async (movie: MovieHit) => {
+  const handleSelect = async (movie: MovieHit) => {
     setSelected(movie);
     setError(null);
     setRecError(null);
     setRecs(null);
     setActiveCircle(null);
-    // A fresh reference means an entirely new Recommendations list - jump
-    // back to the top of the page so the list (and the big wheel, which
-    // mirrors the list's scroll position - see RecommendationsPanel.tsx's
-    // scrollspy) both start from item #1, instead of staying wherever the
-    // PREVIOUS reference's list happened to be scrolled to. Instant, not
-    // smooth: the rest of the UI (wheel, list, backdrop) is about to
-    // change outright anyway, so an animated scroll here would just be
-    // one more, out-of-sync motion on top of that.
+    // A fresh reference means an entirely new Recommendations list -
+    // jump back to the top of the page so the list (and the big wheel,
+    // which mirrors the list's scroll position) both start from item
+    // #1, and the header starts back in "hero" mode, instead of staying
+    // wherever the PREVIOUS reference's list happened to be scrolled to.
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     void fetchBackdrop(movie.item_id);
     // Keep the URL in sync with the current reference movie, so it's
@@ -215,63 +301,88 @@ export default function App() {
   // large centered wheel.
   const primary = activeWheelCircle ?? fallbackPrimary ?? null;
 
+  const schemeSelect = (
+    <div className="rec-form">
+      <label className="rec-form__label" htmlFor="scheme">
+        {t("scheme.label")}
+      </label>
+      <select
+        id="scheme"
+        className="rec-form__select"
+        value={scheme}
+        onChange={(e) => handleSchemeChange(e.target.value)}
+      >
+        {SCHEMES.map((s) => (
+          <option key={s} value={s}>
+            {t(`scheme.${s}`)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <>
       <HeroBackdrop url={backdropUrl} />
       <div className="app">
-        <div className="topbar">
-          <LanguageSwitcher />
-          <button
-            className="about-trigger"
-            onClick={() => setAboutOpen(true)}
-            aria-label={t("footer.about")}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9.5" />
-              <line x1="12" y1="16.2" x2="12" y2="11.5" />
-              <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-        </div>
+        {isWheelWrapHidden ? (
+          <>
+            <div className="topbar">
+              <LanguageSwitcher />
+              <button
+                className="about-trigger"
+                onClick={() => setAboutOpen(true)}
+                aria-label={t("footer.about")}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9.5" />
+                  <line x1="12" y1="16.2" x2="12" y2="11.5" />
+                  <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+            </div>
 
-        <header className="app__header">
-          <h1>{t("app.title")}</h1>
-          <p>{t("app.tagline")}</p>
-        </header>
+            <header className="app__header">
+              <h1>{t("app.title")}</h1>
+              <p>{t("app.tagline")}</p>
+            </header>
 
-        <div className="sticky-controls">
-          <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+            <div className="sticky-controls" ref={stickyControlsRef}>
+              <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+              {schemeSelect}
+            </div>
+          </>
+        ) : (
+          <>
+            <span ref={sentinelEnterRef} className="scroll-sentinel" style={{ top: ENTER_COMPACT_PX }} aria-hidden="true" />
+            <span ref={sentinelExitRef} className="scroll-sentinel" style={{ top: EXIT_TO_HERO_PX }} aria-hidden="true" />
 
-          <div className="rec-form">
-            <label className="rec-form__label" htmlFor="scheme">
-              {t("scheme.label")}
-            </label>
-            <select
-              id="scheme"
-              className="rec-form__select"
-              value={scheme}
-              onChange={(e) => handleSchemeChange(e.target.value)}
-            >
-              {SCHEMES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`scheme.${s}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+            <AppHeader
+              mode={headerMode}
+              onAboutClick={() => setAboutOpen(true)}
+              onHeightChange={setHeaderHeight}
+              searchSlot={
+                <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+              }
+            />
+
+            <div className="sticky-controls" ref={stickyControlsRef}>
+              {schemeSelect}
+            </div>
+          </>
+        )}
 
         {error && <div className="app__error">{error}</div>}
         {recError && <div className="app__error">{recError}</div>}
 
         <div className="layout3">
-           <aside className="layout3__left">
+          <aside className="layout3__left">
             {recs && !recError && (
               <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />
             )}
           </aside>
 
-          <main className="layout3__center">
+          <main className="layout3__center" ref={wheelColumnRef}>
             {!isWheelWrapHidden && (
               <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
                 <WheelStack
@@ -279,6 +390,7 @@ export default function App() {
                   size={wheelSize}
                   title={selected?.title}
                   overlays={primary ? findRecCircle(primary, recs)?.angles : undefined}
+                  onReadoutHeight={setReadoutHeight}
                 />
               </div>
             )}

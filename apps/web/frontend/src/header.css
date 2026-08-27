@@ -1,0 +1,197 @@
+/* ==========================================================================
+   App header: hero (spacious, centered) <-> compact (slim sticky bar).
+   Desktop only for now (everything hero/compact-specific below is
+   gated behind the same min-width:641px breakpoint the rest of the app
+   already uses for its desktop layout - see index.css/RecommendationsPanel.tsx's
+   MOBILE_BREAKPOINT) - mobile keeps its separate, unchanged header
+   markup (see App.tsx's isWheelWrapHidden branch), so nothing here
+   applies there regardless of the `compact` class.
+
+   Mode switching is driven by useHeaderMode.ts and animated via the
+   View Transitions API (document.startViewTransition), NOT a CSS
+   transition on individual properties: hero and compact use genuinely
+   different layout techniques (absolute-positioned corner controls vs.
+   a single flex row), which plain CSS can't interpolate between any
+   more than it can interpolate two different conic-gradients or two
+   different grid-template-areas (same underlying issue hit elsewhere in
+   this codebase). View Transitions instead snapshots each named
+   element's box in both states and animates between those two FIXED
+   snapshots - so this stylesheet is free to define each mode however is
+   clearest, without either state needing to be reachable from the other
+   via animatable properties.
+   ========================================================================== */
+
+.appheader {
+  width: 100%;
+  /* Moved here from
+     index.css (see the comment there). This has to live INSIDE the
+     sticky element's own box, not as flow-level spacing ABOVE it: with
+     nothing preceding .appheader in .app's flow, its natural
+     (non-stuck) position is always exactly y=0 - which is what makes
+     `position: sticky; top: 0` actually engage from the very first
+     pixel of scroll, instead of only kicking in once scrollY exceeds
+     whatever top offset used to sit above it. */
+  padding: 48px 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background: transparent;
+  /* Defensive: excludes this element from being picked as the CSS
+     Scroll Anchoring node, so a sudden height change here (hero<->compact,
+     or the hero/compact content itself changing) can't cause the browser
+     to silently nudge scrollY to "compensate" for it. */
+  overflow-anchor: none;
+}
+
+.appheader__brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.appheader__title {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #6ee7ff, #b46bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.appheader__tagline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+.appheader__search {
+  width: 100%;
+  max-width: 480px;
+}
+.appheader__lang {
+  position: absolute;
+  top: 12px;
+  right: 60px;
+}
+.appheader__about {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0.75;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.appheader__about:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.12);
+}
+.appheader__about svg { display: block; }
+
+@media (min-width: 641px) {
+  .appheader {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  /* view-transition-name must be unique per element on the page - kept
+     here, one per logical block, so every element that should be
+     independently morphed/animated (rather than merely appearing as
+     part of the root page-level crossfade, which is disabled below
+     anyway) is declared in one place. */
+  .vt-brand { view-transition-name: app-header-brand; }
+  .vt-search { view-transition-name: app-header-search; }
+  .vt-lang { view-transition-name: app-header-lang; }
+  .vt-about { view-transition-name: app-header-about; }
+
+  .appheader--compact {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 10px 20px;
+    background: rgba(10, 13, 20, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .appheader--compact .appheader__brand {
+    flex: 0 0 auto;
+    text-align: left;
+    align-items: flex-start;
+    gap: 0;
+    /* Two lines within the single-row bar: title above, tagline
+       directly below it, both shrunk down - rather than hero's large
+       centered stack. */
+  }
+  .appheader--compact .appheader__title {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .appheader--compact .appheader__tagline {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    line-height: 1.3;
+  }
+  .appheader--compact .appheader__search {
+    width: auto;
+    max-width: 320px;
+    flex: 1 1 auto;
+    min-width: 160px;
+  }
+  .appheader--compact .appheader__lang,
+  .appheader--compact .appheader__about {
+    position: static;
+  }
+
+  /* Genre badges under the selected movie only make sense with the room
+     hero mode gives them - hidden in the compact single-row search
+     slot, same graceful-degradation spirit as the rest of this app. */
+  .appheader--compact .search__selected-genres,
+  .appheader--compact .search__selected-row {
+    display: none;
+  }
+  .appheader--compact .search__selected-input,
+  .appheader--compact .search__editor {
+    height: 26px;
+  }
+
+  /* Only the 4 named header elements above should visibly morph during
+     the hero<->compact transition. Everything else on the page - in
+     particular the Recommendations list and the big wheel, both of
+     which reposition/resize as a side effect of the header's height
+     changing - already has its own purpose-built smooth resize logic
+     (Wheel.tsx's frozen-viewBox transition, .layout3__center's
+     max-width transition, App.tsx's rAF-driven wheel-size effect).
+     Letting the DEFAULT root view-transition ALSO crossfade the whole
+     page underneath would fight with that existing motion - a brief,
+     redundant page-wide "double exposure" on top of an already-smooth
+     resize. Zeroing the root group's duration makes every non-named
+     element swap instantly to its final position/size, while the 4
+     named groups above still animate normally. */
+  ::view-transition-group(root) {
+    animation-duration: 0s;
+  }
+  ::view-transition-group(app-header-brand),
+  ::view-transition-group(app-header-search),
+  ::view-transition-group(app-header-lang),
+  ::view-transition-group(app-header-about) {
+    animation-duration: 220ms;
+    animation-timing-function: ease;
+  }
+}

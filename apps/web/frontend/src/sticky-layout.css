@@ -10,19 +10,26 @@
   gap: 28px;
 }
 
-.sticky-controls .search {
-  position: relative;
-}
-
 .sticky-controls .rec-form {
   position: static;
   transform: none;
   background: transparent;
 }
 
+@media (min-width: 641px) {
+  /* On desktop the search box moves into AppHeader (see App.tsx),
+     leaving only the scheme selector here - its sticky offset now has
+     to clear the header's OWN sticky bar above it (fixed on mobile,
+     variable height on desktop - see header.css) rather than the flat
+     8px this used before there was anything sticky above it at all. */
+  .sticky-controls {
+    top: calc(var(--app-header-height, 150px) + 8px);
+  }
+}
+
 .layout3__center {
   position: sticky;
-  top: 112px;
+  top: calc(var(--app-header-height, 150px) + var(--app-controls-height, 64px) + 16px);
   align-self: flex-start;
   z-index: 18;
 }

@@ -44,7 +44,7 @@ const POINT_WEIGHT = 250;
 const SEPARATION_WEIGHT = 10;
 const DISTANCE_WEIGHT = 0.8;
 const RADIAL_WEIGHT = 12;
-const REFERENCE_DISTANCE_WEIGHT = 0.15;
+const REFERENCE_DISTANCE_WEIGHT = 2.5;
 const OPTIMIZATION_PASSES = 12;
 const RANDOM_RESTARTS = 4;
 
@@ -130,14 +130,13 @@ function candidateScore(
 ): number {
   const centerX = stageWidth / 2;
   const centerY = stageHeight / 2;
-  const labelCenterX = candidate.x + candidate.width / 2;
-  const labelCenterY = candidate.y + candidate.height / 2;
-  const distance = Math.hypot(labelCenterX - point.x, labelCenterY - point.y);
-  const distanceWeight = point.reference ? DISTANCE_WEIGHT * REFERENCE_DISTANCE_WEIGHT : DISTANCE_WEIGHT;
+  const distance = distanceToRect(point.x, point.y, candidate);
+  const distanceWeight = point.reference ? REFERENCE_DISTANCE_WEIGHT : DISTANCE_WEIGHT;
+  const radialCost = point.reference ? 0 : radialPenalty(candidate, point, centerX, centerY);
 
   return (
     distance * distanceWeight +
-    radialPenalty(candidate, point, centerX, centerY) +
+    radialCost +
     boundaryOverflow(candidate, stageWidth, stageHeight) * BOUNDARY_WEIGHT
   );
 }

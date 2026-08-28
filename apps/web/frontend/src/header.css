@@ -174,11 +174,6 @@
     position: static;
   }
 
-  .appheader--compact .search__selected-input,
-  .appheader--compact .search__editor {
-    height: 26px;
-  }
-
   /* Only the 4 named header elements above should visibly morph during
      the hero<->compact transition. Everything else on the page - in
      particular the Recommendations list and the big wheel, both of

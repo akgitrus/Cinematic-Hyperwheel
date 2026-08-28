@@ -90,7 +90,6 @@
     align-items: center;
     min-height: 28px;
     gap: 8px;
-    overflow: hidden;
   }
 
   .appheader--compact .search__selected-title {

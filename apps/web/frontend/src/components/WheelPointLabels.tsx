@@ -153,8 +153,10 @@ function candidatesFor(
 
   for (const direction of DIRECTIONS) {
     for (const distance of [LABEL_GAP, LABEL_GAP + 10, LABEL_GAP + 24]) {
-      const x = point.x + direction.x * (distance + width / 2) - width / 2;
-      const y = point.y + direction.y * (distance + height / 2) - height / 2;
+      const halfExtent =
+        Math.abs(direction.x) * width / 2 + Math.abs(direction.y) * height / 2;
+      const x = point.x + direction.x * (distance + halfExtent) - width / 2;
+      const y = point.y + direction.y * (distance + halfExtent) - height / 2;
       const candidate: Candidate = { x, y, width, height, score: 0 };
       candidates.push({
         ...candidate,

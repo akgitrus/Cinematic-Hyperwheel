@@ -44,7 +44,7 @@ const POINT_WEIGHT = 250;
 const SEPARATION_WEIGHT = 10;
 const DISTANCE_WEIGHT = 0.8;
 const RADIAL_WEIGHT = 12;
-const REFERENCE_WEIGHT = 0.15;
+const REFERENCE_DISTANCE_WEIGHT = 0.15;
 const OPTIMIZATION_PASSES = 12;
 const RANDOM_RESTARTS = 4;
 
@@ -133,9 +133,10 @@ function candidateScore(
   const labelCenterX = candidate.x + candidate.width / 2;
   const labelCenterY = candidate.y + candidate.height / 2;
   const distance = Math.hypot(labelCenterX - point.x, labelCenterY - point.y);
+  const distanceWeight = point.reference ? DISTANCE_WEIGHT * REFERENCE_DISTANCE_WEIGHT : DISTANCE_WEIGHT;
 
   return (
-    distance * DISTANCE_WEIGHT +
+    distance * distanceWeight +
     radialPenalty(candidate, point, centerX, centerY) +
     boundaryOverflow(candidate, stageWidth, stageHeight) * BOUNDARY_WEIGHT
   );
@@ -182,17 +183,12 @@ function pointCollisionCost(candidate: Candidate, point: Point): number {
   ) * POINT_WEIGHT;
 }
 
-function globalEnergy(
-  placements: Placement[],
-  candidates: Candidate[][],
-  points: Point[]
-): number {
+function globalEnergy(placements: Placement[], points: Point[]): number {
   let energy = 0;
 
   for (let i = 0; i < placements.length; i += 1) {
     const placement = placements[i];
     energy += placement.score;
-    if (points[i].reference) energy *= 1 + REFERENCE_WEIGHT;
 
     for (const point of points) {
       if (point.index === placement.index) continue;
@@ -233,7 +229,7 @@ function optimizePlacements(
 
   for (let restart = 0; restart < RANDOM_RESTARTS; restart += 1) {
     let current = initialPlacements(points, candidates, restart);
-    let currentEnergy = globalEnergy(current, candidates, points);
+    let currentEnergy = globalEnergy(current, points);
 
     for (let pass = 0; pass < OPTIMIZATION_PASSES; pass += 1) {
       let improved = false;
@@ -243,10 +239,9 @@ function optimizePlacements(
         let localEnergy = currentEnergy;
 
         for (const candidate of candidates[index]) {
-          if (candidate === current[index]) continue;
           const next = current.slice();
           next[index] = { ...points[index], ...candidate };
-          const energy = globalEnergy(next, candidates, points);
+          const energy = globalEnergy(next, points);
           if (energy < localEnergy) {
             localEnergy = energy;
             localBest = next[index];

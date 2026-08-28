@@ -3,13 +3,16 @@ import { flushSync } from "react-dom";
 
 export type HeaderMode = "hero" | "compact";
 
-// Hysteresis window: scrolling past ENTER_COMPACT_PX switches to
-// "compact"; scrolling back above EXIT_TO_HERO_PX switches back to
-// "hero". Between the two, the mode simply doesn't change - this dead
-// zone absorbs scroll jitter (trackpad elastic bounce, tiny accidental
-// scrolls) without the header flapping back and forth.
+// Hysteresis window: scrolling down past ENTER_COMPACT_PX switches to
+// "compact"; scrolling back up above EXIT_TO_HERO_PX switches back to
+// "hero". EXIT_TO_HERO_PX sits CLOSER to the top than ENTER_COMPACT_PX,
+// not further - the gap between the two is a dead zone where the mode
+// doesn't change regardless of scroll direction, absorbing scroll
+// jitter (trackpad elastic bounce, tiny accidental scrolls, or a
+// layout shift from the header's own resize) without the header
+// flapping back and forth.
 export const ENTER_COMPACT_PX = 90;
-export const EXIT_TO_HERO_PX = 180;
+export const EXIT_TO_HERO_PX = 40;
 
 function prefersReducedMotion(): boolean {
   return (

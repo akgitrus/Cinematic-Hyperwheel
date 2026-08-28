@@ -37,11 +37,6 @@
   align-items: center;
   gap: 20px;
   background: transparent;
-  /* Defensive: excludes this element from being picked as the CSS
-     Scroll Anchoring node, so a sudden height change here (hero<->compact,
-     or the hero/compact content itself changing) can't cause the browser
-     to silently nudge scrollY to "compensate" for it. */
-  overflow-anchor: none;
 }
 
 .appheader__brand {

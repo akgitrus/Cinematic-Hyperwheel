@@ -37,11 +37,16 @@ const LABEL_PAD_X = 5;
 const LABEL_PAD_Y = 3;
 const LABEL_MAX_WIDTH = 250;
 const POINT_EXCLUSION = 9;
+const LABEL_SEPARATION = 14;
 const OVERLAP_WEIGHT = 1000;
 const BOUNDARY_WEIGHT = 500;
 const POINT_WEIGHT = 250;
+const SEPARATION_WEIGHT = 10;
 const DISTANCE_WEIGHT = 0.8;
 const RADIAL_WEIGHT = 12;
+const REFERENCE_WEIGHT = 0.15;
+const OPTIMIZATION_PASSES = 12;
+const RANDOM_RESTARTS = 4;
 
 const DIRECTIONS = Array.from({ length: 16 }, (_, i) => {
   const angle = (i * Math.PI * 2) / 16;
@@ -117,17 +122,32 @@ function radialPenalty(candidate: Candidate, point: Point, centerX: number, cent
   return (1 - cosine) * RADIAL_WEIGHT;
 }
 
+function candidateScore(
+  candidate: Candidate,
+  point: Point,
+  stageWidth: number,
+  stageHeight: number
+): number {
+  const centerX = stageWidth / 2;
+  const centerY = stageHeight / 2;
+  const labelCenterX = candidate.x + candidate.width / 2;
+  const labelCenterY = candidate.y + candidate.height / 2;
+  const distance = Math.hypot(labelCenterX - point.x, labelCenterY - point.y);
+
+  return (
+    distance * DISTANCE_WEIGHT +
+    radialPenalty(candidate, point, centerX, centerY) +
+    boundaryOverflow(candidate, stageWidth, stageHeight) * BOUNDARY_WEIGHT
+  );
+}
+
 function candidatesFor(
   point: Point,
   width: number,
   height: number,
   stageWidth: number,
-  stageHeight: number,
-  occupied: Placement[],
-  allPoints: Point[]
+  stageHeight: number
 ): Candidate[] {
-  const centerX = stageWidth / 2;
-  const centerY = stageHeight / 2;
   const candidates: Candidate[] = [];
 
   for (const direction of DIRECTIONS) {
@@ -135,57 +155,132 @@ function candidatesFor(
       const x = point.x + direction.x * (distance + width / 2) - width / 2;
       const y = point.y + direction.y * (distance + height / 2) - height / 2;
       const candidate: Candidate = { x, y, width, height, score: 0 };
-      let score = distance * DISTANCE_WEIGHT;
-
-      score += radialPenalty(candidate, point, centerX, centerY);
-      score += boundaryOverflow(candidate, stageWidth, stageHeight) * BOUNDARY_WEIGHT;
-
-      for (const previous of occupied) {
-        score += overlapArea(candidate, previous) * OVERLAP_WEIGHT;
-      }
-
-      for (const otherPoint of allPoints) {
-        if (otherPoint.index === point.index) continue;
-        score += Math.max(0, POINT_EXCLUSION - distanceToRect(otherPoint.x, otherPoint.y, candidate)) * POINT_WEIGHT;
-      }
-
-      candidates.push({ ...candidate, score });
+      candidates.push({
+        ...candidate,
+        score: candidateScore(candidate, point, stageWidth, stageHeight),
+      });
     }
   }
 
   return candidates;
 }
 
-function layoutLabels(points: Point[], stageWidth: number, stageHeight: number): Placement[] {
-  const occupied: Placement[] = [];
-  const remaining = [...points];
-  const placements: Placement[] = [];
+function pairCost(a: Placement, b: Placement): number {
+  const overlap = overlapArea(a, b);
+  if (overlap > 0) return overlap * OVERLAP_WEIGHT;
 
-  while (remaining.length > 0) {
-    const point = remaining.reduce((best, current) => {
-      if (current.reference && !best.reference) return current;
-      const currentNeighbors = points.filter(
-        (p) => p.index !== current.index && Math.hypot(p.x - current.x, p.y - current.y) < 90
-      ).length;
-      const bestNeighbors = points.filter(
-        (p) => p.index !== best.index && Math.hypot(p.x - best.x, p.y - best.y) < 90
-      ).length;
-      return currentNeighbors > bestNeighbors ? current : best;
-    });
-    remaining.splice(remaining.indexOf(point), 1);
+  const horizontalGap = Math.max(b.x - (a.x + a.width), a.x - (b.x + b.width), 0);
+  const verticalGap = Math.max(b.y - (a.y + a.height), a.y - (b.y + b.height), 0);
+  const gap = Math.hypot(horizontalGap, verticalGap);
+  return Math.max(0, LABEL_SEPARATION - gap) * SEPARATION_WEIGHT;
+}
 
-    const width = Math.min(LABEL_MAX_WIDTH, measureTextWidth(point.title) + LABEL_PAD_X * 2);
-    const height = LABEL_FONT + LABEL_PAD_Y * 2 + 2;
-    const candidates = candidatesFor(point, width, height, stageWidth, stageHeight, occupied, points);
-    const best = candidates.reduce((current, candidate) =>
-      candidate.score < current.score ? candidate : current
-    );
-    const placement: Placement = { ...point, ...best };
-    placements.push(placement);
-    occupied.push(placement);
+function pointCollisionCost(candidate: Candidate, point: Point): number {
+  return Math.max(
+    0,
+    POINT_EXCLUSION - distanceToRect(point.x, point.y, candidate)
+  ) * POINT_WEIGHT;
+}
+
+function globalEnergy(
+  placements: Placement[],
+  candidates: Candidate[][],
+  points: Point[]
+): number {
+  let energy = 0;
+
+  for (let i = 0; i < placements.length; i += 1) {
+    const placement = placements[i];
+    energy += placement.score;
+    if (points[i].reference) energy *= 1 + REFERENCE_WEIGHT;
+
+    for (const point of points) {
+      if (point.index === placement.index) continue;
+      energy += pointCollisionCost(placement, point);
+    }
+
+    for (let j = i + 1; j < placements.length; j += 1) {
+      energy += pairCost(placement, placements[j]);
+    }
   }
 
-  return placements;
+  return energy;
+}
+
+function initialPlacements(
+  points: Point[],
+  candidates: Candidate[][],
+  variant: number
+): Placement[] {
+  return points.map((point, index) => {
+    const options = candidates[index];
+    const offset = (variant * 7 + index * 11) % options.length;
+    const best = [...options]
+      .sort((a, b) => a.score - b.score)
+      .slice(0, Math.min(8, options.length))[offset % Math.min(8, options.length)];
+    return { ...point, ...best };
+  });
+}
+
+function optimizePlacements(
+  points: Point[],
+  candidates: Candidate[][]
+): Placement[] {
+  if (points.length === 0) return [];
+
+  let bestPlacements: Placement[] | null = null;
+  let bestEnergy = Number.POSITIVE_INFINITY;
+
+  for (let restart = 0; restart < RANDOM_RESTARTS; restart += 1) {
+    let current = initialPlacements(points, candidates, restart);
+    let currentEnergy = globalEnergy(current, candidates, points);
+
+    for (let pass = 0; pass < OPTIMIZATION_PASSES; pass += 1) {
+      let improved = false;
+
+      for (let index = 0; index < points.length; index += 1) {
+        let localBest = current[index];
+        let localEnergy = currentEnergy;
+
+        for (const candidate of candidates[index]) {
+          if (candidate === current[index]) continue;
+          const next = current.slice();
+          next[index] = { ...points[index], ...candidate };
+          const energy = globalEnergy(next, candidates, points);
+          if (energy < localEnergy) {
+            localEnergy = energy;
+            localBest = next[index];
+          }
+        }
+
+        if (localBest !== current[index]) {
+          current = current.slice();
+          current[index] = localBest;
+          currentEnergy = localEnergy;
+          improved = true;
+        }
+      }
+
+      if (!improved) break;
+    }
+
+    if (currentEnergy < bestEnergy) {
+      bestEnergy = currentEnergy;
+      bestPlacements = current;
+    }
+  }
+
+  return bestPlacements ?? [];
+}
+
+function layoutLabels(points: Point[], stageWidth: number, stageHeight: number): Placement[] {
+  const candidates = points.map((point) => {
+    const width = Math.min(LABEL_MAX_WIDTH, measureTextWidth(point.title) + LABEL_PAD_X * 2);
+    const height = LABEL_FONT + LABEL_PAD_Y * 2 + 2;
+    return candidatesFor(point, width, height, stageWidth, stageHeight);
+  });
+
+  return optimizePlacements(points, candidates);
 }
 
 function setRecommendationPointOpacity(stage: SVGSVGElement | null, activeIndex: number | null, count: number): void {

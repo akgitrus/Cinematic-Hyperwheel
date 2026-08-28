@@ -364,10 +364,11 @@ export default function App() {
               searchSlot={
                 <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
               }
+              schemeSlot={headerMode === "compact" ? schemeSelect : undefined}
             />
 
             <div className="sticky-controls" ref={stickyControlsRef}>
-              {schemeSelect}
+              {headerMode !== "compact" && schemeSelect}
             </div>
           </>
         )}

@@ -103,6 +103,12 @@
 }
 .appheader__about svg { display: block; }
 
+/* display:contents in hero mode - lang/about stay positioned relative
+   to .appheader exactly as if this wrapper weren't here. */
+.appheader__actions {
+  display: contents;
+}
+
 @media (min-width: 641px) {
   .appheader {
     position: sticky;
@@ -120,12 +126,18 @@
   .vt-lang { view-transition-name: app-header-lang; }
   .vt-about { view-transition-name: app-header-about; }
 
-  .appheader--compact {
+  /* Compact bar: a single-row CSS grid, [brand | search | scheme | lang+about]. */
+ .appheader--compact {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: 16px;
     padding: 10px 20px;
+    /* .app has 20px horizontal padding (index.css); cancel it so the
+       bar reaches the viewport edges. */
+    width: calc(100% + 40px);
+    margin: 0 -20px;
     background: rgba(10, 13, 20, 0.85);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
@@ -135,9 +147,6 @@
     text-align: left;
     align-items: flex-start;
     gap: 0;
-    /* Two lines within the single-row bar: title above, tagline
-       directly below it, both shrunk down - rather than hero's large
-       centered stack. */
   }
   .appheader--compact .appheader__title {
     font-size: 14px;
@@ -154,18 +163,17 @@
     flex: 1 1 auto;
     min-width: 160px;
   }
+  .appheader--compact .appheader__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 0 0 auto;
+  }
   .appheader--compact .appheader__lang,
   .appheader--compact .appheader__about {
     position: static;
   }
 
-  /* Genre badges under the selected movie only make sense with the room
-     hero mode gives them - hidden in the compact single-row search
-     slot, same graceful-degradation spirit as the rest of this app. */
-  .appheader--compact .search__selected-genres,
-  .appheader--compact .search__selected-row {
-    display: none;
-  }
   .appheader--compact .search__selected-input,
   .appheader--compact .search__editor {
     height: 26px;

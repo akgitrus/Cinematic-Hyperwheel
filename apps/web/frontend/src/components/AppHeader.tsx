@@ -6,6 +6,10 @@ import type { HeaderMode } from "../hooks/useHeaderMode";
 interface Props {
   mode: HeaderMode;
   searchSlot: ReactNode;
+  /** Color-scheme selector - only passed (and rendered) in compact mode;
+   * in hero mode it's rendered separately below the header (see
+   * App.tsx's `sticky-controls`). */
+  schemeSlot?: ReactNode;
   onAboutClick: () => void;
   /** Reports this header's own real rendered height via ResizeObserver -
    * see App.tsx, which turns it into a CSS custom property consumed by
@@ -28,7 +32,7 @@ interface Props {
 // transition on individual layout properties - see header.css's top
 // comment for why plain CSS transitions can't do this reflow on their
 // own regardless.
-export default function AppHeader({ mode, searchSlot, onAboutClick, onHeightChange }: Props) {
+export default function AppHeader({ mode, searchSlot, schemeSlot, onAboutClick, onHeightChange }: Props) {
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -55,22 +59,28 @@ export default function AppHeader({ mode, searchSlot, onAboutClick, onHeightChan
 
       <div className="appheader__search vt-search">{searchSlot}</div>
 
-      <div className="appheader__lang vt-lang">
-        <LanguageSwitcher />
+      <div className="appheader__actions">
+        {schemeSlot && <div className="appheader__scheme">{schemeSlot}</div>}
       </div>
 
-      <button
-        type="button"
-        className="appheader__about vt-about"
-        onClick={onAboutClick}
-        aria-label={t("footer.about")}
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.5" />
-          <line x1="12" y1="16.2" x2="12" y2="11.5" />
-          <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
-        </svg>
-      </button>
+      <div className="appheader__actions">
+        <div className="appheader__lang vt-lang">
+          <LanguageSwitcher />
+        </div>
+
+        <button
+          type="button"
+          className="appheader__about vt-about"
+          onClick={onAboutClick}
+          aria-label={t("footer.about")}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" />
+            <line x1="12" y1="16.2" x2="12" y2="11.5" />
+            <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

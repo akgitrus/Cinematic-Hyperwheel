@@ -9,6 +9,19 @@
 
 * { box-sizing: border-box; }
 
+/* Disables the browser's scroll-anchoring heuristic for the whole page.
+   The desktop hero<->compact header (see useHeaderMode.ts) changes
+   .appheader's own height by hundreds of pixels right at the top of the
+   page; without this, scroll anchoring would pick some other element as
+   its anchor and silently adjust scrollY to keep it visually still,
+   which can cross the header's own scroll thresholds and re-trigger the
+   opposite mode - occasionally flipping back and forth indefinitely.
+   Header-mode scroll behavior is handled explicitly via the sentinels
+   in useHeaderMode.ts, so no browser-side compensation is needed. */
+html {
+  overflow-anchor: none;
+}
+
 body {
   margin: 0;
   min-height: 100vh;

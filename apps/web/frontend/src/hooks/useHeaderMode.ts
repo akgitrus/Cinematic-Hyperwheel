@@ -8,8 +8,8 @@ export type HeaderMode = "hero" | "compact";
 // "hero". Between the two, the mode simply doesn't change - this dead
 // zone absorbs scroll jitter (trackpad elastic bounce, tiny accidental
 // scrolls) without the header flapping back and forth.
-export const ENTER_COMPACT_PX = 24;
-export const EXIT_TO_HERO_PX = 8;
+export const ENTER_COMPACT_PX = 90;
+export const EXIT_TO_HERO_PX = 120;
 
 function prefersReducedMotion(): boolean {
   return (

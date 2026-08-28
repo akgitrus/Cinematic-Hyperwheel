@@ -159,7 +159,7 @@
   }
   .appheader--compact .appheader__search {
     width: auto;
-    max-width: 320px;
+    max-width: 600px;
     flex: 1 1 auto;
     min-width: 160px;
   }

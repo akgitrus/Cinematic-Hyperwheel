@@ -28,7 +28,7 @@ const LABEL_MAX_WIDTH = 250;
 const POINT_HOVER_PADDING = 1.5;
 const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
 const DIMMED_POINT_OPACITY = 0.24;
-const DIMMED_POINT_SCALE = 0.55;
+const DIMMED_POINT_SCALE = 0.35;
 
 function pointPosition(zx: number, zy: number): { x: number; y: number } {
   const center = GEOMETRY_SIZE / 2 + RING_PAD;

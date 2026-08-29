@@ -24,6 +24,7 @@ const GEOMETRY_WRAP = GEOMETRY_SIZE + RING_PAD * 2;
 const LABEL_GAP = 10;
 const LABEL_FONT = 10;
 const LABEL_LINE_HEIGHT = 15;
+const LABEL_MAX_WIDTH = 250;
 const POINT_HOVER_CLUSTER_DISTANCE = 18;
 const DIMMED_POINT_OPACITY = 0.24;
 const DIMMED_POINT_SCALE = 0.55;
@@ -41,6 +42,10 @@ function pointPosition(zx: number, zy: number): { x: number; y: number } {
 
 function distanceBetween(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function labelWidth(title: string): number {
+  return Math.min(LABEL_MAX_WIDTH, title.length * LABEL_FONT * 0.6);
 }
 
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
@@ -74,7 +79,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
 
   const visiblePoints = useMemo(() => {
     if (!hoveredPoint) return [];
-    return points.filter((point) => distanceBetween(point, hoveredPoint) <= POINT_HOVER_CLUSTER_DISTANCE);
+    return points
+      .filter((point) => distanceBetween(point, hoveredPoint) <= POINT_HOVER_CLUSTER_DISTANCE)
+      .sort((a, b) => a.y - b.y);
   }, [hoveredPoint, points]);
 
   useEffect(() => {
@@ -134,8 +141,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       ))}
 
       {visiblePoints.map((point, index) => {
-        const hovered = point.index === hoveredIndex;
-        const side = point.x > GEOMETRY_WRAP / 2 ? -1 : 1;
+        const side = point.x + LABEL_GAP + labelWidth(point.title) <= GEOMETRY_WRAP ? 1 : -1;
         const textAnchor = side === 1 ? "start" : "end";
         const x = point.x + side * LABEL_GAP;
         const y = point.y - labelOffset + index * LABEL_LINE_HEIGHT;
@@ -155,7 +161,6 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               className="wheel__point-label-text"
               style={{
                 filter: `drop-shadow(0 0 7px ${glowColor})`,
-                opacity: hovered ? 1 : 0.9,
                 pointerEvents: "none",
               }}
             >

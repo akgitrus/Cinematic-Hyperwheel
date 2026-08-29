@@ -47,6 +47,10 @@ function pointRadius(point: Point, hoveredIndex: number | null): number {
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1);
 }
 
+function hitRadius(point: Point): number {
+  return (point.reference ? 10.5 : 6) + POINT_HOVER_PADDING;
+}
+
 function distanceBetween(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
@@ -147,7 +151,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           key={`hit-${point.index}`}
           cx={point.x}
           cy={point.y}
-          r={pointRadius(point, hoveredIndex) + POINT_HOVER_PADDING}
+          r={hitRadius(point)}
           fill="transparent"
           stroke="none"
           style={{ pointerEvents: "auto", cursor: "default" }}
@@ -220,7 +224,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
             <circle
               cx={point.x}
               cy={point.y}
-              r={hovered ? 4.5 * DIMMED_POINT_SCALE : 4.5 * DIMMED_POINT_SCALE}
+              r={4.5 * DIMMED_POINT_SCALE}
               fill={point.reference ? "#6ee7ff" : "#e8ecf4"}
               opacity={hovered ? 0.95 : 0.75}
               style={{

@@ -90,9 +90,11 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
 
     const activeIndexes = new Set(visiblePoints.map((point) => point.index));
     const allPoints = stage.querySelectorAll<SVGCircleElement>(".wheel__point, .wheel__rec-point");
+    const referenceOffset = title ? 0 : -1;
 
     allPoints.forEach((point, index) => {
-      const active = hoveredIndex !== null && activeIndexes.has(index);
+      const pointIndex = index + referenceOffset;
+      const active = hoveredIndex !== null && activeIndexes.has(pointIndex);
       point.style.opacity = hoveredIndex === null || active ? "" : String(DIMMED_POINT_OPACITY);
       point.style.transform = hoveredIndex === null || active ? "" : `scale(${DIMMED_POINT_SCALE})`;
     });
@@ -103,7 +105,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         point.style.transform = "";
       });
     };
-  }, [hoveredIndex, visiblePoints]);
+  }, [hoveredIndex, title, visiblePoints]);
 
   if (compact || points.length === 0) return null;
 

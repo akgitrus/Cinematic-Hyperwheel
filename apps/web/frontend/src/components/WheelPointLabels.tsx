@@ -1,5 +1,5 @@
 import "./WheelPointLabels.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
 
 interface Props {
@@ -43,14 +43,8 @@ function pointPosition(zx: number, zy: number): { x: number; y: number } {
 
 function pointRadius(point: Point, hoveredIndex: number | null): number {
   const radius = point.reference ? 10.5 : 6;
-  const dimmed = hoveredIndex !== null && !point.reference && point.index !== hoveredIndex;
+  const dimmed = hoveredIndex !== null && !point.reference;
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1);
-}
-
-function hitRadius(point: Point, hoveredIndex: number | null): number {
-  const radius = point.reference ? 10.5 : 6;
-  const dimmed = hoveredIndex !== null && !point.reference && point.index !== hoveredIndex;
-  return radius * (dimmed ? DIMMED_POINT_SCALE : 1) + POINT_HOVER_PADDING;
 }
 
 function distanceBetween(a: Point, b: Point): number {
@@ -111,32 +105,41 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       .sort((a, b) => a.y - b.y);
   }, [hoveredIndex, hoveredPoint, points]);
 
-  useEffect(() => {
-    const stage = svgRef.current?.parentElement;
-    if (!stage) return;
-
-    const activeIndexes = new Set(visiblePoints.map((point) => point.index));
-    const allPoints = stage.querySelectorAll<SVGCircleElement>(".wheel__point, .wheel__rec-point");
-
-    allPoints.forEach((point, index) => {
-      const referencePoint = index === 0 && !!title;
-      const active = hoveredIndex !== null && activeIndexes.has(index);
-      point.style.opacity = hoveredIndex === null || active || referencePoint ? "" : String(DIMMED_POINT_OPACITY);
-      point.style.transform = !referencePoint && hoveredIndex !== null && !active ? `scale(${DIMMED_POINT_SCALE})` : "";
-    });
-
-    return () => {
-      allPoints.forEach((point) => {
-        point.style.opacity = "";
-        point.style.transform = "";
-      });
-    };
-  }, [hoveredIndex, title, visiblePoints]);
-
   if (compact || points.length === 0) return null;
 
-  const setHovered = (index: number | null) => {
-    setHoveredIndex(index);
+  const setHoveredFromPointer = (clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const x = ((clientX - rect.left) / rect.width) * GEOMETRY_WRAP;
+    const y = ((clientY - rect.top) / rect.height) * GEOMETRY_WRAP;
+    const pointerPoint = { x, y };
+
+    if (hoveredPoint) {
+      const hoveredRadius = hoveredPoint.reference
+        ? 10.5
+        : 6;
+      if (distanceBetween(pointerPoint, hoveredPoint) <= hoveredRadius + POINT_HOVER_PADDING) {
+        return;
+      }
+    }
+
+    let nearest: Point | null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const point of points) {
+      const radius = point.reference ? 10.5 : 6;
+      const distance = distanceBetween(pointerPoint, point);
+      if (distance <= radius + POINT_HOVER_PADDING && distance < nearestDistance) {
+        nearest = point;
+        nearestDistance = distance;
+      }
+    }
+
+    setHoveredIndex(nearest?.index ?? null);
   };
 
   const labelOffset = visiblePoints.length > 1
@@ -152,36 +155,24 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       height={displayWrap}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
-      style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "none" }}
+      onMouseMove={(event) => setHoveredFromPointer(event.clientX, event.clientY)}
+      onMouseLeave={() => setHoveredIndex(null)}
+      style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "auto" }}
     >
-      {points.map((point) => (
-        <circle
-          key={`hit-${point.index}`}
-          cx={point.x}
-          cy={point.y}
-          r={hitRadius(point, hoveredIndex)}
-          fill="transparent"
-          stroke="none"
-          style={{ pointerEvents: "auto", cursor: "default" }}
-          onMouseEnter={() => setHovered(point.index)}
-          onMouseLeave={() => setHovered(null)}
-        />
-      ))}
-
       {referencePoint && (
         <g key="reference-label" style={{ pointerEvents: "none" }}>
           <text
-            x={referencePoint.x + LABEL_GAP}
+            x={referencePoint.x + (referencePoint.x + LABEL_GAP + labelWidth(referencePoint.title) <= GEOMETRY_WRAP ? LABEL_GAP : -LABEL_GAP)}
             y={referencePoint.y}
             fill="#ffffff"
             fontFamily="Inter, system-ui, sans-serif"
             fontSize={LABEL_FONT}
             fontWeight={650}
-            textAnchor="start"
+            textAnchor={referencePoint.x + LABEL_GAP + labelWidth(referencePoint.title) <= GEOMETRY_WRAP ? "start" : "end"}
             dominantBaseline="middle"
             className="wheel__point-label-text"
             style={{
-              filter: "drop-shadow(0 0 7px #6ee7ff)",
+              filter: "none",
               pointerEvents: "none",
             }}
           >
@@ -195,7 +186,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         const textAnchor = side === 1 ? "start" : "end";
         const x = point.x + side * LABEL_GAP;
         const y = point.y - labelOffset + index * LABEL_LINE_HEIGHT;
-        const glowColor = point.reference ? "#6ee7ff" : "#e8ecf4";
+        const glowColor = "#e8ecf4";
 
         return (
           <g key={`label-${point.index}`} style={{ pointerEvents: "none" }}>
@@ -205,7 +196,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               fill="#ffffff"
               fontFamily="Inter, system-ui, sans-serif"
               fontSize={LABEL_FONT}
-              fontWeight={point.reference ? 650 : 450}
+              fontWeight={450}
               textAnchor={textAnchor}
               dominantBaseline="middle"
               className="wheel__point-label-text"
@@ -220,58 +211,54 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         );
       })}
 
-      {visiblePoints.map((point) => {
-        const hovered = point.index === hoveredIndex;
-        const glowColor = point.reference ? "#6ee7ff" : "#e8ecf4";
-        return (
-          <g key={`highlight-${point.index}`}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={point.reference ? 14 : 11}
-              fill="none"
-              stroke={point.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
-              strokeWidth={1.5}
-              opacity={hovered ? 0.95 : 0.75}
-              style={{
-                filter: `drop-shadow(0 0 9px ${glowColor})`,
-                pointerEvents: "none",
-              }}
-            >
-              <animate
-                attributeName="opacity"
-                values="0.65;1;0.65"
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
-              <animate
-                attributeName="r"
-                values={point.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
-            </circle>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={4.5 * DIMMED_POINT_SCALE}
-              fill={point.reference ? "#6ee7ff" : "#e8ecf4"}
-              opacity={hovered ? 0.95 : 0.75}
-              style={{
-                filter: `drop-shadow(0 0 7px ${glowColor})`,
-                pointerEvents: "none",
-              }}
-            >
-              <animate
-                attributeName="opacity"
-                values="0.65;1;0.65"
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
-            </circle>
-          </g>
-        );
-      })}
+      {hoveredPoint && (
+        <g key={`highlight-${hoveredPoint.index}`}>
+          <circle
+            cx={hoveredPoint.x}
+            cy={hoveredPoint.y}
+            r={hoveredPoint.reference ? 14 : 11}
+            fill="none"
+            stroke={hoveredPoint.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
+            strokeWidth={1.5}
+            opacity={0.95}
+            style={{
+              filter: `drop-shadow(0 0 9px ${hoveredPoint.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              pointerEvents: "none",
+            }}
+          >
+            <animate
+              attributeName="opacity"
+              values="0.65;1;0.65"
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="r"
+              values={hoveredPoint.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+          </circle>
+          <circle
+            cx={hoveredPoint.x}
+            cy={hoveredPoint.y}
+            r={4.5 * (hoveredPoint.reference ? 1 : DIMMED_POINT_SCALE)}
+            fill={hoveredPoint.reference ? "#6ee7ff" : "#e8ecf4"}
+            opacity={0.95}
+            style={{
+              filter: `drop-shadow(0 0 7px ${hoveredPoint.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              pointerEvents: "none",
+            }}
+          >
+            <animate
+              attributeName="opacity"
+              values="0.65;1;0.65"
+              dur="1.4s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </g>
+      )}
     </svg>
   );
 }

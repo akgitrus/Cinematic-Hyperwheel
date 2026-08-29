@@ -43,7 +43,7 @@ function pointPosition(zx: number, zy: number): { x: number; y: number } {
 
 function pointRadius(point: Point, hoveredIndex: number | null): number {
   const radius = point.reference ? 10.5 : 6;
-  const dimmed = hoveredIndex !== null && point.index !== hoveredIndex;
+  const dimmed = hoveredIndex !== null;
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1);
 }
 
@@ -110,7 +110,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     allPoints.forEach((point, index) => {
       const active = hoveredIndex !== null && activeIndexes.has(index);
       point.style.opacity = hoveredIndex === null || active ? "" : String(DIMMED_POINT_OPACITY);
-      point.style.transform = hoveredIndex === null || active ? "" : `scale(${DIMMED_POINT_SCALE})`;
+      point.style.transform = hoveredIndex === null ? "" : `scale(${DIMMED_POINT_SCALE})`;
     });
 
     return () => {

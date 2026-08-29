@@ -43,13 +43,13 @@ function pointPosition(zx: number, zy: number): { x: number; y: number } {
 
 function pointRadius(point: Point, hoveredIndex: number | null): number {
   const radius = point.reference ? 10.5 : 6;
-  const dimmed = hoveredIndex !== null;
+  const dimmed = hoveredIndex !== null && point.index !== hoveredIndex;
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1);
 }
 
 function hitRadius(point: Point, hoveredIndex: number | null): number {
   const radius = point.reference ? 10.5 : 6;
-  const dimmed = hoveredIndex !== null && point.index !== hoveredIndex;
+  const dimmed = hoveredIndex !== null && !point.reference && point.index !== hoveredIndex;
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1) + POINT_HOVER_PADDING;
 }
 
@@ -91,11 +91,12 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     : points.find((point) => point.index === hoveredIndex) ?? null;
 
   const visiblePoints = useMemo(() => {
-    if (!hoveredPoint) return [];
+    if (!hoveredPoint) return points.filter((point) => point.reference);
 
     const hoveredRadius = pointRadius(hoveredPoint, hoveredIndex);
     return points
       .filter((point) => {
+        if (point.reference) return true;
         if (point.index === hoveredPoint.index) return true;
         const distance = distanceBetween(point, hoveredPoint);
         const candidateRadius = pointRadius(point, hoveredIndex);
@@ -115,8 +116,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
 
     allPoints.forEach((point, index) => {
       const active = hoveredIndex !== null && activeIndexes.has(index);
-      point.style.opacity = hoveredIndex === null || active ? "" : String(DIMMED_POINT_OPACITY);
-      point.style.transform = hoveredIndex === null ? "" : `scale(${DIMMED_POINT_SCALE})`;
+      const referencePoint = index === 0 && title;
+      point.style.opacity = hoveredIndex === null || active || referencePoint ? "" : String(DIMMED_POINT_OPACITY);
+      point.style.transform = !referencePoint && hoveredIndex !== null && !active ? `scale(${DIMMED_POINT_SCALE})` : "";
     });
 
     return () => {
@@ -125,7 +127,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         point.style.transform = "";
       });
     };
-  }, [hoveredIndex, visiblePoints]);
+  }, [hoveredIndex, title, visiblePoints]);
 
   if (compact || points.length === 0) return null;
 

@@ -29,6 +29,7 @@ const POINT_HOVER_PADDING = 0;
 const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
 const DIMMED_POINT_OPACITY = 0.24;
 const DIMMED_POINT_SCALE = 0.35;
+const REFERENCE_LABEL_GAP = 6;
 
 function pointPosition(zx: number, zy: number): { x: number; y: number } {
   const center = GEOMETRY_SIZE / 2 + RING_PAD;
@@ -53,6 +54,35 @@ function distanceBetween(a: Point, b: Point): number {
 
 function labelWidth(title: string): number {
   return Math.min(LABEL_MAX_WIDTH, title.length * LABEL_FONT * 0.6);
+}
+
+function referenceLabelPosition(point: Point, title: string): { x: number; y: number; textAnchor: "middle" | "start" | "end" } {
+  const center = GEOMETRY_SIZE / 2 + RING_PAD;
+  const dx = point.x - center;
+  const dy = point.y - center;
+  const length = Math.hypot(dx, dy);
+
+  if (length === 0) {
+    return { x: point.x + LABEL_GAP, y: point.y, textAnchor: "start" };
+  }
+
+  const nx = -dy / length;
+  const ny = dx / length;
+  const halfWidth = labelWidth(title) / 2;
+  const halfHeight = LABEL_FONT / 2;
+  const offset = Math.abs(nx) * halfWidth + Math.abs(ny) * halfHeight + REFERENCE_LABEL_GAP;
+  const candidates = [
+    { x: point.x + nx * offset, y: point.y + ny * offset },
+    { x: point.x - nx * offset, y: point.y - ny * offset },
+  ];
+  const overflow = (candidate: { x: number; y: number }) =>
+    Math.max(0, halfWidth - candidate.x) +
+    Math.max(0, candidate.x + halfWidth - GEOMETRY_WRAP) +
+    Math.max(0, halfHeight - candidate.y) +
+    Math.max(0, candidate.y + halfHeight - GEOMETRY_WRAP);
+  const candidate = overflow(candidates[0]) <= overflow(candidates[1]) ? candidates[0] : candidates[1];
+
+  return { x: candidate.x, y: candidate.y, textAnchor: "middle" };
 }
 
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
@@ -142,6 +172,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     setHoveredIndex(nearest?.index ?? null);
   };
 
+  const referenceLabel = referencePoint
+    ? referenceLabelPosition(referencePoint, referencePoint.title)
+    : null;
   const labelOffset = visiblePoints.length > 1
     ? ((visiblePoints.length - 1) * LABEL_LINE_HEIGHT) / 2
     : 0;
@@ -159,16 +192,16 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       onMouseLeave={() => setHoveredIndex(null)}
       style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "auto" }}
     >
-      {referencePoint && (
+      {referencePoint && referenceLabel && (
         <g key="reference-label" style={{ pointerEvents: "none" }}>
           <text
-            x={referencePoint.x + (referencePoint.x + LABEL_GAP + labelWidth(referencePoint.title) <= GEOMETRY_WRAP ? LABEL_GAP : -LABEL_GAP)}
-            y={referencePoint.y}
+            x={referenceLabel.x}
+            y={referenceLabel.y}
             fill="#ffffff"
             fontFamily="Inter, system-ui, sans-serif"
             fontSize={LABEL_FONT}
             fontWeight={650}
-            textAnchor={referencePoint.x + LABEL_GAP + labelWidth(referencePoint.title) <= GEOMETRY_WRAP ? "start" : "end"}
+            textAnchor={referenceLabel.textAnchor}
             dominantBaseline="middle"
             className="wheel__point-label-text"
             style={{

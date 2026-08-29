@@ -220,7 +220,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
             <circle
               cx={point.x}
               cy={point.y}
-              r={4.5}
+              r={hovered ? 4.5 * DIMMED_POINT_SCALE : 4.5 * DIMMED_POINT_SCALE}
               fill={point.reference ? "#6ee7ff" : "#e8ecf4"}
               opacity={hovered ? 0.95 : 0.75}
               style={{

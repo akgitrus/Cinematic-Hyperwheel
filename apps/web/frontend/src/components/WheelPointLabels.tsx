@@ -25,7 +25,7 @@ const LABEL_GAP = 10;
 const LABEL_FONT = 10;
 const LABEL_LINE_HEIGHT = 15;
 const LABEL_MAX_WIDTH = 250;
-const POINT_HOVER_PADDING = 1.5;
+const POINT_HOVER_PADDING = 0;
 const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
 const DIMMED_POINT_OPACITY = 0.24;
 const DIMMED_POINT_SCALE = 0.35;
@@ -47,8 +47,10 @@ function pointRadius(point: Point, hoveredIndex: number | null): number {
   return radius * (dimmed ? DIMMED_POINT_SCALE : 1);
 }
 
-function hitRadius(point: Point): number {
-  return (point.reference ? 10.5 : 6) + POINT_HOVER_PADDING;
+function hitRadius(point: Point, hoveredIndex: number | null): number {
+  const radius = point.reference ? 10.5 : 6;
+  const dimmed = hoveredIndex !== null && point.index !== hoveredIndex;
+  return radius * (dimmed ? DIMMED_POINT_SCALE : 1) + POINT_HOVER_PADDING;
 }
 
 function distanceBetween(a: Point, b: Point): number {
@@ -151,7 +153,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           key={`hit-${point.index}`}
           cx={point.x}
           cy={point.y}
-          r={hitRadius(point)}
+          r={hitRadius(point, hoveredIndex)}
           fill="transparent"
           stroke="none"
           style={{ pointerEvents: "auto", cursor: "default" }}

@@ -26,7 +26,7 @@ const LABEL_FONT = 10;
 const LABEL_LINE_HEIGHT = 15;
 const LABEL_MAX_WIDTH = 250;
 const POINT_HOVER_PADDING = 1.5;
-const POINT_HOVER_CLUSTER_PADDING = 2;
+const POINT_HOVER_CLUSTER_OVERLAP = 0.5;
 const DIMMED_POINT_OPACITY = 0.24;
 const DIMMED_POINT_SCALE = 0.55;
 
@@ -93,7 +93,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
         if (point.index === hoveredPoint.index) return true;
         const distance = distanceBetween(point, hoveredPoint);
         const candidateRadius = pointRadius(point, hoveredIndex);
-        return distance <= hoveredRadius + candidateRadius + POINT_HOVER_CLUSTER_PADDING;
+        const combinedRadius = hoveredRadius + candidateRadius;
+        const overlapDistance = combinedRadius * (1 - POINT_HOVER_CLUSTER_OVERLAP);
+        return distance <= overlapDistance;
       })
       .sort((a, b) => a.y - b.y);
   }, [hoveredIndex, hoveredPoint, points]);

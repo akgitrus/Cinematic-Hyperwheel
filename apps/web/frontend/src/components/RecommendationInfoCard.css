@@ -1,0 +1,8 @@
+/* Keep the card overlay interactive without intercepting pointer events outside the card itself. */
+.rec-card__backdrop {
+  pointer-events: none;
+}
+
+.rec-card__backdrop .rec-card {
+  pointer-events: auto;
+}

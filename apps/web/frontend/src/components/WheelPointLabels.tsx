@@ -7,6 +7,8 @@ interface Props {
   size: number;
   title?: string;
   overlays?: RecAngle[];
+  onHoverItemChange?: (itemId: number | null) => void;
+  hoveredItemId?: number | null;
 }
 
 interface Point {
@@ -15,6 +17,7 @@ interface Point {
   title: string;
   reference: boolean;
   index: number;
+  itemId: number | null;
 }
 
 const Z_CLAMP = 3;
@@ -83,7 +86,7 @@ function referenceLabelPosition(point: Point, title: string): { x: number; y: nu
   return { x: candidate.x, y: candidate.y, textAnchor: "middle" };
 }
 
-export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
+export default function WheelPointLabels({ circle, size, title, overlays = [], onHoverItemChange, hoveredItemId = null }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const compact = size < 220;
@@ -96,13 +99,13 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     let index = 0;
     if (title) {
       const position = pointPosition(circle.z_x, circle.z_y);
-      result.push({ x: position.x, y: position.y, title, reference: true, index: index++ });
+      result.push({ x: position.x, y: position.y, title, reference: true, index: index++, itemId: null });
     }
 
     for (const angle of overlays) {
       for (const item of angle.items) {
         const position = pointPosition(item.z_x, item.z_y);
-        result.push({ x: position.x, y: position.y, title: item.title, reference: false, index: index++ });
+        result.push({ x: position.x, y: position.y, title: item.title, reference: false, index: index++, itemId: item.item_id });
       }
     }
     return result;
@@ -113,9 +116,29 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     [points]
   );
 
-  const hoveredPoint = hoveredIndex === null
+  const localHoveredPoint = hoveredIndex === null
     ? null
     : points.find((point) => point.index === hoveredIndex) ?? null;
+
+  const externallyHoveredPoint = hoveredItemId === null
+    ? null
+    : points.find((point) => point.itemId === hoveredItemId) ?? null;
+
+  const hoveredPoint = localHoveredPoint ?? externallyHoveredPoint;
+
+  useEffect(() => {
+    if (localHoveredPoint) {
+      onHoverItemChange?.(localHoveredPoint.itemId);
+      return;
+    }
+    if (hoveredItemId === null) {
+      onHoverItemChange?.(null);
+    }
+  }, [localHoveredPoint, hoveredItemId, onHoverItemChange]);
+
+  useEffect(() => {
+    return () => onHoverItemChange?.(null);
+  }, [onHoverItemChange]);
 
   const visiblePoints = useMemo(() => {
     if (!hoveredPoint || hoveredPoint.reference) return [];
@@ -171,9 +194,9 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
       y: ((clientY - rect.top) / rect.height) * GEOMETRY_WRAP,
     };
 
-    if (hoveredPoint) {
-      const hoveredRadius = pointRadius(hoveredPoint);
-      if (distanceBetween(pointerPoint, hoveredPoint) <= hoveredRadius + POINT_HOVER_PADDING) {
+    if (localHoveredPoint) {
+      const hoveredRadius = pointRadius(localHoveredPoint);
+      if (distanceBetween(pointerPoint, localHoveredPoint) <= hoveredRadius + POINT_HOVER_PADDING) {
         return;
       }
     }

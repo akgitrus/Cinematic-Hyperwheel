@@ -1,8 +1,21 @@
+/* Wheel + legend sit side by side in a flex row (see .wheel-stack__row
+   below and WheelStack.tsx). */
+.wheel-stack__row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Positioned ancestor for WheelPointLabels' absolutely-positioned overlay
+   svg (inset: 0) - sized to the disc alone rather than the whole row, so
+   the overlay stays aligned with the disc regardless of the legend's
+   width. */
+.wheel-stack__disc-wrap {
+  position: relative;
+}
+
 .wheel-stack__legend {
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 24px);
-  transform: translateY(-50%);
+  flex: 0 0 auto;
   width: min(300px, 28vw);
   max-height: min(640px, calc(100vh - 48px));
   overflow-y: auto;

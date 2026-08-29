@@ -62,6 +62,17 @@ const WHEEL_BOTTOM_MARGIN = 24;
 // size computation doesn't wildly overshoot before that measurement
 // exists.
 const READOUT_HEIGHT_FALLBACK = 90;
+// Horizontal gap between the wheel disc and its legend, and the
+// legend's own max width - see .wheel-stack__row / .wheel-stack__legend
+// in WheelLegend.css. Duplicated here (rather than measured) so the
+// wheel-sizing effect below can reserve exactly this much extra column
+// width up front, instead of the wheel and legend fighting over the
+// same pixels once both are laid out.
+const WHEEL_LEGEND_GAP = 24;
+
+function legendReserveWidth(): number {
+  return Math.min(300, window.innerWidth * 0.28) + WHEEL_LEGEND_GAP;
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -129,12 +140,39 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
+  // The wheel circle currently shown as the big central "primary" wheel,
+  // and its recommendation overlays - computed here (rather than lower,
+  // next to the render that consumes them) because the sizing effect
+  // below also needs to know whether a legend will be drawn beside this
+  // circle, to reserve column width for it.
+  const displayCircles: WheelCircle[] =
+    recs && !recError
+      ? recs.circles.map(toWheelCircle).filter((c): c is WheelCircle => c !== null)
+      : circles;
+  // The big central wheel mirrors whichever Recommendations section is
+  // currently scrolled into view (see RecommendationsPanel's scrollspy
+  // effect); until that fires - no data yet, or mobile, where it never
+  // fires - fall back to the top-ranked circle, same as before.
+  const activeWheelCircle = activeCircle ? toWheelCircle(activeCircle) : null;
+  const [fallbackPrimary] = displayCircles;
+  // Secondary circles no longer render here - they're shown inline next
+  // to their matching Recommendations section instead (see
+  // RecommendationsPanel.tsx). Only the top-ranked circle stays as the
+  // large centered wheel.
+  const primary = activeWheelCircle ?? fallbackPrimary ?? null;
+  const primaryOverlays = primary ? findRecCircle(primary, recs)?.angles : undefined;
+  // Whether WheelStack will actually draw a legend beside the primary
+  // wheel (see WheelLegend's own populated-angles check) - the sizing
+  // effect below only reserves column width for it when it will.
+  const hasLegend = !isWheelWrapHidden && (primaryOverlays?.some((a) => a.items.length > 0) ?? false);
+
   // Sizes the big wheel to fill the available space on BOTH axes while
-  // staying fully within the visible viewport, readout text included -
-  // see Wheel.tsx (frozen viewBox) and WheelStack.tsx (crossfade) for
-  // how the result is actually rendered smoothly.
+  // staying fully within the visible viewport, readout text and legend
+  // included - see Wheel.tsx (frozen viewBox) and WheelStack.tsx
+  // (crossfade, wheel+legend row) for how the result is actually
+  // rendered smoothly.
   useEffect(() => {
-    if (isWheelWrapHidden) return; // wrap isn't mounted on mobile - nothing to observe
+    if (isWheelWrapHidden) return;
     const wrapEl = wheelWrapRef.current;
     const colEl = wheelColumnRef.current;
     if (!wrapEl || !colEl) return;
@@ -147,18 +185,21 @@ export default function App() {
       const availableHeight = window.innerHeight - top - WHEEL_BOTTOM_MARGIN;
       const heightBased = availableHeight - WHEEL_GAP - readoutHeight - RING_PAD * 2;
 
-      // Cap the COLUMN itself (index.css/header.css deliberately give it
-      // no max-width of its own) to what a round wheel could ever use
-      // height-wise, BEFORE measuring width below - a circular disc
-      // can't use width beyond its own height budget, so without this
-      // cap the column would soak up all leftover row width and push
-      // .layout3__left off toward the left edge for no visual benefit.
-      const heightCapPx = Math.max(MIN_WHEEL_SIZE, Math.floor(heightBased)) + RING_PAD * 2;
+      // Extra column width reserved for the legend WheelStack draws
+      // beside the disc (see .wheel-stack__row in WheelLegend.css) -
+      // without this, the column would be sized for the disc alone and
+      // the legend would overflow past its right edge once the disc
+      // grows large enough to fill the column (e.g. in compact header
+      // mode, where more vertical room lets the wheel grow wider).
+      const legendReserve = hasLegend ? legendReserveWidth() : 0;
+
+      const heightCapPx =
+        Math.max(MIN_WHEEL_SIZE, Math.floor(heightBased)) + RING_PAD * 2 + legendReserve;
       colEl.style.maxWidth = `${heightCapPx}px`;
 
-      // Forces a synchronous layout so this reads the width AFTER the
-      // cap above has taken effect, not the stale pre-cap value.
-      const widthBased = wrapEl.clientWidth - RING_PAD * 2;
+      // The legend's own reserved width is excluded here too, so the
+      // disc itself is sized from whatever's actually left over for it.
+      const widthBased = wrapEl.clientWidth - RING_PAD * 2 - legendReserve;
 
       const target = Math.floor(Math.min(widthBased, heightBased));
       setWheelSize(Math.min(MAX_WHEEL_SIZE, Math.max(MIN_WHEEL_SIZE, target)));
@@ -189,7 +230,7 @@ export default function App() {
       window.removeEventListener("scroll", onFrame);
       colEl.style.maxWidth = "";
     };
-  }, [isWheelWrapHidden, readoutHeight, headerMode, headerHeight, controlsHeight]);
+  }, [isWheelWrapHidden, readoutHeight, headerMode, headerHeight, controlsHeight, hasLegend]);
 
   const fetchRecommendations = async (itemId: number, sch: string) => {
     try {
@@ -285,22 +326,6 @@ export default function App() {
     if (selected) void fetchRecommendations(selected.item_id, sch);
   };
 
-  const displayCircles: WheelCircle[] =
-    recs && !recError
-      ? recs.circles.map(toWheelCircle).filter((c): c is WheelCircle => c !== null)
-      : circles;
-  // The big central wheel mirrors whichever Recommendations section is
-  // currently scrolled into view (see RecommendationsPanel's scrollspy
-  // effect); until that fires - no data yet, or mobile, where it never
-  // fires - fall back to the top-ranked circle, same as before.
-  const activeWheelCircle = activeCircle ? toWheelCircle(activeCircle) : null;
-  const [fallbackPrimary] = displayCircles;
-  // Secondary circles no longer render here - they're shown inline next
-  // to their matching Recommendations section instead (see
-  // RecommendationsPanel.tsx). Only the top-ranked circle stays as the
-  // large centered wheel.
-  const primary = activeWheelCircle ?? fallbackPrimary ?? null;
-
   const schemeSelect = (
     <div className="rec-form">
       <label className="rec-form__label" htmlFor="scheme">
@@ -390,7 +415,7 @@ export default function App() {
                   circle={primary}
                   size={wheelSize}
                   title={selected?.title}
-                  overlays={primary ? findRecCircle(primary, recs)?.angles : undefined}
+                  overlays={primaryOverlays}
                   onReadoutHeight={setReadoutHeight}
                 />
               </div>

@@ -275,22 +275,29 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
           className={"wheel-stack__layer" + (l.visible ? " wheel-stack__layer--visible" : "")}
           onTransitionEnd={() => handleTransitionEnd(l.id)}
         >
-          <div style={{ position: "relative" }}>
-            <Wheel
-              circle={l.circle}
-              size={l.size}
-              title={l.title}
-              overlays={l.overlays}
-              onReadoutHeight={i === layers.length - 1 ? onReadoutHeight : undefined}
-            />
-            <WheelPointLabels
-              circle={l.circle}
-              size={l.size}
-              title={l.title}
-              overlays={l.overlays}
-              onHoverItemChange={i === layers.length - 1 ? handlePointHoverChange : undefined}
-              hoveredItemId={i === layers.length - 1 ? legendHoveredItemId : null}
-            />
+          {/* Disc and legend sit side by side in a flex row (see
+              .wheel-stack__row in WheelLegend.css) so the legend's width
+              is accounted for by normal layout -
+              App.tsx's wheel-sizing effect reserves matching column
+              width for it. */}
+          <div className="wheel-stack__row">
+            <div className="wheel-stack__disc-wrap">
+              <Wheel
+                circle={l.circle}
+                size={l.size}
+                title={l.title}
+                overlays={l.overlays}
+                onReadoutHeight={i === layers.length - 1 ? onReadoutHeight : undefined}
+              />
+              <WheelPointLabels
+                circle={l.circle}
+                size={l.size}
+                title={l.title}
+                overlays={l.overlays}
+                onHoverItemChange={i === layers.length - 1 ? handlePointHoverChange : undefined}
+                hoveredItemId={i === layers.length - 1 ? legendHoveredItemId : null}
+              />
+            </div>
             <WheelLegend
               circle={l.circle}
               overlays={l.overlays}

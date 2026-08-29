@@ -1,5 +1,5 @@
 import "./WheelPointLabels.css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
 
 interface Props {
@@ -17,61 +17,19 @@ interface Point {
   index: number;
 }
 
-interface Candidate {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  score: number;
-}
-
-interface Placement extends Point, Candidate {}
-
 const Z_CLAMP = 3;
 const GEOMETRY_SIZE = 460;
 const RING_PAD = 36;
 const GEOMETRY_WRAP = GEOMETRY_SIZE + RING_PAD * 2;
-const LABEL_GAP = 8;
+const LABEL_GAP = 10;
 const LABEL_FONT = 10;
-const LABEL_PAD_X = 5;
-const LABEL_PAD_Y = 3;
+const LABEL_LINE_HEIGHT = 15;
 const LABEL_MAX_WIDTH = 250;
-const POINT_EXCLUSION = 9;
-const LABEL_SEPARATION = 14;
-const OVERLAP_WEIGHT = 1000;
-const BOUNDARY_WEIGHT = 500;
-const POINT_WEIGHT = 250;
-const SEPARATION_WEIGHT = 10;
-const DISTANCE_WEIGHT = 0.8;
-const RADIAL_WEIGHT = 12;
-const REFERENCE_DISTANCE_WEIGHT = 2.5;
-const OPTIMIZATION_PASSES = 12;
-const RANDOM_RESTARTS = 4;
-
-const DIRECTIONS = Array.from({ length: 16 }, (_, i) => {
-  const angle = (i * Math.PI * 2) / 16;
-  return { x: Math.cos(angle), y: Math.sin(angle) };
-});
-
-let measureCtx: CanvasRenderingContext2D | null | undefined;
-
-function getMeasureCtx(): CanvasRenderingContext2D | null {
-  if (measureCtx === undefined) {
-    measureCtx = typeof document !== "undefined"
-      ? document.createElement("canvas").getContext("2d")
-      : null;
-  }
-  return measureCtx;
-}
-
-function measureTextWidth(text: string): number {
-  const ctx = getMeasureCtx();
-  if (ctx) {
-    ctx.font = `${LABEL_FONT}px Inter, system-ui, sans-serif`;
-    return ctx.measureText(text).width;
-  }
-  return text.length * LABEL_FONT * 0.55;
-}
+const POINT_HOVER_PADDING = 0;
+const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
+const DIMMED_POINT_OPACITY = 0.24;
+const DIMMED_POINT_SCALE = 0.35;
+const REFERENCE_LABEL_GAP = 6;
 
 function pointPosition(zx: number, zy: number): { x: number; y: number } {
   const center = GEOMETRY_SIZE / 2 + RING_PAD;
@@ -84,210 +42,50 @@ function pointPosition(zx: number, zy: number): { x: number; y: number } {
   };
 }
 
-function overlapArea(a: Candidate | Placement, b: Candidate | Placement): number {
-  const left = Math.max(a.x, b.x);
-  const right = Math.min(a.x + a.width, b.x + b.width);
-  const top = Math.max(a.y, b.y);
-  const bottom = Math.min(a.y + a.height, b.y + b.height);
-  return Math.max(0, right - left) * Math.max(0, bottom - top);
+function pointRadius(point: Point): number {
+  return point.reference ? 10.5 : 6;
 }
 
-function distanceToRect(x: number, y: number, rect: Candidate | Placement): number {
-  const dx = Math.max(rect.x - x, 0, x - (rect.x + rect.width));
-  const dy = Math.max(rect.y - y, 0, y - (rect.y + rect.height));
-  return Math.hypot(dx, dy);
+function distanceBetween(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function boundaryOverflow(candidate: Candidate, width: number, height: number): number {
-  return (
-    Math.max(0, -candidate.x) +
-    Math.max(0, -candidate.y) +
-    Math.max(0, candidate.x + candidate.width - width) +
-    Math.max(0, candidate.y + candidate.height - height)
-  );
+function labelWidth(title: string): number {
+  return Math.min(LABEL_MAX_WIDTH, title.length * LABEL_FONT * 0.6);
 }
 
-function radialPenalty(candidate: Candidate, point: Point, centerX: number, centerY: number): number {
-  const outwardX = point.x - centerX;
-  const outwardY = point.y - centerY;
-  const outwardLength = Math.hypot(outwardX, outwardY);
-  if (outwardLength < 1) return 0;
+function referenceLabelPosition(point: Point, title: string): { x: number; y: number; textAnchor: "middle" | "start" | "end" } {
+  const center = GEOMETRY_SIZE / 2 + RING_PAD;
+  const dx = point.x - center;
+  const dy = point.y - center;
+  const length = Math.hypot(dx, dy);
 
-  const labelX = candidate.x + candidate.width / 2 - point.x;
-  const labelY = candidate.y + candidate.height / 2 - point.y;
-  const labelLength = Math.hypot(labelX, labelY);
-  if (labelLength < 1) return 0;
-
-  const cosine = (labelX * outwardX + labelY * outwardY) / (labelLength * outwardLength);
-  return (1 - cosine) * RADIAL_WEIGHT;
-}
-
-function candidateScore(
-  candidate: Candidate,
-  point: Point,
-  stageWidth: number,
-  stageHeight: number
-): number {
-  const centerX = stageWidth / 2;
-  const centerY = stageHeight / 2;
-  const distance = distanceToRect(point.x, point.y, candidate);
-  const distanceWeight = point.reference ? REFERENCE_DISTANCE_WEIGHT : DISTANCE_WEIGHT;
-  const radialCost = point.reference ? 0 : radialPenalty(candidate, point, centerX, centerY);
-
-  return (
-    distance * distanceWeight +
-    radialCost +
-    boundaryOverflow(candidate, stageWidth, stageHeight) * BOUNDARY_WEIGHT
-  );
-}
-
-function candidatesFor(
-  point: Point,
-  width: number,
-  height: number,
-  stageWidth: number,
-  stageHeight: number
-): Candidate[] {
-  const candidates: Candidate[] = [];
-
-  for (const direction of DIRECTIONS) {
-    for (const distance of [LABEL_GAP, LABEL_GAP + 10, LABEL_GAP + 24]) {
-      const halfExtent =
-        Math.abs(direction.x) * width / 2 + Math.abs(direction.y) * height / 2;
-      const x = point.x + direction.x * (distance + halfExtent) - width / 2;
-      const y = point.y + direction.y * (distance + halfExtent) - height / 2;
-      const candidate: Candidate = { x, y, width, height, score: 0 };
-      candidates.push({
-        ...candidate,
-        score: candidateScore(candidate, point, stageWidth, stageHeight),
-      });
-    }
+  if (length === 0) {
+    return { x: point.x + LABEL_GAP, y: point.y, textAnchor: "start" };
   }
 
-  return candidates;
-}
+  const nx = -dy / length;
+  const ny = dx / length;
+  const halfWidth = labelWidth(title) / 2;
+  const halfHeight = LABEL_FONT / 2;
+  const offset = Math.abs(nx) * halfWidth + Math.abs(ny) * halfHeight + REFERENCE_LABEL_GAP;
+  const candidates = [
+    { x: point.x + nx * offset, y: point.y + ny * offset },
+    { x: point.x - nx * offset, y: point.y - ny * offset },
+  ];
+  const overflow = (candidate: { x: number; y: number }) =>
+    Math.max(0, halfWidth - candidate.x) +
+    Math.max(0, candidate.x + halfWidth - GEOMETRY_WRAP) +
+    Math.max(0, halfHeight - candidate.y) +
+    Math.max(0, candidate.y + halfHeight - GEOMETRY_WRAP);
+  const candidate = overflow(candidates[0]) <= overflow(candidates[1]) ? candidates[0] : candidates[1];
 
-function pairCost(a: Placement, b: Placement): number {
-  const overlap = overlapArea(a, b);
-  if (overlap > 0) return overlap * OVERLAP_WEIGHT;
-
-  const horizontalGap = Math.max(b.x - (a.x + a.width), a.x - (b.x + b.width), 0);
-  const verticalGap = Math.max(b.y - (a.y + a.height), a.y - (b.y + b.height), 0);
-  const gap = Math.hypot(horizontalGap, verticalGap);
-  return Math.max(0, LABEL_SEPARATION - gap) * SEPARATION_WEIGHT;
-}
-
-function pointCollisionCost(candidate: Candidate, point: Point): number {
-  return Math.max(
-    0,
-    POINT_EXCLUSION - distanceToRect(point.x, point.y, candidate)
-  ) * POINT_WEIGHT;
-}
-
-function globalEnergy(placements: Placement[], points: Point[]): number {
-  let energy = 0;
-
-  for (let i = 0; i < placements.length; i += 1) {
-    const placement = placements[i];
-    energy += placement.score;
-
-    for (const point of points) {
-      if (point.index === placement.index) continue;
-      energy += pointCollisionCost(placement, point);
-    }
-
-    for (let j = i + 1; j < placements.length; j += 1) {
-      energy += pairCost(placement, placements[j]);
-    }
-  }
-
-  return energy;
-}
-
-function initialPlacements(
-  points: Point[],
-  candidates: Candidate[][],
-  variant: number
-): Placement[] {
-  return points.map((point, index) => {
-    const options = candidates[index];
-    const offset = (variant * 7 + index * 11) % options.length;
-    const best = [...options]
-      .sort((a, b) => a.score - b.score)
-      .slice(0, Math.min(8, options.length))[offset % Math.min(8, options.length)];
-    return { ...point, ...best };
-  });
-}
-
-function optimizePlacements(
-  points: Point[],
-  candidates: Candidate[][]
-): Placement[] {
-  if (points.length === 0) return [];
-
-  let bestPlacements: Placement[] | null = null;
-  let bestEnergy = Number.POSITIVE_INFINITY;
-
-  for (let restart = 0; restart < RANDOM_RESTARTS; restart += 1) {
-    let current = initialPlacements(points, candidates, restart);
-    let currentEnergy = globalEnergy(current, points);
-
-    for (let pass = 0; pass < OPTIMIZATION_PASSES; pass += 1) {
-      let improved = false;
-
-      for (let index = 0; index < points.length; index += 1) {
-        let localBest = current[index];
-        let localEnergy = currentEnergy;
-
-        for (const candidate of candidates[index]) {
-          const next = current.slice();
-          next[index] = { ...points[index], ...candidate };
-          const energy = globalEnergy(next, points);
-          if (energy < localEnergy) {
-            localEnergy = energy;
-            localBest = next[index];
-          }
-        }
-
-        if (localBest !== current[index]) {
-          current = current.slice();
-          current[index] = localBest;
-          currentEnergy = localEnergy;
-          improved = true;
-        }
-      }
-
-      if (!improved) break;
-    }
-
-    if (currentEnergy < bestEnergy) {
-      bestEnergy = currentEnergy;
-      bestPlacements = current;
-    }
-  }
-
-  return bestPlacements ?? [];
-}
-
-function layoutLabels(points: Point[], stageWidth: number, stageHeight: number): Placement[] {
-  const candidates = points.map((point) => {
-    const width = Math.min(LABEL_MAX_WIDTH, measureTextWidth(point.title) + LABEL_PAD_X * 2);
-    const height = LABEL_FONT + LABEL_PAD_Y * 2 + 2;
-    return candidatesFor(point, width, height, stageWidth, stageHeight);
-  });
-
-  return optimizePlacements(points, candidates);
-}
-
-function setRecommendationPointOpacity(stage: SVGSVGElement | null, activeIndex: number | null, count: number): void {
-  const points = stage?.parentElement?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
-  points.forEach((point, index) => {
-    point.style.opacity = activeIndex === null || count !== points.length || index === activeIndex ? "" : "0.24";
-  });
+  return { x: candidate.x, y: candidate.y, textAnchor: "middle" };
 }
 
 export default function WheelPointLabels({ circle, size, title, overlays = [] }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const compact = size < 220;
   const displayWrap = size + RING_PAD * 2;
 
@@ -310,104 +108,153 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
     return result;
   }, [circle, compact, overlays, title]);
 
-  const placements = useMemo(
-    () => layoutLabels(points, GEOMETRY_WRAP, GEOMETRY_WRAP),
+  const referencePoint = useMemo(
+    () => points.find((point) => point.reference) ?? null,
     [points]
   );
 
-  if (compact || placements.length === 0) return null;
-
-  const hoveredPlacement = hoveredIndex === null
-    ? null
-    : placements.find((placement) => placement.index === hoveredIndex) ?? null;
   const hoveredPoint = hoveredIndex === null
     ? null
     : points.find((point) => point.index === hoveredIndex) ?? null;
 
-  const setHovered = (index: number | null) => {
-    setHoveredIndex(index);
-    const placement = index === null
-      ? null
-      : placements.find((item) => item.index === index) ?? null;
-    const stage = document.querySelector(".wheel__point-labels")?.parentElement;
-    const recPoints = stage?.querySelectorAll<SVGCircleElement>(".wheel__rec-point") ?? [];
-    const recommendationCount = overlays.reduce((total, angle) => total + angle.items.length, 0);
+  const visiblePoints = useMemo(() => {
+    if (!hoveredPoint || hoveredPoint.reference) return [];
 
-    if (placement === null) {
-      recPoints.forEach((recPoint) => {
-        recPoint.style.opacity = "";
-      });
-      return;
-    }
+    return points
+      .filter((point) => {
+        if (point.reference) return false;
+        if (point.index === hoveredPoint.index) return true;
 
-    if (placement.reference) {
-      recPoints.forEach((recPoint) => {
-        recPoint.style.opacity = "0.24";
-      });
-      return;
-    }
+        const hoveredRadius = pointRadius(hoveredPoint);
+        const candidateRadius = pointRadius(point) * DIMMED_POINT_SCALE;
+        const combinedRadius = hoveredRadius + candidateRadius;
+        const overlapDistance = combinedRadius * (1 - POINT_HOVER_CLUSTER_OVERLAP);
+        return distanceBetween(point, hoveredPoint) <= overlapDistance;
+      })
+      .sort((a, b) => a.y - b.y);
+  }, [hoveredPoint, points]);
 
-    const recommendationIndex = placement.index - (title ? 1 : 0);
-    recPoints.forEach((recPoint, pointIndex) => {
-      recPoint.style.opacity = pointIndex === recommendationIndex && recommendationCount === recPoints.length ? "" : "0.24";
+  useEffect(() => {
+    const stage = svgRef.current?.parentElement;
+    if (!stage) return;
+
+    const activeIndexes = new Set(
+      visiblePoints.map((point) => point.index - (title ? 1 : 0))
+    );
+    const allPoints = stage.querySelectorAll<SVGCircleElement>(".wheel__rec-point");
+
+    allPoints.forEach((point, index) => {
+      const active = hoveredPoint !== null && !hoveredPoint.reference && activeIndexes.has(index);
+      point.style.opacity = hoveredPoint === null || active ? "" : String(DIMMED_POINT_OPACITY);
+      point.style.transform = hoveredPoint === null ? "" : `scale(${DIMMED_POINT_SCALE})`;
     });
+
+    return () => {
+      allPoints.forEach((point) => {
+        point.style.opacity = "";
+        point.style.transform = "";
+      });
+    };
+  }, [hoveredPoint, title, visiblePoints]);
+
+  if (compact || points.length === 0) return null;
+
+  const setHoveredFromPointer = (clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const pointerPoint = {
+      x: ((clientX - rect.left) / rect.width) * GEOMETRY_WRAP,
+      y: ((clientY - rect.top) / rect.height) * GEOMETRY_WRAP,
+    };
+
+    if (hoveredPoint) {
+      const hoveredRadius = pointRadius(hoveredPoint);
+      if (distanceBetween(pointerPoint, hoveredPoint) <= hoveredRadius + POINT_HOVER_PADDING) {
+        return;
+      }
+    }
+
+    let nearest: Point | null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const point of points) {
+      const radius = pointRadius(point);
+      const distance = distanceBetween(pointerPoint, point);
+      if (distance <= radius + POINT_HOVER_PADDING && distance < nearestDistance) {
+        nearest = point;
+        nearestDistance = distance;
+      }
+    }
+
+    setHoveredIndex(nearest?.index ?? null);
   };
+
+  const referenceLabel = referencePoint
+    ? referenceLabelPosition(referencePoint, referencePoint.title)
+    : null;
+  const labelOffset = visiblePoints.length > 1
+    ? ((visiblePoints.length - 1) * LABEL_LINE_HEIGHT) / 2
+    : 0;
 
   return (
     <svg
+      ref={svgRef}
       className="wheel__point-labels"
       viewBox={`0 0 ${GEOMETRY_WRAP} ${GEOMETRY_WRAP}`}
       width={displayWrap}
       height={displayWrap}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
-      style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "none" }}
+      onMouseMove={(event) => setHoveredFromPointer(event.clientX, event.clientY)}
+      onMouseLeave={() => setHoveredIndex(null)}
+      style={{ position: "absolute", inset: 0, overflow: "visible", zIndex: 3, pointerEvents: "auto" }}
     >
-      {placements.map((placement) => {
-        const point = points.find((item) => item.index === placement.index)!;
-        const hovered = hoveredIndex === placement.index;
-        const dimmed = hoveredIndex !== null && !hovered;
-        const labelX = placement.x + LABEL_PAD_X;
-        const labelY = placement.y + LABEL_PAD_Y;
-        const glowColor = placement.reference ? "#6ee7ff" : "#e8ecf4";
+      {referencePoint && referenceLabel && (
+        <g key="reference-label" style={{ pointerEvents: "none" }}>
+          <text
+            x={referenceLabel.x}
+            y={referenceLabel.y}
+            fill="#ffffff"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontSize={LABEL_FONT}
+            fontWeight={650}
+            textAnchor={referenceLabel.textAnchor}
+            dominantBaseline="middle"
+            className="wheel__point-label-text"
+            style={{
+              filter: "none",
+              pointerEvents: "none",
+            }}
+          >
+            {referencePoint.title}
+          </text>
+        </g>
+      )}
+
+      {visiblePoints.map((point, index) => {
+        const side = point.x + LABEL_GAP + labelWidth(point.title) <= GEOMETRY_WRAP ? 1 : -1;
+        const textAnchor = side === 1 ? "start" : "end";
+        const x = point.x + side * LABEL_GAP;
+        const y = point.y - labelOffset + index * LABEL_LINE_HEIGHT;
+
         return (
-          <g key={placement.index} style={{ pointerEvents: "none" }}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={placement.reference ? 15 : 12}
-              fill="transparent"
-              stroke="none"
-              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
-              style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => setHovered(placement.index)}
-              onMouseLeave={() => setHovered(null)}
-            />
-            <rect
-              x={placement.x}
-              y={placement.y}
-              width={placement.width}
-              height={placement.height}
-              fill="transparent"
-              stroke="none"
-              className={!placement.reference ? "wheel__point-label-hit--recommendation" : undefined}
-              style={{ pointerEvents: "auto", cursor: "default" }}
-              onMouseEnter={() => setHovered(placement.index)}
-              onMouseLeave={() => setHovered(null)}
-            />
+          <g key={`label-${point.index}`} style={{ pointerEvents: "none" }}>
             <text
-              x={labelX}
-              y={labelY + LABEL_FONT}
-              fill={hovered ? "#ffffff" : placement.reference ? "#e8ecf4" : "#cdd4e2"}
-              opacity={dimmed ? 0.45 : 1}
+              x={x}
+              y={y}
+              fill="#ffffff"
               fontFamily="Inter, system-ui, sans-serif"
               fontSize={LABEL_FONT}
-              fontWeight={placement.reference ? 650 : 450}
-              textAnchor="start"
-              dominantBaseline="alphabetic"
+              fontWeight={450}
+              textAnchor={textAnchor}
+              dominantBaseline="middle"
               className="wheel__point-label-text"
               style={{
-                filter: hovered ? `drop-shadow(0 0 7px ${glowColor})` : undefined,
+                filter: "drop-shadow(0 0 7px #e8ecf4)",
                 pointerEvents: "none",
               }}
             >
@@ -416,18 +263,19 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           </g>
         );
       })}
-      {hoveredPlacement && hoveredPoint && (
-        <>
+
+      {hoveredPoint && !hoveredPoint.reference && (
+        <g key={`highlight-${hoveredPoint.index}`}>
           <circle
             cx={hoveredPoint.x}
             cy={hoveredPoint.y}
-            r={hoveredPlacement.reference ? 14 : 11}
+            r={9.5}
             fill="none"
-            stroke={hoveredPlacement.reference ? "rgba(110, 231, 255, 0.9)" : "rgba(232, 236, 244, 0.75)"}
+            stroke="rgba(232, 236, 244, 0.75)"
             strokeWidth={1.5}
             opacity={0.95}
             style={{
-              filter: `drop-shadow(0 0 9px ${hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              filter: "drop-shadow(0 0 9px #e8ecf4)",
               pointerEvents: "none",
             }}
           >
@@ -439,7 +287,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
             />
             <animate
               attributeName="r"
-              values={hoveredPlacement.reference ? "12.5;15;12.5" : "9.5;12;9.5"}
+              values="9.5;12;9.5"
               dur="1.4s"
               repeatCount="indefinite"
             />
@@ -447,11 +295,11 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
           <circle
             cx={hoveredPoint.x}
             cy={hoveredPoint.y}
-            r={4.5}
-            fill={hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"}
+            r={4.5 * DIMMED_POINT_SCALE}
+            fill="#e8ecf4"
             opacity={0.95}
             style={{
-              filter: `drop-shadow(0 0 7px ${hoveredPlacement.reference ? "#6ee7ff" : "#e8ecf4"})`,
+              filter: "drop-shadow(0 0 7px #e8ecf4)",
               pointerEvents: "none",
             }}
           >
@@ -462,7 +310,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [] }:
               repeatCount="indefinite"
             />
           </circle>
-        </>
+        </g>
       )}
     </svg>
   );

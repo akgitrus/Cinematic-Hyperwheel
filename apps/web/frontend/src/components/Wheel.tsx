@@ -337,7 +337,7 @@ export default function Wheel({
           <line x1={gCenter} y1={gCenter} x2={x} y2={y} className="wheel__vector" />
           <circle
             cx={x} cy={y}
-            r={compact ? 6 : 10.5}
+            r={compact ? 6 : 8}
             className="wheel__point"
             fill={pointColor}
             style={{ filter: `drop-shadow(0 0 ${glowPx}px ${pointColor})` }}
@@ -391,7 +391,7 @@ export default function Wheel({
               key={`${p.item.item_id}-${i}`}
               cx={p.cx}
               cy={p.cy}
-              r={compact ? 3.75 : 6}
+              r={compact ? 3.75 : 4}
               className="wheel__rec-point"
               style={{ fill: p.color, filter: `drop-shadow(0 0 5px ${p.color})` }}
               onMouseEnter={() => setActiveOverlay(i)}

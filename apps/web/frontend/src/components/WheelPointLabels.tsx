@@ -33,6 +33,12 @@ const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
 const DIMMED_POINT_OPACITY = 0.24;
 const DIMMED_POINT_SCALE = 0.35;
 const REFERENCE_LABEL_GAP = 6;
+// Matches the non-reference branch of pointRadius() below - the label
+// vs. point overlap check needs a plain radius value to test against.
+const REC_POINT_RADIUS = 6;
+// Extra clearance kept between the reference label's box and a
+// recommendation point's own drawn radius.
+const POINT_AVOID_PADDING = 4;
 
 function pointPosition(zx: number, zy: number): { x: number; y: number } {
   const center = GEOMETRY_SIZE / 2 + RING_PAD;
@@ -53,11 +59,105 @@ function distanceBetween(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+// Overlap depth (0 if none) between an axis-aligned box centered at
+// (rectCx, rectCy) and a circle - used to keep the reference label
+// clear of other points' own drawn dots.
+function rectOverlapsCircle(
+  rectCx: number,
+  rectCy: number,
+  halfWidth: number,
+  halfHeight: number,
+  circleX: number,
+  circleY: number,
+  radius: number
+): number {
+  const nearestX = Math.min(Math.max(circleX, rectCx - halfWidth), rectCx + halfWidth);
+  const nearestY = Math.min(Math.max(circleY, rectCy - halfHeight), rectCy + halfHeight);
+  const dist = Math.hypot(circleX - nearestX, circleY - nearestY);
+  return Math.max(0, radius - dist);
+}
+
+interface AvoidCircle {
+  x: number;
+  y: number;
+  radius: number;
+}
+
+// Total overlap depth of a label box against every circle it must stay
+// clear of - the reference point's own dot plus every recommendation
+// point's dot, each with its own radius.
+function totalPointOverlap(
+  cx: number,
+  cy: number,
+  halfWidth: number,
+  halfHeight: number,
+  avoid: AvoidCircle[]
+): number {
+  let total = 0;
+  for (const c of avoid) {
+    total += rectOverlapsCircle(cx, cy, halfWidth, halfHeight, c.x, c.y, c.radius + POINT_AVOID_PADDING);
+  }
+  return total;
+}
+
+// Minimum distance from an axis-aligned box (the label) to a line
+// segment (the radius line from the disc center to the reference
+// point) - sampled along the segment since an exact closed-form
+// rect-vs-segment distance isn't needed at this scale.
+function rectDistanceToSegment(
+  rectCx: number,
+  rectCy: number,
+  halfWidth: number,
+  halfHeight: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): number {
+  const samples = 24;
+  let minDist = Infinity;
+  for (let i = 0; i <= samples; i++) {
+    const t = i / samples;
+    const px = x1 + (x2 - x1) * t;
+    const py = y1 + (y2 - y1) * t;
+    const nearestX = Math.min(Math.max(px, rectCx - halfWidth), rectCx + halfWidth);
+    const nearestY = Math.min(Math.max(py, rectCy - halfHeight), rectCy + halfHeight);
+    const dist = Math.hypot(px - nearestX, py - nearestY);
+    if (dist < minDist) minDist = dist;
+  }
+  return minDist;
+}
+
+// Clearance kept between the label and the radius line itself.
+const LINE_AVOID_GAP = 1;
+
+// Per-direction nearest-clear-spot search around the reference point:
+// for each sampled direction, find the SMALLEST offset along that exact
+// direction that clears the point's own dot, every recommendation
+// point's dot, and the radius line, then compare those per-direction
+// results by actual offset distance. A single shared radius swept
+// across all directions doesn't work here because the label box is
+// wide and short - clearing the point itself needs a much larger offset
+// sideways than vertically, so a uniform-radius sweep would always stop
+// at whichever direction empties out first by coincidence of the box's
+// own shape, not by genuine proximity.
+const RADIAL_ANGLE_STEPS = 36; // 10° resolution
+const RADIAL_STEP = 4;
+const RADIAL_MAX_STEPS = 5;
+// Candidates within this many px of the current best are treated as
+// tied on distance; ties are broken by preferring the direction closer
+// to perpendicular to the radius line (the original, tidiest look).
+const TIE_EPSILON = 2;
+
 function labelWidth(title: string): number {
   return Math.min(LABEL_MAX_WIDTH, title.length * LABEL_FONT * 0.6);
 }
 
-function referenceLabelPosition(point: Point, title: string): { x: number; y: number; textAnchor: "middle" | "start" | "end" } {
+function referenceLabelPosition(
+  point: Point,
+  title: string,
+  avoidPoints: Point[]
+): { x: number; y: number; textAnchor: "middle" | "start" | "end" } {
   const center = GEOMETRY_SIZE / 2 + RING_PAD;
   const dx = point.x - center;
   const dy = point.y - center;
@@ -67,23 +167,78 @@ function referenceLabelPosition(point: Point, title: string): { x: number; y: nu
     return { x: point.x + LABEL_GAP, y: point.y, textAnchor: "start" };
   }
 
-  const nx = -dy / length;
-  const ny = dx / length;
+  // Perpendicular to the radius line - used only as a tiebreak between
+  // otherwise-equidistant candidates, not as a constraint.
+  const perpX = -dy / length;
+  const perpY = dx / length;
+
   const halfWidth = labelWidth(title) / 2;
   const halfHeight = LABEL_FONT / 2;
-  const offset = Math.abs(nx) * halfWidth + Math.abs(ny) * halfHeight + REFERENCE_LABEL_GAP;
-  const candidates = [
-    { x: point.x + nx * offset, y: point.y + ny * offset },
-    { x: point.x - nx * offset, y: point.y - ny * offset },
+  const avoid: AvoidCircle[] = [
+    { x: point.x, y: point.y, radius: pointRadius(point) },
+    ...avoidPoints.map((p) => ({ x: p.x, y: p.y, radius: REC_POINT_RADIUS })),
   ];
-  const overflow = (candidate: { x: number; y: number }) =>
-    Math.max(0, halfWidth - candidate.x) +
-    Math.max(0, candidate.x + halfWidth - GEOMETRY_WRAP) +
-    Math.max(0, halfHeight - candidate.y) +
-    Math.max(0, candidate.y + halfHeight - GEOMETRY_WRAP);
-  const candidate = overflow(candidates[0]) <= overflow(candidates[1]) ? candidates[0] : candidates[1];
 
-  return { x: candidate.x, y: candidate.y, textAnchor: "middle" };
+  const combinedOverlap = (x: number, y: number) => {
+    const pointPart = totalPointOverlap(x, y, halfWidth, halfHeight, avoid);
+    const lineDist = rectDistanceToSegment(x, y, halfWidth, halfHeight, center, center, point.x, point.y);
+    const linePart = Math.max(0, LINE_AVOID_GAP - lineDist);
+    return pointPart + linePart;
+  };
+
+  const exceedsViewport = (x: number, y: number) =>
+    x - halfWidth < 0 || x + halfWidth > GEOMETRY_WRAP || y - halfHeight < 0 || y + halfHeight > GEOMETRY_WRAP;
+
+  let best: { x: number; y: number; r: number; perpAlign: number } | null = null;
+
+  for (let i = 0; i < RADIAL_ANGLE_STEPS; i++) {
+    const theta = (i * 2 * Math.PI) / RADIAL_ANGLE_STEPS;
+    const dirX = Math.cos(theta);
+    const dirY = Math.sin(theta);
+    // Exact minimum offset along this direction that clears the
+    // reference point's own circle (support-function distance of the
+    // box plus the circle's radius) - the true per-direction starting
+    // point, rather than one shared radius for every direction.
+    const baseR = Math.abs(dirX) * halfWidth + Math.abs(dirY) * halfHeight + pointRadius(point) + POINT_AVOID_PADDING;
+
+    let foundR: number | null = null;
+    for (let step = 0; step <= RADIAL_MAX_STEPS; step++) {
+      const r = baseR + step * RADIAL_STEP;
+      const x = point.x + dirX * r;
+      const y = point.y + dirY * r;
+      // Moving further out along a fixed direction from an interior
+      // point never re-enters the viewport once it's left it - safe to
+      // stop growing r for this direction entirely.
+      if (exceedsViewport(x, y)) break;
+      if (combinedOverlap(x, y) <= 0) {
+        foundR = r;
+        break;
+      }
+    }
+    if (foundR === null) continue;
+
+    const perpAlign = Math.max(dirX * perpX + dirY * perpY, dirX * -perpX + dirY * -perpY);
+    const better =
+      !best ||
+      foundR < best.r - TIE_EPSILON ||
+      (Math.abs(foundR - best.r) <= TIE_EPSILON && perpAlign > best.perpAlign);
+    if (better) {
+      best = { x: point.x + dirX * foundR, y: point.y + dirY * foundR, r: foundR, perpAlign };
+    }
+  }
+
+  if (best) return { x: best.x, y: best.y, textAnchor: "middle" };
+
+  // No direction cleared everything within budget (extremely cluttered
+  // area) - fall back to the perpendicular offset that clears just the
+  // reference point's own dot, same as the original, always-safe default.
+  const fallbackOffset =
+    Math.abs(perpX) * halfWidth + Math.abs(perpY) * halfHeight + pointRadius(point) + REFERENCE_LABEL_GAP;
+  return {
+    x: point.x + perpX * fallbackOffset,
+    y: point.y + perpY * fallbackOffset,
+    textAnchor: "middle",
+  };
 }
 
 export default function WheelPointLabels({ circle, size, title, overlays = [], onHoverItemChange, hoveredItemId = null }: Props) {
@@ -217,7 +372,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], o
   };
 
   const referenceLabel = referencePoint
-    ? referenceLabelPosition(referencePoint, referencePoint.title)
+    ? referenceLabelPosition(referencePoint, referencePoint.title, points.filter((p) => !p.reference))
     : null;
   const labelOffset = visiblePoints.length > 1
     ? ((visiblePoints.length - 1) * LABEL_LINE_HEIGHT) / 2

@@ -252,7 +252,9 @@ export default function Wheel({
   // outlier) reads as visually "hotter" than one that naturally landed
   // near the edge with a small radius.
   const glowBase = compact ? 3 : 5;
-  const glowScale = compact ? 3 : 6;
+  // Temporary switch off glowScale because actual rendering in the browser
+  // looks bad for shadows with big raduis > 10
+  const glowScale = compact ? 0 : 0;
   const glowPx = glowBase + Math.min(rawR, 5) * glowScale;
 
   // Recommendation overlay points - one per recommendation item (all top-k

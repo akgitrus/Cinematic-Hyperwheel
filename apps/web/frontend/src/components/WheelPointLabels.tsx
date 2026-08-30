@@ -189,7 +189,47 @@ function referenceLabelPosition(
   const exceedsViewport = (x: number, y: number) =>
     x - halfWidth < 0 || x + halfWidth > GEOMETRY_WRAP || y - halfHeight < 0 || y + halfHeight > GEOMETRY_WRAP;
 
-  let best: { x: number; y: number; r: number; perpAlign: number } | null = null;
+  const getBestAnchorInfo = (rectX: number, rectY: number) => {
+    const xs = [rectX - halfWidth, rectX, rectX + halfWidth];
+    const ys = [rectY - halfHeight, rectY, rectY + halfHeight];
+    
+    let minSqDistToPoint = Infinity;
+    let chosenXIdx = 1;
+    let anchorX = rectX;
+    let anchorY = rectY;
+
+    for (let ix = 0; ix < 3; ix++) {
+      for (let iy = 0; iy < 3; iy++) {
+        if (ix === 1 && iy === 1) continue; // rect center not needed
+        
+        const cx = xs[ix];
+        const cy = ys[iy];
+        const dSq = (cx - point.x) ** 2 + (cy - point.y) ** 2;
+        
+        if (dSq < minSqDistToPoint) {
+          minSqDistToPoint = dSq;
+          chosenXIdx = ix;
+          anchorX = cx;
+          anchorY = cy;
+        }
+      }
+    }
+
+    return {
+      minDist: Math.sqrt(minSqDistToPoint),
+      chosenXIdx,
+      distToCenter: Math.hypot(anchorX - center, anchorY - center)
+    };
+  };
+
+  let best: { 
+    x: number; 
+    y: number; 
+    minDist: number; 
+    chosenXIdx: number; 
+    distToCenter: number; 
+    perpAlign: number; 
+  } | null = null;
 
   for (let i = 0; i < RADIAL_ANGLE_STEPS; i++) {
     const theta = (i * 2 * Math.PI) / RADIAL_ANGLE_STEPS;
@@ -200,8 +240,9 @@ function referenceLabelPosition(
     // box plus the circle's radius) - the true per-direction starting
     // point, rather than one shared radius for every direction.
     const baseR = Math.abs(dirX) * halfWidth + Math.abs(dirY) * halfHeight + pointRadius(point) + POINT_AVOID_PADDING;
+    let foundX: number | null = null;
+    let foundY: number | null = null;
 
-    let foundR: number | null = null;
     for (let step = 0; step <= RADIAL_MAX_STEPS; step++) {
       const r = baseR + step * RADIAL_STEP;
       const x = point.x + dirX * r;
@@ -211,32 +252,54 @@ function referenceLabelPosition(
       // stop growing r for this direction entirely.
       if (exceedsViewport(x, y)) break;
       if (combinedOverlap(x, y) <= 0) {
-        foundR = r;
+        foundX = x;
+        foundY = y;
         break;
       }
     }
-    if (foundR === null) continue;
+    if (foundX === null || foundY === null) continue;
 
+    const anchorInfo = getBestAnchorInfo(foundX, foundY);
     const perpAlign = Math.max(dirX * perpX + dirY * perpY, dirX * -perpX + dirY * -perpY);
-    const better =
-      !best ||
-      foundR < best.r - TIE_EPSILON ||
-      (Math.abs(foundR - best.r) <= TIE_EPSILON && perpAlign > best.perpAlign);
-    if (better) {
-      best = { x: point.x + dirX * foundR, y: point.y + dirY * foundR, r: foundR, perpAlign };
+    const isBetter = !best || 
+      anchorInfo.minDist < best.minDist - TIE_EPSILON || 
+      (Math.abs(anchorInfo.minDist - best.minDist) <= TIE_EPSILON && anchorInfo.distToCenter > best.distToCenter + TIE_EPSILON) ||
+      (Math.abs(anchorInfo.minDist - best.minDist) <= TIE_EPSILON && Math.abs(anchorInfo.distToCenter - best.distToCenter) <= TIE_EPSILON && perpAlign > best.perpAlign);
+    if (isBetter) {
+      best = { 
+        x: foundX, 
+        y: foundY, 
+        minDist: anchorInfo.minDist, 
+        chosenXIdx: anchorInfo.chosenXIdx, 
+        distToCenter: anchorInfo.distToCenter, 
+        perpAlign 
+      };
     }
   }
 
-  if (best) return { x: best.x, y: best.y, textAnchor: "middle" };
+  if (best) {
+    let anchorType: "start" | "middle" | "end" = "middle";
+    let outputX = best.x;
 
-  // No direction cleared everything within budget (extremely cluttered
-  // area) - fall back to the perpendicular offset that clears just the
-  // reference point's own dot, same as the original, always-safe default.
-  const fallbackOffset =
-    Math.abs(perpX) * halfWidth + Math.abs(perpY) * halfHeight + pointRadius(point) + REFERENCE_LABEL_GAP;
+    if (best.chosenXIdx === 0) {
+      anchorType = "start";
+      outputX = best.x - halfWidth;
+    } else if (best.chosenXIdx === 2) {
+      anchorType = "end";
+      outputX = best.x + halfWidth;
+    }
+
+    // Baseline shift to compensate for the missing dominant-baseline="central"
+    const outputY = best.y + LABEL_FONT * 0.35; 
+
+    return { x: outputX, y: outputY, textAnchor: anchorType };
+  }
+
+  // Fallback if no clear space was found
+  const fallbackOffset = Math.abs(perpX) * halfWidth + Math.abs(perpY) * halfHeight + pointRadius(point) + REFERENCE_LABEL_GAP;
   return {
     x: point.x + perpX * fallbackOffset,
-    y: point.y + perpY * fallbackOffset,
+    y: point.y + perpY * fallbackOffset + LABEL_FONT * 0.35,
     textAnchor: "middle",
   };
 }

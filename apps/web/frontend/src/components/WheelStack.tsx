@@ -85,11 +85,16 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
     );
     if (!row) return;
 
+    const pointEl = row
+      .closest<HTMLElement>(".wheel-stack__row")
+      ?.querySelector<SVGCircleElement>(`[data-point-item-id="${activeItemId}"]`);
+
     cancelCardClose();
     setActiveCard({
       key: `wheel-legend:${activeItemId}`,
       item,
       rect: row.getBoundingClientRect(),
+      avoidRect: pointEl?.getBoundingClientRect(),
     });
     // The active item and current overlay data determine the card.
   }, [activeItemId, overlays]);

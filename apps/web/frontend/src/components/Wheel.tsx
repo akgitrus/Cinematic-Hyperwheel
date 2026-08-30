@@ -391,9 +391,10 @@ export default function Wheel({
               key={`${p.item.item_id}-${i}`}
               cx={p.cx}
               cy={p.cy}
-              r={compact ? 3.75 : 4}
+              r={compact ? 3.75 : 6}
               className="wheel__rec-point"
-              style={{ fill: p.color, filter: `drop-shadow(0 0 5px ${p.color})` }}
+              data-point-item-id={p.item.item_id}
+              style={{ fill: p.color, filter: `drop-shadow(0 0 ${glowPx}px ${p.color})` }}
               onMouseEnter={() => setActiveOverlay(i)}
               onMouseLeave={() => setActiveOverlay(null)}
             />

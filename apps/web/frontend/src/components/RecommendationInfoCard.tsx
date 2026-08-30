@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getPoster, RecItem } from "../api";
@@ -26,14 +26,72 @@ export interface RecCardTarget {
   key: string;
   item: RecItem;
   rect: DOMRect;
+  /** Bounding rect of this item's own point on the wheel disc (see the
+   * matching data-point-item-id circle in Wheel.tsx). When present, the
+   * card is nudged the minimum distance needed to stop covering it. */
+  avoidRect?: DOMRect;
 }
 
 const CARD_WIDTH = 300;
 const CARD_MAX_HEIGHT = 360;
 const VIEWPORT_MARGIN = 8;
 const MOBILE_BREAKPOINT = 640;
+// Vertical clearance kept between the card and an avoided rect (the
+// wheel disc) - a separate constant from VIEWPORT_MARGIN since this gap
+// is against another UI element, not the viewport edge.
+const AVOID_GAP = 50;
 
-function anchoredStyle(rect: DOMRect): CSSProperties {
+function computeLeft(rect: DOMRect): number {
+  let left = rect.right + 12;
+  if (left + CARD_WIDTH > window.innerWidth - VIEWPORT_MARGIN) {
+    left = rect.left - CARD_WIDTH - 12;
+  }
+  return Math.min(
+    Math.max(left, VIEWPORT_MARGIN),
+    Math.max(VIEWPORT_MARGIN, window.innerWidth - CARD_WIDTH - VIEWPORT_MARGIN)
+  );
+}
+
+// Row-level position, clamped to stay fully inside the viewport given
+// the card's actual height.
+function naturalTop(rect: DOMRect, cardHeight: number): number {
+  const maxTop = Math.max(VIEWPORT_MARGIN, window.innerHeight - cardHeight - VIEWPORT_MARGIN);
+  return Math.min(Math.max(rect.top, VIEWPORT_MARGIN), maxTop);
+}
+
+// Vertical-only nudge clear of avoidRect (the hovered item's own point
+// on the wheel disc - see data-point-item-id in Wheel.tsx), sized from
+// the card's OWN actually rendered height rather than its CSS
+// max-height: the card is usually shorter than that max (no genres/meta
+// line, short title, etc.), so using the real height keeps the shift
+// the minimum distance actually needed instead of overshooting into
+// space the card never uses.
+function avoidOverlap(top: number, cardHeight: number, avoidRect: DOMRect): number {
+  const avoidTop = avoidRect.top - AVOID_GAP;
+  const avoidBottom = avoidRect.bottom + AVOID_GAP;
+  const overlaps = top < avoidBottom && top + cardHeight > avoidTop;
+  if (!overlaps) return top;
+
+  const minTop = VIEWPORT_MARGIN;
+  const maxTop = Math.max(VIEWPORT_MARGIN, window.innerHeight - cardHeight - VIEWPORT_MARGIN);
+  const aboveTop = avoidTop - cardHeight;
+  const belowTop = avoidBottom;
+  const aboveValid = aboveTop >= minTop;
+  const belowValid = belowTop <= maxTop;
+
+  // Prefer whichever valid side needs the smaller shift from the
+  // natural position; a candidate that wouldn't fit the viewport is
+  // never chosen, so the card can't be pushed back into the point by a
+  // later clamp.
+  if (aboveValid && belowValid) {
+    return Math.abs(aboveTop - top) <= Math.abs(belowTop - top) ? aboveTop : belowTop;
+  }
+  if (aboveValid) return aboveTop;
+  if (belowValid) return belowTop;
+  return top; // neither fits (viewport shorter than the card) - keep natural position
+}
+
+function anchoredStyle(rect: DOMRect, avoidRect?: DOMRect): CSSProperties {
   let left = rect.right + 12;
   if (left + CARD_WIDTH > window.innerWidth - VIEWPORT_MARGIN) {
     left = rect.left - CARD_WIDTH - 12;
@@ -43,9 +101,43 @@ function anchoredStyle(rect: DOMRect): CSSProperties {
     Math.max(VIEWPORT_MARGIN, window.innerWidth - CARD_WIDTH - VIEWPORT_MARGIN)
   );
 
-  let top = rect.top;
-  const maxTop = window.innerHeight - CARD_MAX_HEIGHT - VIEWPORT_MARGIN;
-  top = Math.min(Math.max(top, VIEWPORT_MARGIN), Math.max(VIEWPORT_MARGIN, maxTop));
+  const minTop = VIEWPORT_MARGIN;
+  const maxTop = Math.max(VIEWPORT_MARGIN, window.innerHeight - CARD_MAX_HEIGHT - VIEWPORT_MARGIN);
+  let top = Math.min(Math.max(rect.top, minTop), maxTop);
+
+  if (avoidRect) {
+    const avoidTop = avoidRect.top - AVOID_GAP;
+    const avoidBottom = avoidRect.bottom + AVOID_GAP;
+    const avoidLeft = avoidRect.left - AVOID_GAP;
+    const avoidRight = avoidRect.right + AVOID_GAP;
+    const overlaps =
+      left < avoidRight &&
+      left + CARD_WIDTH > avoidLeft &&
+      top < avoidBottom &&
+      top + CARD_MAX_HEIGHT > avoidTop;
+
+    if (overlaps) {
+      // Candidates that place the card fully above or fully below the
+      // point. A candidate only counts as valid if it already fits the
+      // viewport on its own - clamping an invalid candidate back into
+      // range would silently push it back onto the point, undoing the
+      // whole point of moving it.
+      const above = avoidTop - CARD_MAX_HEIGHT;
+      const below = avoidBottom;
+      const aboveValid = above >= minTop;
+      const belowValid = below <= maxTop;
+
+      if (aboveValid && belowValid) {
+        top = Math.abs(above - top) <= Math.abs(below - top) ? above : below;
+      } else if (aboveValid) {
+        top = above;
+      } else if (belowValid) {
+        top = below;
+      }
+      // Neither fits (viewport shorter than the card) - keep the
+      // clamped natural position as a last resort.
+    }
+  }
 
   return { position: "fixed", left, top, width: CARD_WIDTH };
 }
@@ -111,6 +203,8 @@ export default function RecommendationInfoCard({
   const { t } = useTranslation();
   const [posterUrl, setPosterUrl] = useState<string | null | undefined>(undefined);
   const mobile = typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT;
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState(() => naturalTop(target.rect, CARD_MAX_HEIGHT));
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +217,22 @@ export default function RecommendationInfoCard({
     };
   }, [target.item.item_id]);
 
-  const style = mobile ? undefined : anchoredStyle(target.rect);
+  // Recomputes the vertical position from the card's actual rendered
+  // height (via cardRef) whenever the hovered target changes - runs
+  // before paint, so there's no visible jump between the natural and
+  // avoidance-corrected position.
+  useLayoutEffect(() => {
+    if (mobile) return;
+    const cardHeight = cardRef.current?.offsetHeight ?? CARD_MAX_HEIGHT;
+    let nextTop = naturalTop(target.rect, cardHeight);
+    if (target.avoidRect) nextTop = avoidOverlap(nextTop, cardHeight, target.avoidRect);
+    setTop(nextTop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target.key, mobile]);
+
+  const style: CSSProperties | undefined = mobile
+    ? undefined
+    : { position: "fixed", left: computeLeft(target.rect), top, width: CARD_WIDTH };
 
   return createPortal(
     <div
@@ -135,6 +244,7 @@ export default function RecommendationInfoCard({
       onClick={allowUnderlyingInteraction ? undefined : onClose}
     >
       <div
+        ref={cardRef}
         className={"rec-card" + (mobile ? " rec-card--sheet" : " rec-card--anchored")}
         style={style}
         onClick={(e) => e.stopPropagation()}

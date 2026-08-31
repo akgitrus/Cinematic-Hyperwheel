@@ -30,8 +30,8 @@ const LABEL_LINE_HEIGHT = 15;
 const LABEL_MAX_WIDTH = 250;
 const POINT_HOVER_PADDING = 0;
 const POINT_HOVER_CLUSTER_OVERLAP = 0.8;
-const DIMMED_POINT_OPACITY = 0.24;
-const DIMMED_POINT_SCALE = 0.35;
+const DIMMED_POINT_OPACITY = 0.8;
+const DIMMED_POINT_SCALE = 0.4;
 const REFERENCE_LABEL_GAP = 6;
 // Matches the non-reference branch of pointRadius() below - the label
 // vs. point overlap check needs a plain radius value to test against.

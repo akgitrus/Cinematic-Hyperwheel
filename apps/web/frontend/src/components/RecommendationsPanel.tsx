@@ -44,6 +44,17 @@ function formatAngle(angleDeg: number): string {
   return `${rounded > 0 ? "+" : ""}${rounded}°`;
 }
 
+// Reads a CSS length custom property (e.g. "150px") set on the root
+// element - App.tsx keeps --app-header-height/--app-controls-height in
+// sync with the sticky header's actual current height (see
+// useHeaderMode.ts), the same source of truth .rec-circle's own
+// scroll-margin-top uses (see sticky-layout.css) to stay clear of it.
+function readRootCssPx(varName: string, fallback: number): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  const parsed = parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 // Simple hand-drawn "magic wand" glyph - not tied to any specific icon
 // library, just a diagonal wand with a sparkle at the tip, matching the
 // project's "Get recommendations" action.
@@ -489,6 +500,38 @@ export default function RecommendationsPanel({
   // branch below, used to scroll a newly activated section into view.
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  // Mirrors activeKey for the scroll-walk effect below, so that effect
+  // doesn't need activeKey in its dependency array - re-subscribing on
+  // every step-by-step update would tear down and recreate its
+  // requestAnimationFrame chain mid-walk.
+  const activeKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeKeyRef.current = activeKey;
+  }, [activeKey]);
+  // Distinguishes a scroll WE just triggered (activateCircle's own
+  // scrollIntoView) from one the user just did by hand (dragging the
+  // scrollbar thumb - the list's wheel handler above already swallows
+  // trackpad/mouse-wheel input into the stepper, so that's the only
+  // other way this list's scroll position can change). See
+  // armProgrammaticScroll below.
+  const programmaticScrollRef = useRef(false);
+  const programmaticScrollSettleRef = useRef<number | undefined>(undefined);
+  const PROGRAMMATIC_SCROLL_SETTLE_MS = 150;
+
+  // Marks the list's scroll position as "about to change programmatically"
+  // for PROGRAMMATIC_SCROLL_SETTLE_MS - re-armed on every subsequent
+  // scroll event while it's still active (see the listener effect
+  // below), so it stays set for the whole duration of a smooth
+  // scrollIntoView animation and clears shortly after it actually
+  // settles, however long that takes.
+  const armProgrammaticScroll = useCallback(() => {
+    programmaticScrollRef.current = true;
+    window.clearTimeout(programmaticScrollSettleRef.current);
+    programmaticScrollSettleRef.current = window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, PROGRAMMATIC_SCROLL_SETTLE_MS);
+  }, []);
+  
 
   // Defaults the active circle to the first one whenever the populated
   // list changes (new reference movie or scheme). useLayoutEffect so
@@ -508,8 +551,87 @@ export default function RecommendationsPanel({
   // as well as keyboard/wheel stepping.
   const activateCircle = useCallback((key: string) => {
     setActiveKey((prev) => (prev === key ? prev : key));
+    armProgrammaticScroll();
     sectionRefs.current.get(key)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
+  }, [armProgrammaticScroll]);
+
+  // The list itself doesn't scroll internally (see .rec-panel__list's
+  // overflow-y: visible override in recommendations-scroll.css) - the
+  // whole page scrolls instead, so dragging the browser's own scrollbar
+  // thumb is the one way a section can leave view without going through
+  // activateCircle (mouse-wheel/trackpad input over the list is already
+  // fully hijacked into the stepper by the wheel handler above). When
+  // that happens, step the active circle to the section immediately
+  // ADJACENT (by list index) to the one that just left the visible
+  // area - never a list-wide "closest to the visible area's vertical
+  // center" search, which structurally tends to land 2+ sections away
+  // from the one that actually left view (individual sections are
+  // usually much shorter than the visible area, so its center sits far
+  // from the top edge where the outgoing section just disappeared) and
+  // would skip right past a perfectly visible immediate neighbour
+  // regardless of how slowly the user scrolls. Ignored while
+  // programmaticScrollRef is set (see armProgrammaticScroll) so this
+  // never fights activateCircle's own scrollIntoView.
+  useEffect(() => {
+    if (isNarrow || populated.length <= 1) return;
+
+    let scheduled = false;
+
+    const isFullyVisible = (rect: DOMRect, top: number, bottom: number) =>
+      rect.top >= top && rect.bottom <= bottom;
+
+    const recompute = () => {
+      scheduled = false;
+      if (programmaticScrollRef.current) {
+        armProgrammaticScroll();
+        return;
+      }
+      const key = activeKeyRef.current;
+      if (!key) return;
+
+      // Same covered-top calculation as .rec-circle's scroll-margin-top
+      // (sticky-layout.css) - the actually visible area starts below
+      // the sticky header (and, in hero mode, the sticky scheme row).
+      const coveredTop =
+        readRootCssPx("--app-header-height", 150) + readRootCssPx("--app-controls-height", 0) + 12;
+      const bottom = window.innerHeight;
+
+      let idx = populated.findIndex((c) => circleKey(c) === key);
+      if (idx === -1) return;
+
+      // Steps one adjacent index at a time; only loops past 1 step when
+      // a single scroll event covered a large distance (e.g. a
+      // scrollbar-track click) - for ordinary drag/wheel scrolling this
+      // always resolves in exactly one step.
+      while (true) {
+        const el = sectionRefs.current.get(circleKey(populated[idx]));
+        if (!el) break;
+        const rect = el.getBoundingClientRect();
+        if (isFullyVisible(rect, coveredTop, bottom)) break;
+
+        let nextIdx = idx;
+        if (rect.top < coveredTop) nextIdx = idx + 1; // scrolled down
+        else if (rect.bottom > bottom) nextIdx = idx - 1; // scrolled up
+        if (nextIdx === idx || nextIdx < 0 || nextIdx >= populated.length) break;
+        idx = nextIdx;
+      }
+
+      const nextKey = circleKey(populated[idx]);
+      if (nextKey !== key) setActiveKey(nextKey);
+    };
+
+    const onScroll = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(recompute);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(programmaticScrollSettleRef.current);
+    };
+  }, [isNarrow, populated, armProgrammaticScroll]);
 
   // Moves the active circle one step forward/back through `populated`
   // (clamped at either end) - shared by the arrow-key and wheel-tick

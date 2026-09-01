@@ -17,13 +17,14 @@
 }
 
 @media (min-width: 641px) {
-  /* On desktop the search box moves into AppHeader (see App.tsx),
-     leaving only the scheme selector here - its sticky offset now has
-     to clear the header's OWN sticky bar above it (fixed on mobile,
-     variable height on desktop - see header.css) rather than the flat
-     8px this used before there was anything sticky above it at all. */
-  .sticky-controls {
-    top: calc(var(--app-header-height, 150px) + 8px);
+  /* Keeps a section's top edge clear of the sticky header (and, in hero
+     mode, the sticky scheme-selector row below it) when it's scrolled
+     into view via RecommendationsPanel's activateCircle. scrollIntoView
+     has no built-in notion of a sticky element covering part of the
+     viewport, so without this a newly activated section's top can end
+     up partially hidden under either sticky bar. */
+  .rec-circle {
+    scroll-margin-top: calc(var(--app-header-height, 150px) + var(--app-controls-height, 0px) + 12px);
   }
 }
 

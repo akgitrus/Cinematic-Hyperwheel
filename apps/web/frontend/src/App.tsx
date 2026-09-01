@@ -113,7 +113,7 @@ export default function App() {
   }, [i18n.resolvedLanguage]);
 
   // Desktop-only hero/compact header (see AppHeader.tsx / useHeaderMode.ts).
-  const { mode: headerMode, sentinelEnterRef, sentinelExitRef } = useHeaderMode();
+  const { mode: headerMode, sentinelEnterRef, sentinelExitRef, contentRef, spacerHeight } = useHeaderMode();
   const [headerHeight, setHeaderHeight] = useState(150); // fallback until AppHeader's own ResizeObserver reports
   const stickyControlsRef = useRef<HTMLDivElement>(null);
   const [controlsHeight, setControlsHeight] = useState(0);
@@ -401,7 +401,7 @@ export default function App() {
         {error && <div className="app__error">{error}</div>}
         {recError && <div className="app__error">{recError}</div>}
 
-        <div className="layout3">
+        <div className="layout3" ref={contentRef} style={{ paddingTop: spacerHeight }}>
           <aside className="layout3__left">
             {recs && !recError && (
               <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />

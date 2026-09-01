@@ -6,6 +6,7 @@ import { RecAngle, WheelCircle } from "../api";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
 import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
+import { setRecommendationHighlight, useRecommendationHighlight } from "../utils/recommendationHighlight";
 import "./WheelLegend.css";
 
 interface Props {
@@ -191,6 +192,7 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
  * wheel mounted and fully visible underneath, mount the new one on top at
  * opacity 0, fade it in, and only remove the old one once the new one has
  * fully faded in - so there's always something fully opaque on screen.
+ *
  * Layers stack via CSS grid (all layers in one cell - see .wheel-stack in
  * index.css), not absolute positioning, so the container doesn't need an
  * explicitly tracked pixel size for the overlap to work.
@@ -205,6 +207,7 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
   const [pointHoveredItemId, setPointHoveredItemId] = useState<number | null>(null);
   const [legendHoveredItemId, setLegendHoveredItemId] = useState<number | null>(null);
   const nextId = useRef(0);
+  const sharedItemId = useRecommendationHighlight();
 
   useEffect(() => {
     if (!circle) return;
@@ -258,17 +261,20 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
 
   const handlePointHoverChange = useCallback((itemId: number | null) => {
     setPointHoveredItemId((prev) => (prev === itemId ? prev : itemId));
+    setRecommendationHighlight(itemId);
   }, []);
 
   const handleLegendHover = useCallback((itemId: number) => {
     setLegendHoveredItemId((prev) => (prev === itemId ? prev : itemId));
+    setRecommendationHighlight(itemId);
   }, []);
 
   const handleLegendLeave = useCallback(() => {
     setLegendHoveredItemId(null);
+    setRecommendationHighlight(null);
   }, []);
 
-  const activeItemId = pointHoveredItemId ?? legendHoveredItemId;
+  const activeItemId = pointHoveredItemId ?? legendHoveredItemId ?? sharedItemId;
 
   if (layers.length === 0) return null;
 
@@ -300,7 +306,7 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
                 title={l.title}
                 overlays={l.overlays}
                 onHoverItemChange={i === layers.length - 1 ? handlePointHoverChange : undefined}
-                hoveredItemId={i === layers.length - 1 ? legendHoveredItemId : null}
+                hoveredItemId={i === layers.length - 1 ? activeItemId : null}
               />
             </div>
             <WheelLegend

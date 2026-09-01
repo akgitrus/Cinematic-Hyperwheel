@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import RecommendationHighlightRuntime from "./components/RecommendationHighlightRuntime";
 import "./i18n";
 import "./index.css";
 import "./header.css";
@@ -10,5 +11,6 @@ import "./sticky-layout.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
+    <RecommendationHighlightRuntime />
   </React.StrictMode>
 );

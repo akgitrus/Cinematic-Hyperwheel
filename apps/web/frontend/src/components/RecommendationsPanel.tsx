@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
@@ -22,10 +22,11 @@ interface Props {
    */
   tmdbUrlFor?: (item: RecItem) => string;
   /**
-   * Called whenever the scroll-synced "current" circle changes (see the
-   * scrollspy effect below) - lets a parent mirror that circle's data
-   * into a wheel rendered elsewhere (App.tsx's central wheel). Only
-   * fires on the desktop layout, where that wheel actually exists.
+   * Called whenever the active circle changes (via click, arrow keys, or
+   * a wheel tick - see the effects below) - lets a parent mirror that
+   * circle's data into a wheel rendered elsewhere (App.tsx's central
+   * wheel). Only fires on the desktop layout, where that wheel actually
+   * exists.
    */
   onActiveCircleChange?: (circle: RecommendCircle | null) => void;
 }
@@ -478,87 +479,101 @@ export default function RecommendationsPanel({
     return () => window.removeEventListener("resize", onResize);
   }, []);
   
-  // --- Scroll-synced "active" circle (desktop only) --------------------
+    // --- Active circle (desktop only) -------------------------------
+  // The active circle is plain state, set explicitly by clicking a
+  // section, stepping with the arrow keys, or a wheel tick (see below) -
+  // there is no scroll-position tracking; scrolling instead follows the
+  // active circle via scrollIntoView.
   // sectionRefs: DOM node for each rendered .rec-circle section, keyed by
   // circleKey - populated via the ref callback in the desktop render
-  // branch below.
+  // branch below, used to scroll a newly activated section into view.
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
-  // The viewport line (px from top) a section's own top edge must cross
-  // to count as "current". NOT a hardcoded constant matching some other
-  // element's CSS - see the layout effect below for where it comes from.
-  const activeLineRef = useRef<number | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
-  // Captures the tracking line from the FIRST item's own on-screen
-  // position at the moment this list first renders for the current
-  // selection, and marks it active immediately. This is what guarantees,
-  // by construction rather than as a special case, that circle #1 is
-  // active right when the list appears: the line IS circle #1's own
-  // position at that instant, so nothing needs to coincidentally match a
-  // separate constant (e.g. the sticky wheel's own `top` offset).
-  // useLayoutEffect (not useEffect) so this runs before the browser
-  // paints - no one-frame flash of "no circle active".
+  // Defaults the active circle to the first one whenever the populated
+  // list changes (new reference movie or scheme). useLayoutEffect so
+  // this is settled before paint - no one-frame flash of "no circle
+  // active".
   useLayoutEffect(() => {
     if (isNarrow || populated.length === 0) {
-      activeLineRef.current = null;
       setActiveKey(null);
       return;
     }
-    const firstKey = circleKey(populated[0]);
-    const firstEl = sectionRefs.current.get(firstKey);
-    activeLineRef.current = firstEl ? firstEl.getBoundingClientRect().top : null;
-    setActiveKey(firstKey);
+    setActiveKey(circleKey(populated[0]));
   }, [populated, isNarrow]);
 
-  // On every scroll (rAF-throttled), find the LAST section whose top has
-  // crossed the captured line - i.e. whichever section is now sitting at
-  // (or above) the place circle #1 originally occupied. Falls back to
-  // circle #1 whenever nothing has crossed the line yet, which is
-  // exactly the case when the page is back at its starting scroll
-  // position - so scrolling back up re-activates circle #1 for free,
-  // without a separate "are we at the top?" check.
+  // Marks `key` active and scrolls its section into view if it isn't
+  // already fully visible (e.g. it was scrolled past, or sits further
+  // down the list than the current viewport) - covers click selection
+  // as well as keyboard/wheel stepping.
+  const activateCircle = useCallback((key: string) => {
+    setActiveKey((prev) => (prev === key ? prev : key));
+    sectionRefs.current.get(key)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, []);
+
+  // Moves the active circle one step forward/back through `populated`
+  // (clamped at either end) - shared by the arrow-key and wheel-tick
+  // handlers below.
+  const stepActive = useCallback(
+    (direction: 1 | -1) => {
+      if (populated.length === 0) return;
+      const currentIndex = populated.findIndex((c) => circleKey(c) === activeKey);
+      const nextIndex = Math.min(
+        Math.max((currentIndex === -1 ? 0 : currentIndex) + direction, 0),
+        populated.length - 1
+      );
+      activateCircle(circleKey(populated[nextIndex]));
+    },
+    [populated, activeKey, activateCircle]
+  );
+
+  // Up/down arrow keys step the active circle - ignored while a text
+  // input/select elsewhere on the page has focus (e.g. the search box),
+  // so this never hijacks normal typing.
   useEffect(() => {
-    if (isNarrow || populated.length === 0) return;
-
-    let scheduled = false;
-    const computeActive = () => {
-      scheduled = false;
-      const line = activeLineRef.current;
-      if (line == null) return;
-
-      let next: string | null = null;
-      for (const c of populated) {
-        const key = circleKey(c);
-        const el = sectionRefs.current.get(key);
-        if (!el) continue;
-        if (el.getBoundingClientRect().top <= line) {
-          next = key;
-        } else {
-          break; // populated is already top-to-bottom document order
-        }
+    if (isNarrow || populated.length <= 1) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        stepActive(1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        stepActive(-1);
       }
-      if (next == null) next = circleKey(populated[0]);
-      setActiveKey((prev) => (prev === next ? prev : next));
     };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isNarrow, populated, stepActive]);
 
-    const onScroll = () => {
-      if (scheduled) return;
-      scheduled = true;
-      requestAnimationFrame(computeActive);
-    };
+  // Wheel ticks over the list step the active circle instead of freely
+  // scrolling it - locked for a short window per step so a single
+  // physical notch (or a burst of trackpad delta events from the same
+  // gesture) only advances one circle at a time.
+  useEffect(() => {
+    if (isNarrow || populated.length <= 1) return;
+    const el = listRef.current;
+    if (!el) return;
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+    let locked = false;
+    const WHEEL_LOCK_MS = 350;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      if (locked) return;
+      locked = true;
+      stepActive(e.deltaY > 0 ? 1 : -1);
+      window.setTimeout(() => {
+        locked = false;
+      }, WHEEL_LOCK_MS);
     };
-  }, [populated, isNarrow]);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [isNarrow, populated, stepActive]);
 
   // Mirror the active circle up to the parent - drives the big central
-  // wheel in App.tsx. Separate effect (rather than calling the callback
-  // inline above) so it re-fires correctly regardless of which of the
-  // two effects above actually changed activeKey.
+  // wheel in App.tsx.
   useEffect(() => {
     if (!onActiveCircleChange) return;
     onActiveCircleChange(populated.find((c) => circleKey(c) === activeKey) ?? null);
@@ -703,9 +718,9 @@ export default function RecommendationsPanel({
       <div className="rec-panel__list scroll-fade" ref={listRef}>
         {populated.map((circle) => {
           const cKey = circleKey(circle);
-          // Desktop: driven by scroll position (activeKey). Mobile: the
-          // scrollspy above is a no-op there (isNarrow short-circuits both
-          // effects), so this stays exactly the old server-driven flag.
+          // Desktop: matches whichever circle is currently active (see
+          // the effects above). Mobile has no notion of an active circle,
+          // so it stays the server-provided "primary" flag instead.
           const isPrimaryStyle = isNarrow ? circle.primary : cKey === activeKey;
           const bearing = circle.reference
             ? refCompassBearing(circle.reference.z_x, circle.reference.z_y)
@@ -738,6 +753,7 @@ export default function RecommendationsPanel({
                   if (el) sectionRefs.current.set(cKey, el);
                   else sectionRefs.current.delete(cKey);
                 }}
+                onClick={() => activateCircle(cKey)}
               >
                 <div className="rec-circle__layout">
                   {wheelCircle && (

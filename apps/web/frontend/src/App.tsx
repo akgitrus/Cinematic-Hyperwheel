@@ -82,11 +82,11 @@ export default function App() {
   const [scheme, setScheme] = useState<string>(SCHEMES[2]);
   const [recs, setRecs] = useState<RecommendResponse | null>(null);
   const [recError, setRecError] = useState<string | null>(null);
-  // The circle currently scrolled into view in the Recommendations list
-  // (see RecommendationsPanel's scrollspy effect) - mirrored into the
-  // big central wheel. Null until that effect fires (or on mobile,
-  // where it never fires); the render below falls back to the top-ranked
-  // circle in that case.
+  // The circle currently active in the Recommendations list (click,
+  // arrow keys, or a wheel tick - see RecommendationsPanel.tsx) -
+  // mirrored into the big central wheel. Null until that fires (or on
+  // mobile, where there is no notion of an active circle); the render
+  // below falls back to the top-ranked circle in that case.
   const [activeCircle, setActiveCircle] = useState<RecommendCircle | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);

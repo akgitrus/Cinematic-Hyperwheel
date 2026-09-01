@@ -554,6 +554,10 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  /* The whole section is clickable to make its circle the active one
+     (see RecommendationsPanel.tsx) - interactive controls inside (links,
+     buttons) already show their own pointer cursor regardless. */
+  cursor: pointer;
 }
 .rec-circle__wheel {
   flex: 0 0 auto;

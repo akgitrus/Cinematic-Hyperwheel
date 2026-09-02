@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Wheel from "./Wheel";
 import WheelPointLabels from "./WheelPointLabels";
 import RecommendationInfoCard, { type RecCardTarget } from "./RecommendationInfoCard";
 import { RecAngle, WheelCircle } from "../api";
+import { circleKey } from "../utils/circleKey";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
 import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
+import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
 import "./WheelLegend.css";
+import "./MovieHighlight.css";
 
 interface Props {
   /** Circle to display, or null while nothing is resolved yet (before the
@@ -33,10 +36,6 @@ interface Layer {
   visible: boolean;
 }
 
-function layerKeyFor(circle: WheelCircle): string {
-  return `${circle.axis_x.pc}-${circle.axis_y.pc}`;
-}
-
 function refCompassBearing(refX: number, refY: number): number {
   return ((Math.atan2(refY, refX) * 180) / Math.PI + 90 + 360) % 360;
 }
@@ -44,12 +43,15 @@ function refCompassBearing(refX: number, refY: number): number {
 interface WheelLegendProps {
   circle: WheelCircle;
   overlays?: RecAngle[];
-  activeItemId: number | null;
-  onItemHover: (itemId: number) => void;
-  onItemLeave: () => void;
 }
 
-function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave }: WheelLegendProps) {
+// Mirrors the same movie's highlight into the RecommendationInfoCard
+// hover popup - unrelated to the highlight effect itself (see
+// HighlightContext.tsx).
+function WheelLegend({ circle, overlays }: WheelLegendProps) {
+  const cKey = circleKey(circle);
+  const { setHighlighted, clearHighlighted } = useHighlight();
+  const activeItemId = useHighlightedItem(cKey);
   const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
   const populated = overlays?.filter((angle) => angle.items.length > 0) ?? [];
@@ -58,17 +60,14 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
   const bearing = refCompassBearing(circle.z_x, circle.z_y);
 
   const cancelCardClose = () => window.clearTimeout(closeTimerRef.current);
-  const scheduleItemLeave = () => {
+  const scheduleCardClose = () => {
     cancelCardClose();
-    closeTimerRef.current = window.setTimeout(() => {
-      setActiveCard(null);
-      onItemLeave();
-    }, 200);
+    closeTimerRef.current = window.setTimeout(() => setActiveCard(null), 200);
   };
 
   useEffect(() => {
     if (activeItemId === null) {
-      scheduleItemLeave();
+      scheduleCardClose();
       return;
     }
 
@@ -119,14 +118,21 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
             <div className="rec-angle" key={angle.angle_deg}>
               {angle.items.map((item, index) => (
                 <div
-                  className={"rec-row" + (index > 0 ? " rec-row--compact" : "") + (activeItemId === item.item_id ? " wheel-legend__row--active" : "")}
+                  className={
+                    "rec-row" +
+                    (index > 0 ? " rec-row--compact" : "") +
+                    (activeItemId === item.item_id ? " rec-row--highlighted" : "")
+                  }
                   key={item.item_id}
                   data-wheel-legend-item-id={item.item_id}
                   onMouseEnter={() => {
                     cancelCardClose();
-                    onItemHover(item.item_id);
+                    setHighlighted(cKey, item.item_id);
                   }}
-                  onMouseLeave={scheduleItemLeave}
+                  onMouseLeave={() => {
+                    scheduleCardClose();
+                    clearHighlighted(cKey, item.item_id);
+                  }}
                 >
                   {index === 0 ? (
                     <span
@@ -166,12 +172,11 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
           onClose={() => {
             cancelCardClose();
             setActiveCard(null);
-            onItemLeave();
           }}
           imdbUrlFor={(item) => item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)}
           tmdbUrlFor={(item) => item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)}
           onMouseEnter={cancelCardClose}
-          onMouseLeave={scheduleItemLeave}
+          onMouseLeave={scheduleCardClose}
         />
       )}
     </>
@@ -199,16 +204,19 @@ function WheelLegend({ circle, overlays, activeItemId, onItemHover, onItemLeave 
  * its overlay recommendation points changed, from a scheme switch) is not
  * treated as a new layer - its data is updated in place, so unrelated
  * prop changes never trigger an unnecessary fade.
+ *
+ * Point/legend hover highlighting (see contexts/HighlightContext.tsx) is
+ * scoped per circle key, so an outgoing layer (a stale, different circle
+ * key) never cross-lights with the incoming one - no special-casing
+ * needed here beyond each layer rendering its own circle's key.
  */
 export default function WheelStack({ circle, size, title, overlays, onReadoutHeight }: Props) {
   const [layers, setLayers] = useState<Layer[]>([]);
-  const [pointHoveredItemId, setPointHoveredItemId] = useState<number | null>(null);
-  const [legendHoveredItemId, setLegendHoveredItemId] = useState<number | null>(null);
   const nextId = useRef(0);
 
   useEffect(() => {
     if (!circle) return;
-    const key = layerKeyFor(circle);
+    const key = circleKey(circle);
     setLayers((prev) => {
       if (prev.length > 0 && prev[prev.length - 1].key === key) {
         // Same circle already showing (or mid fade-in) - update its data
@@ -256,20 +264,6 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
     });
   };
 
-  const handlePointHoverChange = useCallback((itemId: number | null) => {
-    setPointHoveredItemId((prev) => (prev === itemId ? prev : itemId));
-  }, []);
-
-  const handleLegendHover = useCallback((itemId: number) => {
-    setLegendHoveredItemId((prev) => (prev === itemId ? prev : itemId));
-  }, []);
-
-  const handleLegendLeave = useCallback(() => {
-    setLegendHoveredItemId(null);
-  }, []);
-
-  const activeItemId = pointHoveredItemId ?? legendHoveredItemId;
-
   if (layers.length === 0) return null;
 
   return (
@@ -299,17 +293,10 @@ export default function WheelStack({ circle, size, title, overlays, onReadoutHei
                 size={l.size}
                 title={l.title}
                 overlays={l.overlays}
-                onHoverItemChange={i === layers.length - 1 ? handlePointHoverChange : undefined}
-                hoveredItemId={i === layers.length - 1 ? legendHoveredItemId : null}
+                circleKey={l.key}
               />
             </div>
-            <WheelLegend
-              circle={l.circle}
-              overlays={l.overlays}
-              activeItemId={i === layers.length - 1 ? activeItemId : null}
-              onItemHover={handleLegendHover}
-              onItemLeave={handleLegendLeave}
-            />
+            <WheelLegend circle={l.circle} overlays={l.overlays} />
           </div>
         </div>
       ))}

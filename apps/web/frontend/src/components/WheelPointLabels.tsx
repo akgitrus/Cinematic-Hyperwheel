@@ -1,14 +1,19 @@
 import "./WheelPointLabels.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
+import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
 
 interface Props {
   circle: WheelCircle;
   size: number;
   title?: string;
   overlays?: RecAngle[];
-  onHoverItemChange?: (itemId: number | null) => void;
-  hoveredItemId?: number | null;
+  /** Identity of the circle this instance belongs to (see
+   * utils/circleKey.ts) - scopes this instance's hover to the shared
+   * HighlightContext, so it only lights up (and only lights up) the
+   * matching legend row / list row / big-wheel point that share this
+   * same circle. */
+  circleKey: string;
 }
 
 interface Point {
@@ -304,15 +309,15 @@ function referenceLabelPosition(
   };
 }
 
-export default function WheelPointLabels({ circle, size, title, overlays = [], onHoverItemChange, hoveredItemId = null }: Props) {
+export default function WheelPointLabels({ circle, size, title, overlays = [], circleKey }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const compact = size < 220;
   const displayWrap = size + RING_PAD * 2;
+  const { setHighlighted, clearHighlighted } = useHighlight();
+  const highlightedItemId = useHighlightedItem(circleKey);
+  const reportedItemIdRef = useRef<number | null>(null);
 
   const points = useMemo<Point[]>(() => {
-    if (compact) return [];
-
     const result: Point[] = [];
     let index = 0;
     if (title) {
@@ -327,7 +332,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], o
       }
     }
     return result;
-  }, [circle, compact, overlays, title]);
+  }, [circle, overlays, title]);
 
   const referencePoint = useMemo(
     () => points.find((point) => point.reference) ?? null,
@@ -338,25 +343,37 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], o
     ? null
     : points.find((point) => point.index === hoveredIndex) ?? null;
 
-  const externallyHoveredPoint = hoveredItemId === null
+  // A point highlighted from elsewhere within THIS SAME circle (another
+  // wheel point, the legend, or a recommendations-list row - see
+  // HighlightContext) - only relevant when this instance isn't itself
+  // the one currently driving the hover.
+  const highlightedPoint = highlightedItemId === null
     ? null
-    : points.find((point) => point.itemId === hoveredItemId) ?? null;
+    : points.find((point) => point.itemId === highlightedItemId) ?? null;
 
-  const hoveredPoint = localHoveredPoint ?? externallyHoveredPoint;
+  const hoveredPoint = localHoveredPoint ?? highlightedPoint;
+
+  // Reports this instance's own local hover into the shared context -
+  // recommendation points only (reference has no itemId and never
+  // appears anywhere else, so it never needs cross-surface highlight).
+  useEffect(() => {
+    const itemId = localHoveredPoint?.itemId ?? null;
+    const previous = reportedItemIdRef.current;
+    if (itemId === previous) return;
+
+    if (previous !== null) clearHighlighted(circleKey, previous);
+    if (itemId !== null) setHighlighted(circleKey, itemId);
+    reportedItemIdRef.current = itemId;
+  }, [localHoveredPoint, circleKey, setHighlighted, clearHighlighted]);
 
   useEffect(() => {
-    if (localHoveredPoint) {
-      onHoverItemChange?.(localHoveredPoint.itemId);
-      return;
-    }
-    if (hoveredItemId === null) {
-      onHoverItemChange?.(null);
-    }
-  }, [localHoveredPoint, hoveredItemId, onHoverItemChange]);
-
-  useEffect(() => {
-    return () => onHoverItemChange?.(null);
-  }, [onHoverItemChange]);
+    return () => {
+      if (reportedItemIdRef.current !== null) {
+        clearHighlighted(circleKey, reportedItemIdRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const visiblePoints = useMemo(() => {
     if (!hoveredPoint || hoveredPoint.reference) return [];
@@ -398,7 +415,7 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], o
     };
   }, [hoveredPoint, title, visiblePoints]);
 
-  if (compact || points.length === 0) return null;
+  if (points.length === 0) return null;
 
   const setHoveredFromPointer = (clientX: number, clientY: number) => {
     const svg = svgRef.current;

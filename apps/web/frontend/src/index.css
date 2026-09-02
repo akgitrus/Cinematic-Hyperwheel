@@ -405,29 +405,6 @@ body {
   cursor: help;
   pointer-events: all;
 }
-.wheel__rec-popup {
-  position: absolute;
-  z-index: 6;
-  min-width: 160px;
-  max-width: 260px;
-  font-size: 11px;
-  background: rgba(10, 13, 20, 0.92);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 6px 8px;
-  pointer-events: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-}
-.wheel__rec-popup-title {
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 4px;
-  letter-spacing: 0.04em;
-}
-.wheel__rec-popup-row {
-  color: var(--text);
-  line-height: 1.3;
-}
 .card {
   width: 100%; max-width: 480px;
   background: var(--panel); border: 1px solid var(--border);
@@ -561,10 +538,21 @@ body {
 }
 .rec-circle__wheel {
   flex: 0 0 auto;
+  /* Positioned ancestor for WheelPointLabels' absolutely-positioned
+     overlay svg - same pattern as WheelStack.tsx's disc-wrap. */
+  position: relative;
 }
 .rec-circle__content {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Wraps just the per-section wheel (not the list below it) in the
+   mobile layout, so WheelPointLabels' overlay svg anchors to the
+   wheel's own box rather than the full-width flex column - same
+   pattern as .rec-circle__wheel above. */
+.rec-circle__mobile-wheel {
+  position: relative;
 }
 
 /* Mobile-only (see isNarrow in RecommendationsPanel.tsx): wheel on top,

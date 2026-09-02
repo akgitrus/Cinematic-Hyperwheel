@@ -9,6 +9,7 @@ import RecommendationsPanel from "./components/RecommendationsPanel";
 import AboutModal from "./components/AboutModal";
 import HeroBackdrop from "./components/HeroBackdrop";
 import { useHeaderMode, ENTER_COMPACT_PX, EXIT_TO_HERO_PX } from "./hooks/useHeaderMode";
+import { HighlightProvider } from "./contexts/HighlightContext";
 import {
   MovieHit,
   RecommendCircle,
@@ -348,91 +349,93 @@ export default function App() {
 
   return (
     <>
-      <HeroBackdrop url={backdropUrl} />
-      <div className="app">
-        {isWheelWrapHidden ? (
-          <>
-            <div className="topbar">
-              <LanguageSwitcher />
-              <button
-                className="about-trigger"
-                onClick={() => setAboutOpen(true)}
-                aria-label={t("footer.about")}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9.5" />
-                  <line x1="12" y1="16.2" x2="12" y2="11.5" />
-                  <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
-                </svg>
-              </button>
-            </div>
-
-            <header className="app__header">
-              <h1>{t("app.title")}</h1>
-              <p>{t("app.tagline")}</p>
-            </header>
-
-            <div className="sticky-controls" ref={stickyControlsRef}>
-              <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
-              {schemeSelect}
-            </div>
-          </>
-        ) : (
-          <>
-            <span ref={sentinelEnterRef} className="scroll-sentinel" style={{ top: ENTER_COMPACT_PX }} aria-hidden="true" />
-            <span ref={sentinelExitRef} className="scroll-sentinel" style={{ top: EXIT_TO_HERO_PX }} aria-hidden="true" />
-
-            <AppHeader
-              mode={headerMode}
-              onAboutClick={() => setAboutOpen(true)}
-              onHeightChange={setHeaderHeight}
-              searchSlot={
-                <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
-              }
-              schemeSlot={headerMode === "compact" ? schemeSelect : undefined}
-            />
-
-            <div className="sticky-controls" ref={stickyControlsRef}>
-              {headerMode !== "compact" && schemeSelect}
-            </div>
-          </>
-        )}
-
-        {error && <div className="app__error">{error}</div>}
-        {recError && <div className="app__error">{recError}</div>}
-
-        <div className="layout3" ref={contentRef} style={{ paddingTop: spacerHeight }}>
-          <aside className="layout3__left">
-            {recs && !recError && (
-              <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />
-            )}
-          </aside>
-
-          <main className="layout3__center" ref={wheelColumnRef}>
-            {!isWheelWrapHidden && (
-              <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
-                <WheelStack
-                  circle={primary}
-                  size={wheelSize}
-                  title={selected?.title}
-                  overlays={primaryOverlays}
-                  onReadoutHeight={setReadoutHeight}
-                />
+      <HighlightProvider>
+        <HeroBackdrop url={backdropUrl} />
+        <div className="app">
+          {isWheelWrapHidden ? (
+            <>
+              <div className="topbar">
+                <LanguageSwitcher />
+                <button
+                  className="about-trigger"
+                  onClick={() => setAboutOpen(true)}
+                  aria-label={t("footer.about")}
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9.5" />
+                    <line x1="12" y1="16.2" x2="12" y2="11.5" />
+                    <circle cx="12" cy="7.6" r="1.3" fill="currentColor" stroke="none" />
+                  </svg>
+                </button>
               </div>
-            )}
-          </main>
+
+              <header className="app__header">
+                <h1>{t("app.title")}</h1>
+                <p>{t("app.tagline")}</p>
+              </header>
+
+              <div className="sticky-controls" ref={stickyControlsRef}>
+                <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+                {schemeSelect}
+              </div>
+            </>
+          ) : (
+            <>
+              <span ref={sentinelEnterRef} className="scroll-sentinel" style={{ top: ENTER_COMPACT_PX }} aria-hidden="true" />
+              <span ref={sentinelExitRef} className="scroll-sentinel" style={{ top: EXIT_TO_HERO_PX }} aria-hidden="true" />
+
+              <AppHeader
+                mode={headerMode}
+                onAboutClick={() => setAboutOpen(true)}
+                onHeightChange={setHeaderHeight}
+                searchSlot={
+                  <SearchBar onSelect={handleSelect} selectedTitle={selected?.title ?? null} selectedMovie={selected} />
+                }
+                schemeSlot={headerMode === "compact" ? schemeSelect : undefined}
+              />
+
+              <div className="sticky-controls" ref={stickyControlsRef}>
+                {headerMode !== "compact" && schemeSelect}
+              </div>
+            </>
+          )}
+
+          {error && <div className="app__error">{error}</div>}
+          {recError && <div className="app__error">{recError}</div>}
+
+          <div className="layout3" ref={contentRef} style={{ paddingTop: spacerHeight }}>
+            <aside className="layout3__left">
+              {recs && !recError && (
+                <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />
+              )}
+            </aside>
+
+            <main className="layout3__center" ref={wheelColumnRef}>
+              {!isWheelWrapHidden && (
+                <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
+                  <WheelStack
+                    circle={primary}
+                    size={wheelSize}
+                    title={selected?.title}
+                    overlays={primaryOverlays}
+                    onReadoutHeight={setReadoutHeight}
+                  />
+                </div>
+              )}
+            </main>
+          </div>
+
+          <footer className="app__footer app__footer--slim">
+            <p>
+              {t("footer.copyright", { year: new Date().getFullYear() })}
+              {" · "}
+              <button onClick={() => setAboutOpen(true)}>{t("footer.about")}</button>
+            </p>
+          </footer>
+
+          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </div>
-
-        <footer className="app__footer app__footer--slim">
-          <p>
-            {t("footer.copyright", { year: new Date().getFullYear() })}
-            {" · "}
-            <button onClick={() => setAboutOpen(true)}>{t("footer.about")}</button>
-          </p>
-        </footer>
-
-        <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-      </div>
+      </HighlightProvider>
     </>
   );
 }

@@ -2,10 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
+import { circleKey } from "../utils/circleKey";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
 import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
+import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
 import Wheel, { RING_PAD } from "./Wheel";
+import WheelPointLabels from "./WheelPointLabels";
+import "./MovieHighlight.css";
 
 interface Props {
   circles: RecommendCircle[];
@@ -29,10 +33,6 @@ interface Props {
    * exists.
    */
   onActiveCircleChange?: (circle: RecommendCircle | null) => void;
-}
-
-function circleKey(c: RecommendCircle): string {
-  return `${c.axis_x.pc}-${c.axis_y.pc}`;
 }
 
 // Compact label for a scheme angle, shown inside the angle badge on the
@@ -164,6 +164,13 @@ function AngleSections({
   tmdbUrlFor,
 }: AngleSectionsProps) {
   const { t } = useTranslation();
+  const { setHighlighted, clearHighlighted } = useHighlight();
+  const highlightedItemId = useHighlightedItem(cKey);
+  // Thin wrappers so RecRow only needs to report its own item id, not
+  // thread the circle's key through every call site.
+  const onHighlightEnter = (itemId: number) => setHighlighted(cKey, itemId);
+  const onHighlightLeave = (itemId: number) => clearHighlighted(cKey, itemId);
+
   return (
     <>
       {circle.angles
@@ -181,6 +188,10 @@ function AngleSections({
             circle.axis_y.colors.negative
           );
           const topCardKey = `${key}:top:${top.item_id}`;
+          // The highlighted item is hidden inside this group's collapsed
+          // "rest" list - light up the "+N" button as a stand-in for the
+          // (currently invisible) row, see MovieHighlight.css.
+          const hiddenHighlight = !isOpen && rest.some((it) => it.item_id === highlightedItemId);
 
           return (
             <div className="rec-angle" key={key}>
@@ -195,11 +206,18 @@ function AngleSections({
                 onCardEnter={onCardEnter}
                 onCardLeave={onCardLeave}
                 onCardToggle={onCardToggle}
+                isHighlighted={highlightedItemId === top.item_id}
+                onHighlightEnter={onHighlightEnter}
+                onHighlightLeave={onHighlightLeave}
                 trailing={
                   hasMore ? (
                     <button
                       type="button"
-                      className={"rec-row__expand" + (isOpen ? " rec-row__expand--open" : "")}
+                      className={
+                        "rec-row__expand" +
+                        (isOpen ? " rec-row__expand--open" : "") +
+                        (hiddenHighlight ? " rec-row__expand--highlighted" : "")
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleExpand(key);
@@ -235,6 +253,9 @@ function AngleSections({
                           onCardEnter={onCardEnter}
                           onCardLeave={onCardLeave}
                           onCardToggle={onCardToggle}
+                          isHighlighted={highlightedItemId === it.item_id}
+                          onHighlightEnter={onHighlightEnter}
+                          onHighlightLeave={onHighlightLeave}
                           compact
                         />
                       );
@@ -274,7 +295,7 @@ function refCompassBearing(refX: number, refY: number): number {
 // mounted RecInfoCard instance and across selections within the same
 // page session. A movie's poster essentially never changes, so once
 // resolved (or resolved as "unavailable") for a given item_id, hovering
-// it again should never re-hit the network. in-flight promises are
+// it again should never re-hit the network. In-flight promises are
 // deduplicated too, in case the same item is hovered again before the
 // first lookup returns. ---
 const posterCache = new Map<number, string | null>();
@@ -295,7 +316,7 @@ async function resolvePoster(itemId: number): Promise<string | null> {
   return url;
 }
 
-interface   RecCardTarget {
+interface RecCardTarget {
   key: string;
   item: RecItem;
   rect: DOMRect;
@@ -479,7 +500,7 @@ export default function RecommendationsPanel({
     () => circles.filter((c) => c.angles.some((a) => a.items.length > 0)),
     [circles]
   );
-  
+
   // Reactive version of the MOBILE_BREAKPOINT check (resize/orientation
   // change matter here, unlike the one-off canHover capability check
   // above) - drives the section wheel's fill-width sizing below.
@@ -489,15 +510,16 @@ export default function RecommendationsPanel({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  
-    // --- Active circle (desktop only) -------------------------------
+
+  // --- Active circle (desktop only) -------------------------------
   // The active circle is plain state, set explicitly by clicking a
   // section, stepping with the arrow keys, or a wheel tick (see below) -
   // there is no scroll-position tracking; scrolling instead follows the
   // active circle via scrollIntoView.
   // sectionRefs: DOM node for each rendered .rec-circle section, keyed by
-  // circleKey - populated via the ref callback in the desktop render
-  // branch below, used to scroll a newly activated section into view.
+  // circleKey (see utils/circleKey.ts) - populated via the ref callback
+  // in the desktop render branch below, used to scroll a newly activated
+  // section into view.
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [activeKey, setActiveKey] = useState<string | null>(null);
   // Mirrors activeKey for the scroll-walk effect below, so that effect
@@ -531,7 +553,6 @@ export default function RecommendationsPanel({
       programmaticScrollRef.current = false;
     }, PROGRAMMATIC_SCROLL_SETTLE_MS);
   }, []);
-  
 
   // Defaults the active circle to the first one whenever the populated
   // list changes (new reference movie or scheme). useLayoutEffect so
@@ -708,7 +729,7 @@ export default function RecommendationsPanel({
   // pure CSS animation (see .rec-circle__mobile--peek/--stacked in
   // index.css) - overflow-anchor on the scroll container (also in
   // index.css) is what keeps the user's scroll position visually
-  // stable while it plays
+  // stable while it plays.
   const [unstacked, setUnstacked] = useState(false);
 
   // Fill-width sizing for the per-section wheel: measures the
@@ -865,7 +886,9 @@ export default function RecommendationsPanel({
             />
           );
 
-          // Desktop: fixed small wheel beside the list,
+          // Desktop: fixed small wheel beside the list, with the same
+          // point-label/highlight overlay as the big wheel (see
+          // WheelPointLabels).
           if (!isNarrow) {
             return (
               <section
@@ -881,6 +904,12 @@ export default function RecommendationsPanel({
                   {wheelCircle && (
                     <div className="rec-circle__wheel">
                       <Wheel circle={wheelCircle} size={SECTION_WHEEL_UNSTACKED} overlays={circle.angles} />
+                      <WheelPointLabels
+                        circle={wheelCircle}
+                        size={SECTION_WHEEL_UNSTACKED}
+                        overlays={circle.angles}
+                        circleKey={cKey}
+                      />
                     </div>
                   )}
                   <div className="rec-circle__content">{angleSections}</div>
@@ -892,7 +921,10 @@ export default function RecommendationsPanel({
           // Mobile: same DOM in both states, only a modifier class (and
           // --wheel-peek) changes - see .rec-circle__mobile* in
           // index.css for why this needs to stay structurally identical
-          // (it's what makes the switch an actual CSS transition).
+          // (it's what makes the switch an actual CSS transition). The
+          // wheel and its point-label overlay are wrapped together in
+          // .rec-circle__mobile-wheel purely so the overlay has a
+          // correctly-sized positioned ancestor to anchor to.
           return (
             <section
               className={"rec-circle" + (isPrimaryStyle ? " rec-circle--primary" : "")}
@@ -906,12 +938,20 @@ export default function RecommendationsPanel({
                 style={{ "--wheel-peek": `${wheelPeek}px` } as CSSProperties}
               >
                 {wheelCircle && (
-                  <Wheel
-                    circle={wheelCircle}
-                    size={fillWheelSize}
-                    overlays={circle.angles}
-                    showReadout={false}
-                  />
+                  <div className="rec-circle__mobile-wheel">
+                    <Wheel
+                      circle={wheelCircle}
+                      size={fillWheelSize}
+                      overlays={circle.angles}
+                      showReadout={false}
+                    />
+                    <WheelPointLabels
+                      circle={wheelCircle}
+                      size={fillWheelSize}
+                      overlays={circle.angles}
+                      circleKey={cKey}
+                    />
+                  </div>
                 )}
                 <div className="rec-circle__mobile-list">{angleSections}</div>
               </div>
@@ -949,22 +989,29 @@ interface RecRowProps {
   onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
   onCardLeave: () => void;
   onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
+  /** Whether this row's movie is the one currently highlighted - from a
+   * hover on this row itself, its wheel point (small or big), or the
+   * legend, all scoped to the same circle (see
+   * contexts/HighlightContext.tsx). */
+  isHighlighted: boolean;
+  onHighlightEnter: (itemId: number) => void;
+  onHighlightLeave: (itemId: number) => void;
 }
 
-// A single recommendation row: rank, scheme-angle swatch, a title link
-// (loads this movie as the new reference via onSelectItem), external
-// IMDb/TMDB links, and an optional trailing control (the expand/collapse
-// chevron - only ever passed for the top-ranked row of an angle). Each
-// interactive zone is its own element, not one big clickable row - the
-// title link, the two external links, and the chevron are all
-// independently clickable.
+// A single recommendation row: scheme-angle swatch or badge, title,
+// external IMDb/TMDB links, a "get recommendations" button, and an
+// optional trailing control (the expand/collapse chevron - only ever
+// passed for the top-ranked row of an angle). Each interactive zone is
+// its own element, not one big clickable row - the external links, the
+// wand button, and the chevron are all independently clickable.
 //
-// The row as a whole is also the trigger for the hover/tap info card
-// (see RecInfoCard): hovering it (desktop) or tapping it (touch) opens
-// a small card with a poster, title, and genres next to it. The title
-// link, external links, and chevron all stop propagation on click so a
-// tap on one of them performs its own action (navigate / open a new
-// tab / expand) instead of also toggling the info card.
+// The row as a whole also drives two other things: hovering it opens
+// the shared poster/details info card (see RecInfoCard) after a short
+// delay window that lets the pointer travel onto the card itself, which
+// lives elsewhere in the DOM via a portal; and it marks this row's
+// movie as highlighted (see contexts/HighlightContext.tsx), lighting up
+// the same movie's point on this circle's wheel and its legend row,
+// wherever they're currently shown.
 function RecRow({
   item,
   swatchColor,
@@ -978,6 +1025,9 @@ function RecRow({
   onCardEnter,
   onCardLeave,
   onCardToggle,
+  isHighlighted,
+  onHighlightEnter,
+  onHighlightLeave,
 }: RecRowProps) {
   const { t } = useTranslation();
   return (
@@ -985,10 +1035,17 @@ function RecRow({
       className={
         "rec-row" +
         (compact ? " rec-row--compact" : "") +
-        (isCardOpen ? " rec-row--active" : "")
+        (isCardOpen ? " rec-row--active" : "") +
+        (isHighlighted ? " rec-row--highlighted" : "")
       }
-      onMouseEnter={(e) => onCardEnter(cardKey, item, e.currentTarget)}
-      onMouseLeave={onCardLeave}
+      onMouseEnter={(e) => {
+        onCardEnter(cardKey, item, e.currentTarget);
+        onHighlightEnter(item.item_id);
+      }}
+      onMouseLeave={() => {
+        onCardLeave();
+        onHighlightLeave(item.item_id);
+      }}
       onClick={(e) => onCardToggle(cardKey, item, e.currentTarget)}
     >
       {angleLabel ? (

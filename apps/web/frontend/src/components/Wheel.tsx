@@ -131,7 +131,6 @@ export default function Wheel({
 }: Props) {
   const { t, i18n } = useTranslation();
   const [activeLabel, setActiveLabel] = useState<null | string>(null);
-  const [activeOverlay, setActiveOverlay] = useState<number | null>(null);
   // Unique per mounted Wheel instance - the axis pair alone (pid) is NOT
   // enough: the same (pc_x, pc_y) can now render twice at once (the main
   // wheel in App.tsx and its duplicate small wheel in the primary
@@ -397,29 +396,9 @@ export default function Wheel({
               className="wheel__rec-point"
               data-point-item-id={p.item.item_id}
               style={{ fill: p.color, filter: `drop-shadow(0 0 ${glowPx}px ${p.color})` }}
-              onMouseEnter={() => setActiveOverlay(i)}
-              onMouseLeave={() => setActiveOverlay(null)}
             />
           ))}
         </svg>
-        {activeOverlay !== null && recPoints[activeOverlay] && (
-          <div
-            className="wheel__rec-popup"
-            style={{ left: recPoints[activeOverlay].popupX + 12, top: recPoints[activeOverlay].popupY }}
-          >
-            <div className="wheel__rec-popup-title">
-              Angle {recPoints[activeOverlay].angle}&deg; &middot; #{recPoints[activeOverlay].item.rank}
-            </div>
-            <div className="wheel__rec-popup-row">{recPoints[activeOverlay].item.title}</div>
-            {recPoints[activeOverlay].item.angular_error_deg != null && (
-              <div className="wheel__rec-popup-row">
-                Δangle: {recPoints[activeOverlay].item.angular_error_deg!.toFixed(1)}°
-                {recPoints[activeOverlay].item.radius_ratio != null &&
-                  ` · r-ratio: ${recPoints[activeOverlay].item.radius_ratio!.toFixed(2)}`}
-              </div>
-            )}
-          </div>
-        )}
       </div>
       {!compact && showReadout && (
         <div className="wheel__readout" ref={readoutRef}>

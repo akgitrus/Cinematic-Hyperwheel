@@ -57,16 +57,14 @@
   cursor: default;
 }
 
-.wheel-stack__legend .wheel-legend__row--active {
-  --legend-glow: rgba(232, 236, 244, 0.9);
-  --legend-glow-soft: rgba(232, 236, 244, 0.24);
-  position: relative;
-  z-index: 1;
-  background: rgba(232, 236, 244, 0.07);
-  border-radius: 8px;
-}
-
-.wheel-stack__legend .wheel-legend__row--active::before {
+/* Directional "beam" pointing into a highlighted legend row, plus a
+   brief flash ring on entry - a legend-specific accent layered on top
+   of the shared .rec-row--highlighted treatment (see MovieHighlight.css
+   for the base pulse/glow effect shared with the recommendations list
+   and the "+N" button). The beam's "pointing in from the wheel" framing
+   only makes sense in the legend's own layout (disc to the left, see
+   .wheel-stack__row above), so it isn't part of the shared class. */
+.wheel-stack__legend .rec-row--highlighted::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -75,13 +73,13 @@
   height: 1px;
   transform: translateY(-50%);
   transform-origin: right center;
-  background: linear-gradient(90deg, transparent, var(--legend-glow));
-  box-shadow: 0 0 7px var(--legend-glow), 0 0 16px var(--legend-glow-soft);
+  background: linear-gradient(90deg, transparent, var(--highlight-glow));
+  box-shadow: 0 0 7px var(--highlight-glow), 0 0 16px var(--highlight-glow-soft);
   pointer-events: none;
   animation: wheel-legend-beam 1.4s ease-in-out infinite;
 }
 
-.wheel-stack__legend .wheel-legend__row--active::after {
+.wheel-stack__legend .rec-row--highlighted::after {
   content: "";
   position: absolute;
   inset: -2px -1px;
@@ -90,52 +88,6 @@
   box-shadow: 0 0 18px rgba(232, 236, 244, 0.08);
   pointer-events: none;
   animation: wheel-legend-flash 900ms ease-out 1;
-}
-
-.wheel-stack__legend .wheel-legend__row--active .rec-row__title {
-  color: #ffffff;
-  text-shadow:
-    0 0 6px rgba(255, 255, 255, 0.45),
-    0 0 14px rgba(232, 236, 244, 0.5),
-    0 0 28px rgba(232, 236, 244, 0.22);
-  animation: wheel-legend-title-pulse 1.4s ease-in-out infinite;
-}
-
-.wheel-stack__legend .wheel-legend__row--active .rec-row__meta {
-  color: rgba(232, 236, 244, 0.78);
-  text-shadow: 0 0 8px rgba(232, 236, 244, 0.18);
-}
-
-.wheel-stack__legend .wheel-legend__row--active .rec-row__anglebadge {
-  box-shadow:
-    0 0 8px currentColor,
-    0 0 18px currentColor,
-    0 0 30px rgba(255, 255, 255, 0.2);
-  animation: wheel-legend-marker-pulse 1.4s ease-in-out infinite;
-}
-
-.wheel-stack__legend .wheel-legend__row--active .rec-row__swatch {
-  box-shadow:
-    0 0 8px currentColor,
-    0 0 18px currentColor,
-    0 0 28px rgba(255, 255, 255, 0.18);
-  animation: wheel-legend-marker-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes wheel-legend-title-pulse {
-  0%, 100% {
-    opacity: 0.84;
-    text-shadow:
-      0 0 6px rgba(255, 255, 255, 0.32),
-      0 0 12px rgba(232, 236, 244, 0.36);
-  }
-  50% {
-    opacity: 1;
-    text-shadow:
-      0 0 7px rgba(255, 255, 255, 0.55),
-      0 0 16px rgba(232, 236, 244, 0.65),
-      0 0 30px rgba(232, 236, 244, 0.3);
-  }
 }
 
 @keyframes wheel-legend-beam {
@@ -149,30 +101,14 @@
   }
 }
 
-@keyframes wheel-legend-marker-pulse {
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.3);
-  }
-}
-
 @keyframes wheel-legend-flash {
-  0% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-  }
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wheel-stack__legend .wheel-legend__row--active::before,
-  .wheel-stack__legend .wheel-legend__row--active::after,
-  .wheel-stack__legend .wheel-legend__row--active .rec-row__title,
-  .wheel-stack__legend .wheel-legend__row--active .rec-row__anglebadge,
-  .wheel-stack__legend .wheel-legend__row--active .rec-row__swatch {
+  .wheel-stack__legend .rec-row--highlighted::before,
+  .wheel-stack__legend .rec-row--highlighted::after {
     animation: none;
   }
 }

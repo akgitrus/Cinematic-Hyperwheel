@@ -3,13 +3,13 @@ import { useTranslation } from "react-i18next";
 import { RecItem, RecommendCircle, toWheelCircle } from "../api";
 import { circleKey } from "../utils/circleKey";
 import { colorOnWheel } from "../utils/color";
-import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
-import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
+import { imdbUrlForItem } from "../utils/imdb";
+import { tmdbUrlForItem } from "../utils/tmdb";
 import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
+import { useActiveCard } from "../contexts/ActiveCardContext";
 import { useActiveCircleNav } from "../hooks/useActiveCircleNav";
 import Wheel, { RING_PAD } from "./Wheel";
 import WheelPointLabels from "./WheelPointLabels";
-import RecommendationInfoCard, { type RecCardTarget } from "./RecommendationInfoCard";
 import "./MovieHighlight.css";
 
 interface Props {
@@ -122,6 +122,18 @@ function GetRecommendationsButton({ itemId, label }: { itemId: number; label: st
   );
 }
 
+// Big (primary/central) wheel's own point for this item, when one is
+// currently rendered there - kept clear of the recommendation info card
+// (see RecommendationInfoCard's avoidOverlap). Scoped to
+// .layout3__wheel-wrap (App.tsx), the big wheel's unique page-level
+// wrapper, so a same-id point on a different wheel (this row's own
+// small section wheel, or another section's) is never picked up.
+function bigWheelPointRect(itemId: number): DOMRect | undefined {
+  return document
+    .querySelector<SVGCircleElement>(`.layout3__wheel-wrap [data-point-item-id="${itemId}"]`)
+    ?.getBoundingClientRect();
+}
+
 interface AngleSectionsProps {
   circle: RecommendCircle;
   cKey: string;
@@ -130,7 +142,7 @@ interface AngleSectionsProps {
   onToggleExpand: (key: string) => void;
   activeCardKey: string | null;
   onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
-  onCardLeave: () => void;
+  onCardLeave: (key: string) => void;
   onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
   imdbUrlFor: (item: RecItem) => string;
   tmdbUrlFor: (item: RecItem) => string;
@@ -289,14 +301,13 @@ const MOBILE_BREAKPOINT = 640;
 
 export default function RecommendationsPanel({
   circles,
-  imdbUrlFor = (item) => (item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)),
-  tmdbUrlFor = (item) => (item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)),
+  imdbUrlFor = imdbUrlForItem,
+  tmdbUrlFor = tmdbUrlForItem,
   onActiveCircleChange,
 }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
-  const closeTimerRef = useRef<number | undefined>(undefined);
+  const { trigger, showCard, hideCard, closeCardNow, clearCard } = useActiveCard();
   const listRef = useRef<HTMLDivElement>(null);
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
@@ -372,7 +383,7 @@ export default function RecommendationsPanel({
 
   // Reset UI state tied to a specific movie/scheme selection.
   useEffect(() => {
-    closeCardNow();
+    clearCard();
     setUnstacked(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circles]);
@@ -387,64 +398,54 @@ export default function RecommendationsPanel({
   };
 
   // --- Hover/tap info card wiring -----------------------------------
-  // Hovering a row (desktop) or tapping it (touch) opens the card;
-  // moving off the row schedules a delayed close so the pointer has
-  // time to travel onto the card itself (which is positioned elsewhere
-  // in the DOM via a portal, so it's not a CSS-hoverable descendant of
-  // the row) without the card flickering shut in between.
-  const cancelPendingClose = () => window.clearTimeout(closeTimerRef.current);
-
+  // Hovering a row (desktop) opens the shared card (see
+  // contexts/ActiveCardContext.tsx), anchored to the row and kept clear
+  // of the big wheel's own point for this item, if one is currently
+  // shown there; tapping a row (touch) toggles it open/closed
+  // regardless of hover support.
   const openCard = (key: string, item: RecItem, el: HTMLElement) => {
     if (!canHover) return;
-
-    cancelPendingClose();
-    setActiveCard({ key, item, rect: el.getBoundingClientRect() });
+    showCard({
+      key,
+      item,
+      source: "list",
+      rect: el.getBoundingClientRect(),
+      avoidRect: bigWheelPointRect(item.item_id),
+    });
   };
 
-  const scheduleCloseCard = () => {
+  const scheduleCloseCard = (key: string) => {
     if (!canHover) return;
-
-    cancelPendingClose();
-    closeTimerRef.current = window.setTimeout(() => setActiveCard(null), 200);
-  };
-
-  const closeCardNow = () => {
-    cancelPendingClose();
-    setActiveCard(null);
+    hideCard(key);
   };
 
   const toggleCard = (key: string, item: RecItem, el: HTMLElement) => {
-    cancelPendingClose();
-    setActiveCard((prev) => (prev && prev.key === key ? null : { key, item, rect: el.getBoundingClientRect() }));
+    if (trigger?.key === key) {
+      closeCardNow(key);
+      return;
+    }
+    showCard({
+      key,
+      item,
+      source: "list",
+      rect: el.getBoundingClientRect(),
+      avoidRect: bigWheelPointRect(item.item_id),
+    });
   };
 
-  // A fresh `circles` prop means a new selection or scheme - any open
-  // card refers to a row that's about to be replaced or reordered, so
-  // close it rather than let it point at stale data.
+  // Scrolling the list invalidates a LIST-sourced card's own captured
+  // anchor rect - legend/point-sourced cards live elsewhere on the page
+  // and are unaffected by this list's scroll position. Escape and
+  // window resize are handled once, globally, by
+  // ActiveRecommendationCard.
   useEffect(() => {
-    closeCardNow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [circles]);
-
-  // Escape, scrolling the list, or resizing the window (which would
-  // invalidate the card's captured anchor position) all close the card.
-  useEffect(() => {
-    if (!activeCard) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeCardNow();
-    };
-    const onDismiss = () => closeCardNow();
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("resize", onDismiss);
+    if (!trigger || trigger.source !== "list") return;
     const listEl = listRef.current;
-    listEl?.addEventListener("scroll", onDismiss, { passive: true });
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("resize", onDismiss);
-      listEl?.removeEventListener("scroll", onDismiss);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCard]);
+    if (!listEl) return;
+    const onScroll = () => closeCardNow(trigger.key);
+    listEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => listEl.removeEventListener("scroll", onScroll);
+  }, [trigger, closeCardNow]);
 
   if (populated.length === 0) return null;
 
@@ -486,7 +487,7 @@ export default function RecommendationsPanel({
               bearing={bearing}
               expanded={expanded}
               onToggleExpand={toggle}
-              activeCardKey={activeCard?.key ?? null}
+              activeCardKey={trigger?.key ?? null}
               onCardEnter={openCard}
               onCardLeave={scheduleCloseCard}
               onCardToggle={toggleCard}
@@ -565,17 +566,6 @@ export default function RecommendationsPanel({
           );
         })}
       </div>
-
-      {activeCard && (
-        <RecommendationInfoCard
-          target={activeCard}
-          onClose={closeCardNow}
-          imdbUrlFor={imdbUrlFor}
-          tmdbUrlFor={tmdbUrlFor}
-          onMouseEnter={cancelPendingClose}
-          onMouseLeave={scheduleCloseCard}
-        />
-      )}
     </div>
   );
 }
@@ -593,7 +583,7 @@ interface RecRowProps {
   cardKey: string;
   isCardOpen: boolean;
   onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
-  onCardLeave: () => void;
+  onCardLeave: (key: string) => void;
   onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
   /** Whether this row's movie is the one currently highlighted - from a
    * hover on this row itself, its wheel point (small or big), or the
@@ -649,7 +639,7 @@ function RecRow({
         onHighlightEnter(item.item_id);
       }}
       onMouseLeave={() => {
-        onCardLeave();
+        onCardLeave(cardKey);
         onHighlightLeave(item.item_id);
       }}
       onClick={(e) => onCardToggle(cardKey, item, e.currentTarget)}

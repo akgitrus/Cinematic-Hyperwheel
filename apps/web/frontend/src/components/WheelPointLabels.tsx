@@ -2,6 +2,8 @@ import "./WheelPointLabels.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecAngle, WheelCircle } from "../api";
 import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
+import { useActiveCard } from "../contexts/ActiveCardContext";
+import { supportsHover } from "../utils/hover";
 
 interface Props {
   circle: WheelCircle;
@@ -316,6 +318,8 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], c
   const { setHighlighted, clearHighlighted } = useHighlight();
   const highlightedItemId = useHighlightedItem(circleKey);
   const reportedItemIdRef = useRef<number | null>(null);
+  const { showCard, hideCard } = useActiveCard();
+  const reportedCardKeyRef = useRef<string | null>(null);
 
   const points = useMemo<Point[]>(() => {
     const result: Point[] = [];
@@ -371,6 +375,39 @@ export default function WheelPointLabels({ circle, size, title, overlays = [], c
       if (reportedItemIdRef.current !== null) {
         clearHighlighted(circleKey, reportedItemIdRef.current);
       }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Hovering a recommendation point directly opens the info card
+  // anchored to the point itself (see contexts/ActiveCardContext.tsx) -
+  // gated on hover support so a touch device's synthetic mouse events
+  // never half-trigger it; touch uses its own tap-to-open flow instead
+  // (see RecommendationsPanel.tsx).
+  useEffect(() => {
+    if (!supportsHover()) return;
+    const itemId = localHoveredPoint?.itemId ?? null;
+
+    if (itemId === null) {
+      if (reportedCardKeyRef.current) hideCard(reportedCardKeyRef.current);
+      reportedCardKeyRef.current = null;
+      return;
+    }
+
+    const item = overlays.flatMap((angle) => angle.items).find((candidate) => candidate.item_id === itemId);
+    const pointEl = svgRef.current?.parentElement?.querySelector<SVGCircleElement>(
+      `[data-point-item-id="${itemId}"]`
+    );
+    if (!item || !pointEl) return;
+
+    const key = `${circleKey}:point:${itemId}`;
+    showCard({ key, item, source: "point", rect: pointEl.getBoundingClientRect() });
+    reportedCardKeyRef.current = key;
+  }, [localHoveredPoint, overlays, circleKey, showCard, hideCard]);
+
+  useEffect(() => {
+    return () => {
+      if (reportedCardKeyRef.current) hideCard(reportedCardKeyRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

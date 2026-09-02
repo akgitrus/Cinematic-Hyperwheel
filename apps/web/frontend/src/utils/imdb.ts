@@ -12,3 +12,12 @@ export function imdbSearchUrl(title: string): string {
 export function imdbTitleUrl(imdbId: string): string {
   return `https://www.imdb.com/title/tt${imdbId}/`;
 }
+
+/**
+ * IMDb link for a recommendation item: a direct title-page link when the
+ * dataset has a matching imdbId, falling back to a title search
+ * otherwise (see "External ids" in apps/web/README.md).
+ */
+export function imdbUrlForItem(item: { imdb_id: string | null; title: string }): string {
+  return item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title);
+}

@@ -14,3 +14,8 @@ export function tmdbSearchUrl(title: string): string {
 export function tmdbTitleUrl(tmdbId: string): string {
   return `https://www.themoviedb.org/movie/${tmdbId}`;
 }
+
+/** TMDB equivalent of imdb.ts's imdbUrlForItem - see there for the rationale. */
+export function tmdbUrlForItem(item: { tmdb_id: string | null; title: string }): string {
+  return item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title);
+}

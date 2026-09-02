@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import Wheel from "./Wheel";
 import WheelPointLabels from "./WheelPointLabels";
-import RecommendationInfoCard, { type RecCardTarget } from "./RecommendationInfoCard";
 import { RecAngle, WheelCircle } from "../api";
 import { circleKey } from "../utils/circleKey";
 import { colorOnWheel } from "../utils/color";
-import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
-import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
 import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
+import { useActiveCard } from "../contexts/ActiveCardContext";
 import "./WheelLegend.css";
 import "./MovieHighlight.css";
 
@@ -45,78 +43,54 @@ interface WheelLegendProps {
   overlays?: RecAngle[];
 }
 
-// Mirrors the same movie's highlight into the RecommendationInfoCard
-// hover popup - unrelated to the highlight effect itself (see
-// HighlightContext.tsx).
+// Legend rows for the big/primary wheel. Hovering a row cross-highlights
+// the same movie's point on the wheel/other surfaces (see
+// HighlightContext.tsx) and, independently, opens the recommendation
+// info card anchored to that row (see contexts/ActiveCardContext.tsx),
+// kept clear of the big wheel's own point for this item - the card only
+// ever reacts to THIS row's own hover, never to a highlight that
+// originated elsewhere, so it can't end up open at the same time as a
+// card triggered by a different surface (a list row, a wheel point).
 function WheelLegend({ circle, overlays }: WheelLegendProps) {
   const cKey = circleKey(circle);
   const { setHighlighted, clearHighlighted } = useHighlight();
   const activeItemId = useHighlightedItem(cKey);
-  const [activeCard, setActiveCard] = useState<RecCardTarget | null>(null);
-  const closeTimerRef = useRef<number | undefined>(undefined);
+  const { showCard, hideCard, closeCardNow } = useActiveCard();
+  const openCardKeyRef = useRef<string | null>(null);
+
+  // Closes this instance's own card (if one of its rows currently has
+  // one open) when the instance itself unmounts - e.g. the big wheel
+  // crossfading to a different circle while a legend row is still
+  // hovered (see WheelStack's crossfade) - so the card never outlives
+  // the row it's anchored to.
+  useEffect(() => {
+    return () => {
+      if (openCardKeyRef.current) closeCardNow(openCardKeyRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const populated = overlays?.filter((angle) => angle.items.length > 0) ?? [];
   if (populated.length === 0) return null;
 
   const bearing = refCompassBearing(circle.z_x, circle.z_y);
 
-  const cancelCardClose = () => window.clearTimeout(closeTimerRef.current);
-  const scheduleCardClose = () => {
-    cancelCardClose();
-    closeTimerRef.current = window.setTimeout(() => setActiveCard(null), 200);
-  };
-
-  useEffect(() => {
-    if (activeItemId === null) {
-      scheduleCardClose();
-      return;
-    }
-
-    const item = overlays
-      ?.flatMap((angle) => angle.items)
-      .find((candidate) => candidate.item_id === activeItemId);
-    if (!item) {
-      setActiveCard(null);
-      return;
-    }
-
-    const row = document.querySelector<HTMLElement>(
-      `.wheel-stack__legend [data-wheel-legend-item-id="${activeItemId}"]`
-    );
-    if (!row) return;
-
-    const pointEl = row
-      .closest<HTMLElement>(".wheel-stack__row")
-      ?.querySelector<SVGCircleElement>(`[data-point-item-id="${activeItemId}"]`);
-
-    cancelCardClose();
-    setActiveCard({
-      key: `wheel-legend:${activeItemId}`,
-      item,
-      rect: row.getBoundingClientRect(),
-      avoidRect: pointEl?.getBoundingClientRect(),
-    });
-    // The active item and current overlay data determine the card.
-  }, [activeItemId, overlays]);
-
-  useEffect(() => {
-    return () => window.clearTimeout(closeTimerRef.current);
-  }, []);
-
   return (
-    <>
-      <div className="wheel-stack__legend" aria-label="Recommendations">
-        {populated.map((angle) => {
-          const swatch = colorOnWheel(
-            bearing + angle.angle_deg,
-            circle.axis_x.colors.positive,
-            circle.axis_x.colors.negative,
-            circle.axis_y.colors.positive,
-            circle.axis_y.colors.negative
-          );
+    <div className="wheel-stack__legend" aria-label="Recommendations">
+      {populated.map((angle) => {
+        const swatch = colorOnWheel(
+          bearing + angle.angle_deg,
+          circle.axis_x.colors.positive,
+          circle.axis_x.colors.negative,
+          circle.axis_y.colors.positive,
+          circle.axis_y.colors.negative
+        );
 
-          return (
-            <div className="rec-angle" key={angle.angle_deg}>
-              {angle.items.map((item, index) => (
+        return (
+          <div className="rec-angle" key={angle.angle_deg}>
+            {angle.items.map((item, index) => {
+              const cardKey = `${cKey}:legend:${item.item_id}`;
+              return (
                 <div
                   className={
                     "rec-row" +
@@ -124,14 +98,23 @@ function WheelLegend({ circle, overlays }: WheelLegendProps) {
                     (activeItemId === item.item_id ? " rec-row--highlighted" : "")
                   }
                   key={item.item_id}
-                  data-wheel-legend-item-id={item.item_id}
-                  onMouseEnter={() => {
-                    cancelCardClose();
+                  onMouseEnter={(e) => {
                     setHighlighted(cKey, item.item_id);
+                    const pointEl = e.currentTarget
+                      .closest<HTMLElement>(".wheel-stack__row")
+                      ?.querySelector<SVGCircleElement>(`[data-point-item-id="${item.item_id}"]`);
+                    showCard({
+                      key: cardKey,
+                      item,
+                      source: "legend",
+                      rect: e.currentTarget.getBoundingClientRect(),
+                      avoidRect: pointEl?.getBoundingClientRect(),
+                    });
+                    openCardKeyRef.current = cardKey;
                   }}
                   onMouseLeave={() => {
-                    scheduleCardClose();
                     clearHighlighted(cKey, item.item_id);
+                    hideCard(cardKey);
                   }}
                 >
                   {index === 0 ? (
@@ -161,25 +144,12 @@ function WheelLegend({ circle, overlays }: WheelLegendProps) {
                   <span />
                   <span />
                 </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-      {activeCard && (
-        <RecommendationInfoCard
-          target={activeCard}
-          onClose={() => {
-            cancelCardClose();
-            setActiveCard(null);
-          }}
-          imdbUrlFor={(item) => item.imdb_id ? imdbTitleUrl(item.imdb_id) : imdbSearchUrl(item.title)}
-          tmdbUrlFor={(item) => item.tmdb_id ? tmdbTitleUrl(item.tmdb_id) : tmdbSearchUrl(item.title)}
-          onMouseEnter={cancelCardClose}
-          onMouseLeave={scheduleCardClose}
-        />
-      )}
-    </>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

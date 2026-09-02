@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { getPoster, RecItem, RecommendCircle, toWheelCircle } from "../api";
+import { RecItem, RecommendCircle, toWheelCircle } from "../api";
 import { circleKey } from "../utils/circleKey";
 import { colorOnWheel } from "../utils/color";
 import { imdbSearchUrl, imdbTitleUrl } from "../utils/imdb";
@@ -9,6 +8,7 @@ import { tmdbSearchUrl, tmdbTitleUrl } from "../utils/tmdb";
 import { useHighlight, useHighlightedItem } from "../contexts/HighlightContext";
 import Wheel, { RING_PAD } from "./Wheel";
 import WheelPointLabels from "./WheelPointLabels";
+import RecommendationInfoCard, { type RecCardTarget } from "./RecommendationInfoCard";
 import "./MovieHighlight.css";
 
 interface Props {
@@ -291,193 +291,11 @@ function refCompassBearing(refX: number, refY: number): number {
   return ((Math.atan2(refY, refX) * 180) / Math.PI + 90 + 360) % 360;
 }
 
-// --- Poster resolution: a small client-side cache shared across every
-// mounted RecInfoCard instance and across selections within the same
-// page session. A movie's poster essentially never changes, so once
-// resolved (or resolved as "unavailable") for a given item_id, hovering
-// it again should never re-hit the network. In-flight promises are
-// deduplicated too, in case the same item is hovered again before the
-// first lookup returns. ---
-const posterCache = new Map<number, string | null>();
-const posterInFlight = new Map<number, Promise<string | null>>();
-
-async function resolvePoster(itemId: number): Promise<string | null> {
-  if (posterCache.has(itemId)) return posterCache.get(itemId)!;
-  let pending = posterInFlight.get(itemId);
-  if (!pending) {
-    pending = getPoster(itemId)
-      .then((r) => r.poster_url)
-      .catch(() => null);
-    posterInFlight.set(itemId, pending);
-  }
-  const url = await pending;
-  posterCache.set(itemId, url);
-  posterInFlight.delete(itemId);
-  return url;
-}
-
-interface RecCardTarget {
-  key: string;
-  item: RecItem;
-  rect: DOMRect;
-}
-
-// Assumed card footprint used to clamp its position within the
-// viewport (see anchoredStyle) - matches the CSS width/max-height for
-// .rec-card--anchored, so the clamp math and the actual rendered card
-// never disagree.
-const CARD_WIDTH = 300;
-const CARD_MAX_HEIGHT = 360;
-const VIEWPORT_MARGIN = 8;
-// Below this viewport width, hover has no real equivalent (touch), and
-// there's rarely room to anchor a 300px popover next to a full-width
-// row anyway - the card renders as a bottom sheet instead (see
-// RecInfoCard).
+// Threshold below which the panel switches from the desktop layout
+// (wheel beside the list, hover-driven info card) to the mobile one
+// (stacked list, tap-driven card as a bottom sheet - see
+// RecommendationInfoCard.tsx).
 const MOBILE_BREAKPOINT = 640;
-
-function anchoredStyle(rect: DOMRect): CSSProperties {
-  // Prefer opening to the right of the row; flip to the left if there
-  // isn't enough room, then clamp so the card is never partially off
-  // either edge of the viewport.
-  let left = rect.right + 12;
-  if (left + CARD_WIDTH > window.innerWidth - VIEWPORT_MARGIN) {
-    left = rect.left - CARD_WIDTH - 12;
-  }
-  left = Math.min(
-    Math.max(left, VIEWPORT_MARGIN),
-    Math.max(VIEWPORT_MARGIN, window.innerWidth - CARD_WIDTH - VIEWPORT_MARGIN)
-  );
-
-  let top = rect.top;
-  const maxTop = window.innerHeight - CARD_MAX_HEIGHT - VIEWPORT_MARGIN;
-  top = Math.min(Math.max(top, VIEWPORT_MARGIN), Math.max(VIEWPORT_MARGIN, maxTop));
-
-  return { position: "fixed", left, top, width: CARD_WIDTH };
-}
-
-interface RecInfoCardProps {
-  target: RecCardTarget;
-  onClose: () => void;
-  imdbUrlFor: (item: RecItem) => string;
-  tmdbUrlFor: (item: RecItem) => string;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}
-
-// The hover/tap info card itself: a mini poster (lazily resolved from
-// TMDB, or omitted entirely if none is available - see resolvePoster),
-// title, genres, and the same IMDb/TMDB links as the row. Rendered via a
-// portal into document.body and positioned with `position: fixed`, so it
-// is never clipped by the scrollable .rec-panel__list container it's
-// triggered from, and it works the same way regardless of how deep the
-// list has scrolled.
-function RecInfoCard({
-  target,
-  onClose,
-  imdbUrlFor,
-  tmdbUrlFor,
-  onMouseEnter,
-  onMouseLeave,
-}: RecInfoCardProps) {
-  const { t } = useTranslation();
-  // undefined = still loading, null = resolved as unavailable.
-  const [posterUrl, setPosterUrl] = useState<string | null | undefined>(undefined);
-  const mobile = typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT;
-
-  useEffect(() => {
-    let cancelled = false;
-    setPosterUrl(undefined);
-    resolvePoster(target.item.item_id).then((url) => {
-      if (!cancelled) setPosterUrl(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [target.item.item_id]);
-
-  const style = mobile ? undefined : anchoredStyle(target.rect);
-
-  return createPortal(
-    <div
-      className={"rec-card__backdrop" + (mobile ? " rec-card__backdrop--sheet" : "")}
-      onClick={onClose}
-    >
-      <div
-        className={"rec-card" + (mobile ? " rec-card--sheet" : " rec-card--anchored")}
-        style={style}
-        onClick={(e) => e.stopPropagation()}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <button
-          type="button"
-          className="rec-card__close"
-          onClick={onClose}
-          aria-label={t("recommendations.close")}
-        >
-          ✕
-        </button>
-        <div className="rec-card__body">
-          {posterUrl === undefined && (
-            <div className="rec-card__poster rec-card__poster--loading" aria-hidden="true" />
-          )}
-          {posterUrl && (
-            <img
-              className="rec-card__poster"
-              src={posterUrl}
-              alt={target.item.title}
-              loading="lazy"
-            />
-          )}
-          <div className="rec-card__info">
-            <div className="rec-card__title-row">
-              <span className="rec-card__title">{target.item.title}</span>
-              <GetRecommendationsButton
-                itemId={target.item.item_id}
-                label={t("recommendations.getRecommendations")}
-              />
-            </div>
-            {target.item.genres.length > 0 && (
-              <div className="rec-card__genres">
-                {target.item.genres.map((g) => (
-                  <span key={g} className="card__genre-badge">
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
-            {target.item.angular_error_deg != null && (
-              <div className="rec-card__meta">
-                Δangle: {target.item.angular_error_deg.toFixed(1)}°
-                {target.item.radius_ratio != null &&
-                  ` · r-ratio: ${target.item.radius_ratio.toFixed(2)}`}
-              </div>
-            )}
-            <div className="rec-card__links">
-              <a
-                className="rec-row__extlink rec-row__extlink--imdb"
-                href={imdbUrlFor(target.item)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                IMDb
-              </a>
-              <a
-                className="rec-row__extlink rec-row__extlink--tmdb"
-                href={tmdbUrlFor(target.item)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                TMDB
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
 
 export default function RecommendationsPanel({
   circles,
@@ -961,7 +779,7 @@ export default function RecommendationsPanel({
       </div>
 
       {activeCard && (
-        <RecInfoCard
+        <RecommendationInfoCard
           target={activeCard}
           onClose={closeCardNow}
           imdbUrlFor={imdbUrlFor}

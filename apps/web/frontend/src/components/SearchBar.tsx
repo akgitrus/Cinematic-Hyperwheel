@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MovieHit, Span, searchMovies } from "../api";
+import { MovieHit, Span, getRandomMovie, searchMovies } from "../api";
 import "./SearchBar.css";
 
 interface Props {
@@ -55,12 +55,77 @@ function SearchIcon() {
   );
 }
 
+// "Surprise me" trigger - a magician's hat with a pair of rabbit ears
+// peeking out and a sparkle, standing in for "pull a random movie out
+// of the catalog" the way a rabbit is pulled out of a hat.
+function MagicHatIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <ellipse cx="12" cy="18.4" rx="8" ry="2.1" />
+      <path d="M6.8 18 L8.2 8.6 A4 3.4 0 0 1 15.8 8.6 L17.2 18" />
+      <path d="M10.2 8.6 C9.4 5.6 9.8 3.4 10.8 2" />
+      <path d="M13.4 8.6 C13.7 5.3 13.3 3.1 12.4 1.7" />
+      <path d="M19 4.2 L19.5 5.7 L21 6.2 L19.5 6.7 L19 8.2 L18.5 6.7 L17 6.2 L18.5 5.7 Z" />
+    </svg>
+  );
+}
+
+interface RandomMovieButtonProps {
+  onClick: () => void;
+  spinning: boolean;
+  label: string;
+}
+
+function RandomMovieButton({ onClick, spinning, label }: RandomMovieButtonProps) {
+  return (
+    <button
+      type="button"
+      className={"search__random" + (spinning ? " search__random--spinning" : "")}
+      onClick={onClick}
+      disabled={spinning}
+      aria-label={label}
+      aria-busy={spinning}
+      title={label}
+    >
+      <MagicHatIcon />
+    </button>
+  );
+}
+
+// Characters used for the "reel" scramble animation while a random pick
+// is in flight/resolving - kept language-neutral (not real words) so
+// the effect looks the same regardless of UI language.
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function randomScrambleChar(): string {
+  return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+}
+
+const SPIN_PLACEHOLDER_LENGTH = 18;
+const SPIN_FRAME_MS = 45;
+// Minimum time spent visibly "spinning" before revealing the pick, so a
+// fast response doesn't make the button feel like it did nothing.
+const SPIN_MIN_DURATION_MS = 500;
+// Per-character stagger for the reveal phase - each letter/digit locks
+// into place a little later than the one before it, left to right.
+const REVEAL_STAGGER_MS = 18;
+
 export default function SearchBar({ onSelect, selectedTitle = null, selectedMovie = null }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MovieHit[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(selectedMovie == null);
+  const [spinning, setSpinning] = useState(false);
   const debounceRef = useRef<number | undefined>(undefined);
   // FIX: monotonically increasing id per fired request, so that when
   // several searches are in flight at once (typing faster than the
@@ -73,6 +138,13 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
   // so the search effect can recognize "this change came from picking a
   // result, not from typing" and skip re-searching/reopening for it.
   const suppressNextSearchRef = useRef<string | null>(null);
+  // Interval driving the random-pick "reel" animation (scramble, then
+  // character-by-character reveal) - see runRandomPick/revealTitle.
+  const spinTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => window.clearInterval(spinTimerRef.current);
+  }, []);
 
   // Keep the input in sync with the reference movie set externally (a
   // recommendation title click, or a deep-linked /{item_id} URL) - those
@@ -155,17 +227,100 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
     setOpen(false);
   };
 
+  // Reveal phase of the random-pick animation: characters lock into
+  // their final position one by one, left to right, each after its own
+  // randomized delay, while the rest keep flickering. Punctuation/spaces
+  // are left alone throughout - scrambling them adds noise without
+  // adding to the effect.
+  const revealTitle = (title: string) =>
+    new Promise<void>((resolve) => {
+      const chars = title.split("");
+      const lockAt = chars.map((ch, i) =>
+        /[a-zA-Z0-9]/.test(ch) ? i * REVEAL_STAGGER_MS + Math.random() * REVEAL_STAGGER_MS * 2 : 0
+      );
+      const duration = Math.max(0, ...lockAt) + 220;
+      const start = Date.now();
+
+      window.clearInterval(spinTimerRef.current);
+      spinTimerRef.current = window.setInterval(() => {
+        const elapsed = Date.now() - start;
+        setQuery(chars.map((ch, i) => (elapsed >= lockAt[i] ? ch : randomScrambleChar())).join(""));
+        if (elapsed >= duration) {
+          window.clearInterval(spinTimerRef.current);
+          setQuery(title);
+          resolve();
+        }
+      }, SPIN_FRAME_MS);
+    });
+
+  // "Surprise me": picks a random movie from the whole catalog. Plays a
+  // brief slot-machine-style animation in the input itself (fast
+  // character scramble while the pick is in flight, then a left-to-right
+  // reveal once it's known) before actually selecting it, via the same
+  // handleSelect() path a normal search-result click uses.
+  const runRandomPick = async () => {
+    if (spinning) return;
+    setSpinning(true);
+    setEditing(true);
+    setOpen(false);
+    setResults([]);
+    // Invalidate any in-flight typed search so its response can't land
+    // (and reopen the dropdown) once the animation is done.
+    requestIdRef.current += 1;
+
+    const startedAt = Date.now();
+    window.clearInterval(spinTimerRef.current);
+    spinTimerRef.current = window.setInterval(() => {
+      setQuery(Array.from({ length: SPIN_PLACEHOLDER_LENGTH }, randomScrambleChar).join(""));
+    }, SPIN_FRAME_MS);
+
+    let movie: MovieHit | null = null;
+    try {
+      movie = await getRandomMovie();
+    } catch {
+      movie = null;
+    }
+
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < SPIN_MIN_DURATION_MS) {
+      await new Promise((resolve) => window.setTimeout(resolve, SPIN_MIN_DURATION_MS - elapsed));
+    }
+
+    if (!movie) {
+      window.clearInterval(spinTimerRef.current);
+      setSpinning(false);
+      if (selectedMovie) {
+        setQuery(selectedMovie.title);
+        setEditing(false);
+      } else {
+        setQuery("");
+      }
+      return;
+    }
+
+    await revealTitle(movie.title);
+    setSpinning(false);
+    handleSelect(movie);
+  };
+
+  const randomLabel = t("search.random");
+
   const renderSelectedContent = () => (
     <div className="search__selected">
       {editing ? (
         <div className="search__editor">
           <input
             id="reference-search-input"
-            className="search__input search__selected-input"
+            className={
+              "search__input search__selected-input" +
+              (spinning ? " search__selected-input--spinning" : "")
+            }
             placeholder={t("search.placeholder")}
             value={query}
+            readOnly={spinning}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={(e) => {
+              if (spinning) return;
               // Select-all on focus, so clicking/tabbing into an already-filled
               // field (e.g. after picking a result) lets the user immediately
               // retype instead of having to manually clear it first.
@@ -173,6 +328,7 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
               if (results.length) setOpen(true);
             }}
             onBlur={() => {
+              if (spinning) return;
               window.setTimeout(() => {
                 setOpen(false);
                 if (!selectedMovie) return;
@@ -181,12 +337,14 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
               }, 150);
             }}
             onKeyDown={(e) => {
+              if (spinning) return;
               if (e.key === "Escape" && selectedMovie) {
                 e.preventDefault();
                 cancelEditing();
               }
             }}
           />
+          <RandomMovieButton onClick={runRandomPick} spinning={spinning} label={randomLabel} />
           {open && results.length > 0 && (
             <ul className="search__results">
               {results.map((r) => (
@@ -235,6 +393,7 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
           >
             <SearchIcon />
           </button>
+          <RandomMovieButton onClick={runRandomPick} spinning={spinning} label={randomLabel} />
         </>
       )}
       {selectedMovie && (

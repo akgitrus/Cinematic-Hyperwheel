@@ -174,6 +174,11 @@ Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   panel's hover/tap info card (see below). Same graceful-degradation
   shape as `/backdrop`: `null` - never a 404 - when the movie has no
   `tmdb_id`, TMDB isn't configured, or the lookup failed.
+- `GET /api/movie/random` — a single movie, uniformly picked at random
+  from the same searchable catalog `/api/search` and `/api/movie/{item_id}`
+  draw from. Same response shape as `/api/movie/{item_id}`. Backs the
+  "surprise me" button in the search box
+  (`frontend/src/components/SearchBar.tsx`).
 
 ## Linking directly to a reference movie
 

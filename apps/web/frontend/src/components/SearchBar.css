@@ -2,18 +2,30 @@
   position: relative;
   grid-column: 1 / -1;
   height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .search__selected-input {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 28px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
+/* Slightly wider letter-spacing while the reel is spinning - the
+   scrambled characters read more clearly this way than at the input's
+   normal, denser tracking. */
+.search__selected-input--spinning {
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
 .search__selected {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   column-gap: 8px;
   row-gap: 10px;
@@ -58,6 +70,49 @@
   color: var(--accent);
   border-color: var(--border);
   background: rgba(110, 231, 255, 0.08);
+}
+
+/* "Surprise me" trigger - same footprint/behavior as
+   .search__selected-search, so the two sit as a matched pair. */
+.search__random {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+.search__random:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--border);
+  background: rgba(110, 231, 255, 0.08);
+}
+
+.search__random:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.search__random--spinning svg {
+  animation: search-random-wiggle 700ms ease-in-out infinite;
+}
+
+@keyframes search-random-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search__random--spinning svg {
+    animation: none;
+  }
 }
 
 .search__selected-genres {
@@ -130,6 +185,10 @@
   }
 
   .appheader--compact .search__selected-search {
+    flex: 0 0 28px;
+  }
+
+  .appheader--compact .search__random {
     flex: 0 0 28px;
   }
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import random
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -36,6 +37,22 @@ _titles = {r.item_id: r.title for r in _records}
 @app.get("/api/search")
 def search(q: str = Query(..., min_length=1), limit: int = 8):
     return {"results": _index.search(q, limit=limit)}
+
+@app.get("/api/movie/random")
+def get_random_movie():
+    item_id = random.choice(list(_records_by_id.keys()))
+    record = _records_by_id.get(item_id)
+
+    if record is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    return {
+        "item_id": record.item_id,
+        "title": record.title,
+        "genres": record.genres,
+        "imdb_id": record.imdb_id,
+        "tmdb_id": record.tmdb_id,
+    }
 
 
 @app.get("/api/movie/{item_id}")

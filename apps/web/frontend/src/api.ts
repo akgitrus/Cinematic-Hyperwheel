@@ -140,6 +140,25 @@ export async function getMovieById(itemId: number): Promise<MovieHit> {
   };
 }
 
+/**
+ * Picks one movie at random from the whole catalog (not just the
+ * currently loaded search results) - backs the "surprise me" button in
+ * SearchBar.tsx. Same response shape as getMovieById().
+ */
+export async function getRandomMovie(): Promise<MovieHit> {
+  const res = await fetch(`/api/movie/random`);
+  if (!res.ok) throw new Error("random movie lookup failed");
+  const data = await res.json();
+  return {
+    item_id: data.item_id,
+    title: data.title,
+    titleHighlights: [],
+    genres: data.genres,
+    imdb_id: data.imdb_id ?? null,
+    tmdb_id: data.tmdb_id ?? null,
+  };
+}
+
 export interface BackdropResponse {
   item_id: number;
   backdrop_url: string | null;

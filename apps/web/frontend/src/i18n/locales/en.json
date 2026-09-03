@@ -32,7 +32,8 @@
     "error": "Could not fetch recommendations.",
     "openImdb": "Open on IMDb",
     "openTmdb": "Open on TMDB",
-    "close": "Close"
+    "close": "Close",
+    "locate": "Locate on wheel"
   },
   "errors": {
     "wheelLookup": "Could not fetch the movie's coordinates in PCA space."

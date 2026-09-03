@@ -619,10 +619,11 @@ body {
 }
 
 /* rec-row: auto column width for the first cell, since it now holds
-   either an 8px dot or a 34px angle badge, plus a dedicated wand column. */
+   either an 8px dot or a 34px angle badge, plus a wand column and
+   (mobile only) a locate column. */
 .rec-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   column-gap: 10px;
   padding: 6px 2px;
@@ -717,6 +718,34 @@ body {
   color: var(--accent);
   background: rgba(110, 231, 255, 0.1);
   border-color: rgba(110, 231, 255, 0.25);
+}
+
+/* Mobile-only "locate" button - taps toggle this row's item as
+   highlighted without opening the info card (see LocateButton in
+   RecommendationsPanel.tsx), the mobile stand-in for desktop's hover. */
+.rec-row__locate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+.rec-row__locate:hover {
+  color: var(--accent);
+  background: rgba(110, 231, 255, 0.1);
+  border-color: rgba(110, 231, 255, 0.25);
+}
+.rec-row__locate--active {
+  color: var(--accent);
+  border-color: rgba(110, 231, 255, 0.4);
+  background: rgba(110, 231, 255, 0.12);
 }
 
 /* Expand/collapse button - bigger, labeled pill instead of a tiny bare

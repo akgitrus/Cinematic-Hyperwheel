@@ -122,6 +122,66 @@ function GetRecommendationsButton({ itemId, label }: { itemId: number; label: st
   );
 }
 
+function LocateIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <line x1="12" y1="2" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="22" y2="12" />
+    </svg>
+  );
+}
+
+// Mobile-only stand-in for desktop's hover: touch has no hover-enter/leave
+// pair, so this button toggles the row's item as highlighted directly
+// (see HighlightContext) - lighting up its point on the section's small
+// wheel - without ever opening the info card, unlike tapping the row
+// itself (which still toggles the card, see RecRow's own onClick).
+function LocateButton({
+  itemId,
+  isActive,
+  onActivate,
+  onDeactivate,
+  label,
+}: {
+  itemId: number;
+  isActive: boolean;
+  onActivate: (itemId: number) => void;
+  onDeactivate: (itemId: number) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={"rec-row__locate" + (isActive ? " rec-row__locate--active" : "")}
+      title={label}
+      aria-label={label}
+      aria-pressed={isActive}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isActive) onDeactivate(itemId);
+        else onActivate(itemId);
+      }}
+    >
+      <LocateIcon />
+    </button>
+  );
+}
+
 // Big (primary/central) wheel's own point for this item, when one is
 // currently rendered there - kept clear of the recommendation info card
 // (see RecommendationInfoCard's avoidOverlap). Scoped to
@@ -146,6 +206,7 @@ interface AngleSectionsProps {
   onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
   imdbUrlFor: (item: RecItem) => string;
   tmdbUrlFor: (item: RecItem) => string;
+  showLocate: boolean;
 }
 
 // The per-angle rows for one circle - factored out of RecommendationsPanel
@@ -164,6 +225,7 @@ function AngleSections({
   onCardToggle,
   imdbUrlFor,
   tmdbUrlFor,
+  showLocate,
 }: AngleSectionsProps) {
   const { t } = useTranslation();
   const { setHighlighted, clearHighlighted } = useHighlight();
@@ -211,6 +273,7 @@ function AngleSections({
                 isHighlighted={highlightedItemId === top.item_id}
                 onHighlightEnter={onHighlightEnter}
                 onHighlightLeave={onHighlightLeave}
+                showLocate={showLocate}
                 trailing={
                   hasMore ? (
                     <button
@@ -258,6 +321,7 @@ function AngleSections({
                           isHighlighted={highlightedItemId === it.item_id}
                           onHighlightEnter={onHighlightEnter}
                           onHighlightLeave={onHighlightLeave}
+                          showLocate={showLocate}
                           compact
                         />
                       );
@@ -493,6 +557,7 @@ export default function RecommendationsPanel({
               onCardToggle={toggleCard}
               imdbUrlFor={imdbUrlFor}
               tmdbUrlFor={tmdbUrlFor}
+              showLocate={isNarrow}
             />
           );
 
@@ -592,6 +657,7 @@ interface RecRowProps {
   isHighlighted: boolean;
   onHighlightEnter: (itemId: number) => void;
   onHighlightLeave: (itemId: number) => void;
+  showLocate?: boolean;
 }
 
 // A single recommendation row: scheme-angle swatch or badge, title,
@@ -624,6 +690,7 @@ function RecRow({
   isHighlighted,
   onHighlightEnter,
   onHighlightLeave,
+  showLocate,
 }: RecRowProps) {
   const { t } = useTranslation();
   return (
@@ -669,6 +736,15 @@ function RecRow({
         )}
       </div>
       <GetRecommendationsButton itemId={item.item_id} label={t("recommendations.getRecommendations")} />
+      {showLocate && (
+        <LocateButton
+          itemId={item.item_id}
+          isActive={isHighlighted}
+          onActivate={onHighlightEnter}
+          onDeactivate={onHighlightLeave}
+          label={t("recommendations.locate")}
+        />
+      )}
       {trailing}
     </div>
   );

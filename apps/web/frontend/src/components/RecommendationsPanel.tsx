@@ -97,7 +97,7 @@ function StackToggleIcon({ unstacked }: { unstacked: boolean }) {
 
 interface StackToggleButtonProps {
   unstacked: boolean;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 // Per-section stack/unstack control (mobile only), sitting at the seam
@@ -636,7 +636,24 @@ export default function RecommendationsPanel({
                       overlays={circle.angles}
                       circleKey={cKey}
                     />
-                    <StackToggleButton unstacked={unstacked} onClick={() => setUnstacked((v) => !v)} />
+                    <StackToggleButton unstacked={unstacked} onClick={(e) => {
+                      const timeGap = 300;
+                      const clickedButton = e.currentTarget as HTMLElement;
+                      const rectBefore = clickedButton.getBoundingClientRect();
+
+                      setUnstacked((v) => !v);
+
+                      setTimeout(() => {
+                        requestAnimationFrame(() => {
+
+                          const rectAfter = clickedButton.getBoundingClientRect();
+                          const diff = rectAfter.top - rectBefore.top;
+
+                          if (diff !== 0)
+                            window.scrollBy(0, diff);
+                        });
+                      }, timeGap);
+                    }} />
                   </div>
                 )}
                 <div className="rec-circle__mobile-list">{angleSections}</div>

@@ -482,36 +482,57 @@ body {
   padding-top: 0;
 }
 
-/* Non-scrolling toolbar row between the "Recommendations" heading and
-   the scrollable section list - stays visible without scrolling back up,
-   unlike a per-section control would. Mobile only (see isNarrow in
-   RecommendationsPanel.tsx). */
-.rec-panel__toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
-
-/* --- Stack/unstack toggle --- */
-.rec-circle__stack-toggle {
+/* --- Mobile per-section stack/unstack toggle --- */
+/* Icon-only per-section stack/unstack control (see StackToggleButton in
+   RecommendationsPanel.tsx), sitting at the seam between a section's
+   wheel and its own angle-section list. Anchored to
+   .rec-circle__mobile-wheel's own box (a stable reference frame, unlike
+   the list's box which moves) and positioned via `bottom` so it tracks
+   that seam in both layout modes below. Solid panel background so it
+   reads clearly whether the backdrop behind it is the wheel's coloured
+   disc or plain page background. */
+.rec-circle__stack-toggle-icon {
+  position: absolute;
+  left: 50%;
+  margin-left: -13px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 10px;
+  justify-content: center;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+  padding: 0;
+  /* Above both the wheel's point-label overlay (WheelPointLabels, z-index
+     3) and the angle-section list (z-index 2), so it stays clickable
+     regardless of which one the current layout mode places over it. */
+  z-index: 5;
+  transition: bottom 260ms cubic-bezier(0.4, 0, 0.2, 1), color 120ms ease, border-color 120ms ease;
 }
-.rec-circle__stack-toggle:hover {
+.rec-circle__stack-toggle-icon:hover {
   color: var(--accent);
   border-color: var(--accent);
+}
+/* "Peek" layout: centered in the band where the list's negative margin
+   overlaps the wheel (see --wheel-peek, set inline per section in
+   RecommendationsPanel.tsx) - i.e. drawn over the disc itself. */
+.rec-circle__mobile--peek .rec-circle__stack-toggle-icon {
+  bottom: calc(var(--wheel-peek, 90px) - 23px);
+}
+/* "Stacked" layout: centered in the fixed gap below the wheel (see
+   .rec-circle__mobile--stacked .rec-circle__mobile-list's own
+   margin-top, sized for this button). */
+.rec-circle__mobile--stacked .rec-circle__stack-toggle-icon {
+  bottom: -28px;
+}
+
+.rec-circle__mobile--stacked .rec-circle__mobile-list {
+  /* Widened to leave room for .rec-circle__stack-toggle-icon, centered
+     in this gap. */
+  margin-top: 30px;
 }
 
 /* Primary circle is marked by a colored rule on the left and a brighter

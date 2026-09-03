@@ -69,31 +69,59 @@ function WandIcon() {
   );
 }
 
-// Two small rectangles - overlapping in "stacked" (default: list
-// overlaid on the wheel) state, pulled apart in "unstacked" state -
-// mirrors what the button actually does to the layout.
+// Two vertical arrows: pointing toward each other depicts the "stack"
+// action, pointing away from each other depicts "unstack" - drawn
+// according to the CURRENT layout, i.e. whichever action the button is
+// about to perform.
 function StackToggleIcon({ unstacked }: { unstacked: boolean }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect
-        x={unstacked ? 1.5 : 3.5}
-        y={unstacked ? 2 : 3.5}
-        width="8"
-        height="8"
-        rx="1.5"
-        fill="currentColor"
-        opacity="0.55"
-      />
-      <rect
-        x={unstacked ? 6.5 : 4.5}
-        y={unstacked ? 7 : 4.5}
-        width="8"
-        height="8"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {unstacked ? (
+        <>
+          <path d="M12 3 V11" />
+          <path d="M8.5 7.5 L12 11 L15.5 7.5" />
+          <path d="M12 21 V13" />
+          <path d="M8.5 16.5 L12 13 L15.5 16.5" />
+        </>
+      ) : (
+        <>
+          <path d="M12 11 V3" />
+          <path d="M8.5 6.5 L12 3 L15.5 6.5" />
+          <path d="M12 13 V21" />
+          <path d="M8.5 17.5 L12 21 L15.5 17.5" />
+        </>
+      )}
     </svg>
+  );
+}
+
+interface StackToggleButtonProps {
+  unstacked: boolean;
+  onClick: () => void;
+}
+
+// Per-section stack/unstack control (mobile only), sitting at the seam
+// between a section's wheel and its own angle-section list so it stays
+// reachable while scrolling through a long recommendations list. One
+// shared toggle for the whole panel (see the `unstacked` state in
+// RecommendationsPanel) - every section renders its own button, but
+// they all flip the same layout together. Exact position is CSS-driven
+// (see .rec-circle__stack-toggle-icon in index.css): centered in the
+// wheel/list overlap band in "peek" mode, in the small gap between
+// wheel and list in "stacked" mode.
+function StackToggleButton({ unstacked, onClick }: StackToggleButtonProps) {
+  const { t } = useTranslation();
+  const label = unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll");
+  return (
+    <button
+      type="button"
+      className="rec-circle__stack-toggle-icon"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+    >
+      <StackToggleIcon unstacked={unstacked} />
+    </button>
   );
 }
 
@@ -517,21 +545,6 @@ export default function RecommendationsPanel({
     <div className="rec-panel">
       {/* <h2 className="recommendations__title">{t("recommendations.title")}</h2> */}
 
-      {isNarrow && (
-        <div className="rec-panel__toolbar">
-          <button
-            type="button"
-            className="rec-circle__stack-toggle"
-            onClick={() => setUnstacked((v) => !v)}
-            title={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
-            aria-label={unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
-          >
-            <StackToggleIcon unstacked={unstacked} />
-            {unstacked ? t("recommendations.stackAll") : t("recommendations.unstackAll")}
-          </button>
-        </div>
-      )}
-
       <div className="rec-panel__list scroll-fade" ref={listRef}>
         {populated.map((circle) => {
           const cKey = circleKey(circle);
@@ -623,6 +636,7 @@ export default function RecommendationsPanel({
                       overlays={circle.angles}
                       circleKey={cKey}
                     />
+                    <StackToggleButton unstacked={unstacked} onClick={() => setUnstacked((v) => !v)} />
                   </div>
                 )}
                 <div className="rec-circle__mobile-list">{angleSections}</div>

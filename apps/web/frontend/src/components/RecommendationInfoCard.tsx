@@ -1,29 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { getPoster } from "../api";
 import type { CardTrigger } from "../contexts/ActiveCardContext";
 import { imdbUrlForItem } from "../utils/imdb";
 import { tmdbUrlForItem } from "../utils/tmdb";
+import { resolvePoster } from "../utils/poster";
 import "./RecommendationInfoCard.css";
-
-const posterCache = new Map<number, string | null>();
-const posterInFlight = new Map<number, Promise<string | null>>();
-
-async function resolvePoster(itemId: number): Promise<string | null> {
-  if (posterCache.has(itemId)) return posterCache.get(itemId)!;
-  let pending = posterInFlight.get(itemId);
-  if (!pending) {
-    pending = getPoster(itemId)
-      .then((r) => r.poster_url)
-      .catch(() => null);
-    posterInFlight.set(itemId, pending);
-  }
-  const url = await pending;
-  posterCache.set(itemId, url);
-  posterInFlight.delete(itemId);
-  return url;
-}
 
 const CARD_WIDTH = 300;
 const CARD_MAX_HEIGHT = 360;

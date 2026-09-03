@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MovieHit, Span, getRandomMovie, searchMovies } from "../api";
+import { imdbUrlForItem } from "../utils/imdb";
+import { tmdbUrlForItem } from "../utils/tmdb";
+import { resolvePoster } from "../utils/poster";
 import "./SearchBar.css";
 
 interface Props {
@@ -126,6 +129,10 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(selectedMovie == null);
   const [spinning, setSpinning] = useState(false);
+  // Poster thumbnail for the currently selected reference movie -
+  // undefined while loading/unresolved, null once resolved to "no
+  // poster available" (see utils/poster.ts).
+  const [posterUrl, setPosterUrl] = useState<string | null | undefined>(undefined);
   const debounceRef = useRef<number | undefined>(undefined);
   // FIX: monotonically increasing id per fired request, so that when
   // several searches are in flight at once (typing faster than the
@@ -167,6 +174,25 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
       setEditing(true);
     }
   }, [selectedMovie?.item_id, selectedMovie?.title]);
+
+  // Poster thumbnail for the reference card - same lazy, cached lookup
+  // as the recommendation hover/tap info card (see utils/poster.ts).
+  // Kept independent of `editing`, so it stays visible under the input
+  // while the user is retyping a new query but hasn't picked yet.
+  useEffect(() => {
+    if (!selectedMovie) {
+      setPosterUrl(undefined);
+      return;
+    }
+    let cancelled = false;
+    setPosterUrl(undefined);
+    resolvePoster(selectedMovie.item_id).then((url) => {
+      if (!cancelled) setPosterUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMovie?.item_id]);
 
   useEffect(() => {
     window.clearTimeout(debounceRef.current);
@@ -397,19 +423,39 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
         </>
       )}
       {selectedMovie && (
-        selectedMovie.genres.length > 0 ? (
-          <div className="search__selected-genres">
-            {selectedMovie.genres.map((g) => (
-              <span key={g} className="card__genre-badge">
-                {g}
-              </span>
-            ))}
+        <div className="search__selected-meta">
+          {selectedMovie.genres.length > 0 ? (
+            <div className="search__selected-genres">
+              {selectedMovie.genres.map((g) => (
+                <span key={g} className="card__genre-badge">
+                  {g}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="search__selected-genres-empty">
+              {t("card.genres")}: {t("card.unknown")}
+            </span>
+          )}
+          <div className="search__selected-links">
+            <a
+              className="rec-row__extlink rec-row__extlink--imdb"
+              href={imdbUrlForItem({ imdb_id: selectedMovie.imdb_id ?? null, title: selectedMovie.title })}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              IMDb
+            </a>
+            <a
+              className="rec-row__extlink rec-row__extlink--tmdb"
+              href={tmdbUrlForItem({ tmdb_id: selectedMovie.tmdb_id ?? null, title: selectedMovie.title })}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              TMDB
+            </a>
           </div>
-        ) : (
-          <div className="search__selected-row">
-            {t("card.genres")}: {t("card.unknown")}
-          </div>
-        )
+        </div>
       )}
     </div>
   );
@@ -424,7 +470,15 @@ export default function SearchBar({ onSelect, selectedTitle = null, selectedMovi
 
   return (
     <div className="search card search--selected">
-      {renderSelectedContent()}
+      <div className="search__card-row">
+        {posterUrl === undefined && (
+          <div className="search__poster search__poster--loading" aria-hidden="true" />
+        )}
+        {posterUrl && (
+          <img className="search__poster" src={posterUrl} alt={selectedMovie.title} loading="lazy" />
+        )}
+        <div className="search__selected-col">{renderSelectedContent()}</div>
+      </div>
     </div>
   );
 }

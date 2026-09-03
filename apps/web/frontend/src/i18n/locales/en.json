@@ -21,7 +21,8 @@
     "triadic": "Triadic",
     "analogous": "Analogous",
     "split-complementary": "Split complementary",
-    "tetradic": "Tetradic"
+    "tetradic": "Tetradic",
+    "monochromatic": "Monochromatic"
   },
   "recommendations": {
     "title": "Recommendations",

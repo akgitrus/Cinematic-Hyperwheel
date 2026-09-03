@@ -16,6 +16,7 @@ SCHEMES: dict[str, list[float]] = {
     "analogous": [30.0, -30.0],
     "split-complementary": [150.0, -150.0],
     "tetradic": [90.0, 180.0, -90.0],
+    "monochromatic": [0.0],
 }
 
 

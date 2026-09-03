@@ -30,6 +30,7 @@ const SCHEMES = [
   "analogous",
   "split-complementary",
   "tetradic",
+  "monochromatic",
 ];
 
 function findRecCircle(circle: WheelCircle, recs: RecommendResponse | null): RecommendCircle | undefined {

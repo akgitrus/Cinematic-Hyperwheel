@@ -106,6 +106,27 @@ function GetRecommendationsButton({ itemId, label }: { itemId: number; label: st
   );
 }
 
+// Chevron used for the mobile sheet's prev/next buttons - same hand-drawn
+// stroke style as the app's other small icons, mirrored for "next".
+function ChevronIcon({ direction }: { direction: "prev" | "next" }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={direction === "next" ? { transform: "scaleX(-1)" } : undefined}
+    >
+      <path d="M15 5 L8 12 L15 19" />
+    </svg>
+  );
+}
+
 interface RecInfoCardProps {
   target: CardTrigger;
   onClose: () => void;
@@ -127,16 +148,33 @@ export default function RecommendationInfoCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(() => naturalTop(target.rect, CARD_MAX_HEIGHT));
 
+  // Prev/next navigation within the triggering row's own item list
+  // (mobile only - see the nav buttons below, and CardTrigger.list).
+  // Navigating only moves this LOCAL pointer - it never re-fires
+  // showCard, so it doesn't affect which row elsewhere on the page
+  // reads as "active" for the originally tapped item.
+  const list = target.list;
+  const [navIndex, setNavIndex] = useState(() =>
+    list ? Math.max(0, list.findIndex((it) => it.item_id === target.item.item_id)) : 0
+  );
+  useEffect(() => {
+    // Reset only when a genuinely different card is opened - target.key
+    // stays constant across the buttons' own navIndex changes.
+    setNavIndex(list ? Math.max(0, list.findIndex((it) => it.item_id === target.item.item_id)) : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target.key]);
+  const displayItem = list?.[navIndex] ?? target.item;
+
   useEffect(() => {
     let cancelled = false;
     setPosterUrl(undefined);
-    resolvePoster(target.item.item_id).then((url) => {
+    resolvePoster(displayItem.item_id).then((url) => {
       if (!cancelled) setPosterUrl(url);
     });
     return () => {
       cancelled = true;
     };
-  }, [target.item.item_id]);
+  }, [displayItem.item_id]);
 
   // Recomputes the vertical position from the card's actual rendered
   // height (via cardRef) whenever the trigger changes - runs before
@@ -150,6 +188,32 @@ export default function RecommendationInfoCard({
     setTop(nextTop);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target.key, mobile]);
+
+  // Vertical center of the mobile sheet card, in viewport coordinates -
+  // used to position the fixed prev/next buttons level with it. A
+  // ResizeObserver (rather than a one-off measurement) keeps this
+  // correct as the card's height changes: navigating items, the poster
+  // loading, or a longer/shorter title all resize it.
+  const [navTop, setNavTop] = useState<number | null>(null);
+  const [cardTop, setCardTop] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (!mobile) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setNavTop(rect.top + rect.height / 2);
+      setCardTop(rect.top);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [mobile]);
 
   const style: CSSProperties | undefined = mobile
     ? undefined
@@ -172,54 +236,45 @@ export default function RecommendationInfoCard({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <button
+        {!mobile && <button
           type="button"
           className="rec-card__close"
           onClick={onClose}
           aria-label={t("recommendations.close")}
         >
           ✕
-        </button>
+        </button>}
         <div className="rec-card__body">
           {posterUrl === undefined && (
             <div className="rec-card__poster rec-card__poster--loading" aria-hidden="true" />
           )}
           {posterUrl && (
-            <img
-              className="rec-card__poster"
-              src={posterUrl}
-              alt={target.item.title}
-              loading="lazy"
-            />
+            <img className="rec-card__poster" src={posterUrl} alt={displayItem.title} loading="lazy" />
           )}
           <div className="rec-card__info">
             <div className="rec-card__title-row">
-              <span className="rec-card__title">{target.item.title}</span>
-              <GetRecommendationsButton
-                itemId={target.item.item_id}
-                label={t("recommendations.getRecommendations")}
-              />
+              <span className="rec-card__title">{displayItem.title}</span>
             </div>
-            {target.item.genres.length > 0 && (
+            {displayItem.genres.length > 0 && (
               <div className="rec-card__genres">
-                {target.item.genres.map((g) => (
+                {displayItem.genres.map((g) => (
                   <span key={g} className="card__genre-badge">
                     {g}
                   </span>
                 ))}
               </div>
             )}
-            {target.item.angular_error_deg != null && (
+            {displayItem.angular_error_deg != null && !mobile && (
               <div className="rec-card__meta">
-                Δangle: {target.item.angular_error_deg.toFixed(1)}°
-                {target.item.radius_ratio != null &&
-                  ` · r-ratio: ${target.item.radius_ratio.toFixed(2)}`}
+                Δangle: {displayItem.angular_error_deg.toFixed(1)}°
+                {displayItem.radius_ratio != null &&
+                  ` · r-ratio: ${displayItem.radius_ratio.toFixed(2)}`}
               </div>
             )}
             <div className="rec-card__links">
               <a
                 className="rec-row__extlink rec-row__extlink--imdb"
-                href={imdbUrlForItem(target.item)}
+                href={imdbUrlForItem(displayItem)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -227,16 +282,62 @@ export default function RecommendationInfoCard({
               </a>
               <a
                 className="rec-row__extlink rec-row__extlink--tmdb"
-                href={tmdbUrlForItem(target.item)}
+                href={tmdbUrlForItem(displayItem)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 TMDB
               </a>
+              <GetRecommendationsButton
+                itemId={displayItem.item_id}
+                label={t("recommendations.getRecommendations")}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {mobile && list && list.length > 1 && navTop !== null && (
+        <>
+          <button
+            type="button"
+            className="rec-card__nav rec-card__nav--close"
+            style={{ top: cardTop ?? 'auto' }}
+            onClick={onClose}
+            aria-label={t("recommendations.close")}
+          >
+            ✕
+          </button>
+          <button
+            type="button"
+            className="rec-card__nav rec-card__nav--prev"
+            style={{ top: navTop }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setNavIndex((i) => Math.max(0, i - 1));
+            }}
+            disabled={navIndex === 0}
+            aria-label={t("recommendations.previous")}
+            title={t("recommendations.previous")}
+          >
+            <ChevronIcon direction="prev" />
+          </button>
+          <button
+            type="button"
+            className="rec-card__nav rec-card__nav--next"
+            style={{ top: navTop }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setNavIndex((i) => Math.min(list.length - 1, i + 1));
+            }}
+            disabled={navIndex === list.length - 1}
+            aria-label={t("recommendations.next")}
+            title={t("recommendations.next")}
+          >
+            <ChevronIcon direction="next" />
+          </button>
+        </>
+      )}
     </div>,
     document.body
   );

@@ -35,7 +35,10 @@
     "openImdb": "Open on IMDb",
     "openTmdb": "Open on TMDB",
     "close": "Close",
-    "locate": "Locate on wheel"
+    "locate": "Locate on wheel",
+    "previous": "Previous",
+    "next": "Next"
+    
   },
   "errors": {
     "wheelLookup": "Could not fetch the movie's coordinates in PCA space."

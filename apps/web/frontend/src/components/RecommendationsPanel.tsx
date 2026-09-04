@@ -229,9 +229,9 @@ interface AngleSectionsProps {
   expanded: Set<string>;
   onToggleExpand: (key: string) => void;
   activeCardKey: string | null;
-  onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
+  onCardEnter: (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => void;
   onCardLeave: (key: string) => void;
-  onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
+  onCardToggle: (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => void;
   imdbUrlFor: (item: RecItem) => string;
   tmdbUrlFor: (item: RecItem) => string;
   showLocate: boolean;
@@ -262,6 +262,16 @@ function AngleSections({
   // thread the circle's key through every call site.
   const onHighlightEnter = (itemId: number) => setHighlighted(cKey, itemId);
   const onHighlightLeave = (itemId: number) => clearHighlighted(cKey, itemId);
+
+  // Full ordered item list for this circle (every populated angle,
+  // flattened) - passed to each row's card trigger so the mobile popup's
+  // prev/next buttons (RecommendationInfoCard.tsx) can step through
+  // every recommended movie for this circle, not only the ones
+  // currently expanded/visible.
+  const navigableItems = useMemo(
+    () => circle.angles.filter((a) => a.items.length > 0).flatMap((a) => a.items),
+    [circle]
+  );
 
   return (
     <>
@@ -302,6 +312,7 @@ function AngleSections({
                 onHighlightEnter={onHighlightEnter}
                 onHighlightLeave={onHighlightLeave}
                 showLocate={showLocate}
+                navList={navigableItems}
                 trailing={
                   hasMore ? (
                     <button
@@ -309,6 +320,7 @@ function AngleSections({
                       className={
                         "rec-row__expand" +
                         (isOpen ? " rec-row__expand--open" : "") +
+                        (!isOpen && !hiddenHighlight ? " rec-row__expand--pulse" : "") +
                         (hiddenHighlight ? " rec-row__expand--highlighted" : "")
                       }
                       onClick={(e) => {
@@ -323,7 +335,13 @@ function AngleSections({
                         isOpen ? t("recommendations.hide") : t("recommendations.more", { count: rest.length })
                       }
                     >
-                      {isOpen ? "−" : `+${rest.length}`}
+                      <span className="rec-row__expand-label">{isOpen ? `+${rest.length}` : `+${rest.length}`}</span>
+                      <span
+                        className={"rec-row__expand-chevron" + (isOpen ? " rec-row__expand-chevron--open" : "")}
+                        aria-hidden="true"
+                      >
+                        ▾
+                      </span>
                     </button>
                   ) : null
                 }
@@ -350,6 +368,7 @@ function AngleSections({
                           onHighlightEnter={onHighlightEnter}
                           onHighlightLeave={onHighlightLeave}
                           showLocate={showLocate}
+                          navList={navigableItems}
                           compact
                         />
                       );
@@ -495,7 +514,7 @@ export default function RecommendationsPanel({
   // of the big wheel's own point for this item, if one is currently
   // shown there; tapping a row (touch) toggles it open/closed
   // regardless of hover support.
-  const openCard = (key: string, item: RecItem, el: HTMLElement) => {
+  const openCard = (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => {
     if (!canHover) return;
     showCard({
       key,
@@ -503,6 +522,7 @@ export default function RecommendationsPanel({
       source: "list",
       rect: el.getBoundingClientRect(),
       avoidRect: bigWheelPointRect(item.item_id),
+      list,
     });
   };
 
@@ -511,7 +531,7 @@ export default function RecommendationsPanel({
     hideCard(key);
   };
 
-  const toggleCard = (key: string, item: RecItem, el: HTMLElement) => {
+  const toggleCard = (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => {
     if (trigger?.key === key) {
       closeCardNow(key);
       return;
@@ -522,6 +542,7 @@ export default function RecommendationsPanel({
       source: "list",
       rect: el.getBoundingClientRect(),
       avoidRect: bigWheelPointRect(item.item_id),
+      list,
     });
   };
 
@@ -678,9 +699,9 @@ interface RecRowProps {
   compact?: boolean;
   cardKey: string;
   isCardOpen: boolean;
-  onCardEnter: (key: string, item: RecItem, el: HTMLElement) => void;
+  onCardEnter: (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => void;
   onCardLeave: (key: string) => void;
-  onCardToggle: (key: string, item: RecItem, el: HTMLElement) => void;
+  onCardToggle: (key: string, item: RecItem, el: HTMLElement, list?: RecItem[]) => void;
   /** Whether this row's movie is the one currently highlighted - from a
    * hover on this row itself, its wheel point (small or big), or the
    * legend, all scoped to the same circle (see
@@ -689,6 +710,9 @@ interface RecRowProps {
   onHighlightEnter: (itemId: number) => void;
   onHighlightLeave: (itemId: number) => void;
   showLocate?: boolean;
+  /** Ordered item list this row belongs to - forwarded into the card
+   * trigger for the mobile popup's prev/next navigation. */
+  navList?: RecItem[];
 }
 
 // A single recommendation row: scheme-angle swatch or badge, title,
@@ -722,6 +746,7 @@ function RecRow({
   onHighlightEnter,
   onHighlightLeave,
   showLocate,
+  navList,
 }: RecRowProps) {
   const { t } = useTranslation();
   return (
@@ -733,14 +758,14 @@ function RecRow({
         (isHighlighted ? " rec-row--highlighted" : "")
       }
       onMouseEnter={(e) => {
-        onCardEnter(cardKey, item, e.currentTarget);
+        onCardEnter(cardKey, item, e.currentTarget, navList);
         onHighlightEnter(item.item_id);
       }}
       onMouseLeave={() => {
         onCardLeave(cardKey);
         onHighlightLeave(item.item_id);
       }}
-      onClick={(e) => onCardToggle(cardKey, item, e.currentTarget)}
+      onClick={(e) => onCardToggle(cardKey, item, e.currentTarget, navList)}
     >
       {angleLabel ? (
         <span

@@ -28,6 +28,12 @@ export interface CardTrigger {
    * "legend"/"list" sources; a "point" trigger is already anchored to
    * the point itself, so it needs no separate avoidance target. */
   avoidRect?: DOMRect;
+  /** Ordered list of items this trigger belongs to, used by the mobile
+   * popup's prev/next buttons (see RecommendationInfoCard.tsx). Only
+   * populated by RecommendationsPanel's mobile list rows; other sources
+   * (legend, wheel point) leave it undefined, which just hides the
+   * buttons. */
+  list?: RecItem[];
 }
 
 interface ActiveCardContextValue {

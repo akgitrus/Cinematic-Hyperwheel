@@ -6,3 +6,5 @@ services:
       args:
         VITE_GITHUB_URL: ${VITE_GITHUB_URL}
         VITE_AUTHOR_URL: ${VITE_AUTHOR_URL}
+      platforms:
+        - linux/amd64

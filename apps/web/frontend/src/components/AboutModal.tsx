@@ -45,6 +45,13 @@ export default function AboutModal({ open, onClose }: Props) {
           <h3 className="about__heading">{t("about.project.heading")}</h3>
           <p>{t("about.project.text")}</p>
         </section>
+ 
+        <section className="about__section">
+          <h3 className="about__heading">{t("about.disclaimer.heading")}</h3>
+          <p>{t("about.disclaimer.recommendations")}</p>
+          <p>{t("about.disclaimer.schemes")}</p>
+          <p className="about__fine">{t("about.disclaimer.warranty")}</p>
+        </section>
 
         <section className="about__section">
           <h3 className="about__heading">{t("about.license.heading")}</h3>

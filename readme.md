@@ -777,6 +777,47 @@ by the recommendation engine itself.
 
 ---
 
+## Disclaimer
+
+### Recommendations are algorithmic, not editorial
+
+The movies this project surfaces as "recommendations" are not editorial
+or curatorial picks. Each one is the output of a purely geometric,
+mathematical procedure - a rotation within a PCA-derived plane followed
+by a nearest-neighbor search (see [Cinematic color schemes](#cinematic-color-schemes)
+and [Finding a real movie](#finding-a-real-movie) above) - reflecting
+proximity in a data-driven vector space, not a judgment about a movie's
+quality, nor a claim that the author has seen, endorses, or is actually
+recommending that anyone watch it.
+
+Schemes with a large angular offset from the reference - triadic and
+tetradic in particular - deliberately move far from the reference's own
+profile and can surface movies that share little with it beyond an
+abstract geometric relationship; results can be surprising. Complementary,
+which rotates a full 180°, can be especially jarring, since it targets
+the opposite end of a semantic axis on purpose. Use these schemes with
+that in mind.
+
+This project exists for entertainment and experimentation. It is not
+intended, and should not be relied upon, as guidance for what to watch.
+
+### No warranty, no liability
+
+This software, and any output it produces, is provided "AS IS", without
+warranty of any kind, express or implied, including but not limited to
+warranties of merchantability, fitness for a particular purpose,
+accuracy, or non-infringement. Use of this project, any instance of it,
+and any content it surfaces is entirely at your own risk.
+
+To the maximum extent permitted by applicable law, the author(s) and
+contributors disclaim all liability for any direct, indirect,
+incidental, special, consequential, or other damages arising from or
+related to the use of, or inability to use, this project or any content
+it suggests. This section supplements, and does not limit, the warranty
+disclaimer already included in the AGPL-3.0-or-later license below.
+
+---
+
 ## License
 
 The Cinematic-Hyperwheel source code is licensed under the

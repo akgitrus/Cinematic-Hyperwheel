@@ -57,6 +57,12 @@
       "heading": "",
       "text": "Cinematic Hyperwheel is an experimental project exploring \"harmony beyond similarity\" in movie recommendations — using PCA and geometric rotation to suggest movies that are deliberately different from a reference, yet resonate with it in spirit, the way complementary or triadic colors relate on a color wheel."
     },
+    "disclaimer": {
+      "heading": "Disclaimer",
+      "recommendations": "\"Recommendations\" here are not editorial picks - each one comes from a purely geometric, mathematical procedure (a PCA-based rotation followed by a nearest-neighbor search), not a judgment about a movie's quality, and not a claim that the author has seen or actually recommends watching it.",
+      "schemes": "Schemes with a large angular offset - triadic and tetradic in particular - can surface movies that share little with the reference beyond an abstract geometric relationship, and results may be surprising. Complementary rotates a full 180° and can be especially jarring. Use these schemes with that in mind.",
+      "warranty": "This project is provided for entertainment and experimentation only, \"as is\", with no warranty of any kind and no liability accepted for any damages arising from its use."
+    },
     "license": {
       "heading": "License",
       "text": "Source code is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).",

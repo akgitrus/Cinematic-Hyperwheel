@@ -120,8 +120,58 @@ cd apps/web/frontend && npm install && npm run build
 
 Start: `cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
+Set `POW_SECRET` (see "Proof-of-work request gating" above) as an env var on
+the deploy platform for a stable production deployment.
+
+## Proof-of-work request gating
+
+Every `/api/*` endpoint requires a proof-of-work ticket, obtained by solving
+a short hashcash-style puzzle (`apps/web/backend/app/pow.py`): the server
+issues a signed, short-lived challenge, the browser finds a nonce such that
+`SHA-256(challenge:nonce)` has enough leading zero bits, and redeems it for a
+ticket good for a batch of subsequent calls. The cost of finding a valid
+nonce scales with the puzzle's difficulty and does not depend on IP address,
+cookies, or any other client-supplied identity - unlike a per-IP request
+counter, it can't be diluted by spreading requests across many addresses,
+and it never needs a captcha, login, or any client-visible interaction:
+solving runs in a Web Worker (`frontend/src/pow/worker.ts`) in the
+background while the app stays fully responsive.
+
+Two difficulty tiers (`SCOPES` in `pow.py`):
+
+- `light` - cheap, frequently-called endpoints (search-as-you-type, wheel
+  lookup, movie metadata, backdrop/poster, random pick).
+- `heavy` - `/recommend`, the one endpoint that runs a full-catalog Stage
+  A/B pass per circle (see
+  `packages/hyperwheel-recommender/docs/math.md` section 6c) - a higher
+  difficulty and a smaller per-ticket call budget than `light`.
+
+A solved ticket is sent back as the `X-Pow-Ticket` header
+(`frontend/src/pow/powFetch.ts` attaches it automatically to every API
+call); a request without a valid, non-exhausted ticket for the endpoint's
+scope gets `429 Too Many Requests`. The client treats that as a signal to
+mint (solve) a fresh ticket and retries once automatically - invisible to
+the user under normal use.
+
+`POW_SECRET` signs issued challenges - set it explicitly for any deployment
+running more than one backend worker/process, or one that should keep
+outstanding challenges valid across a restart; without it the app falls
+back to a random per-process secret (see `.env.example`), which is fine for
+local development but means a restart or a multi-worker deployment
+invalidates/desyncs challenges issued right before it.
+
 ## API
 
+All endpoints below require a proof-of-work ticket (`X-Pow-Ticket` header) -
+see "Proof-of-work request gating" above; the frontend's `api.ts` attaches
+this automatically via `powFetch`, so this only matters for a direct/manual
+API call.
+
+- `GET /api/pow/challenge?scope=light|heavy` — issues a signed, short-lived
+  puzzle (`{ challenge, difficulty }`) for the given scope.
+- `POST /api/pow/solve` — redeems a solved puzzle (`{ challenge, nonce }`)
+  for a ticket (`{ ticket, calls_remaining }`) good for several subsequent
+  calls in that scope.
 - `GET /api/search?q=...&limit=8` — literal (non-fuzzy) search over the
   movie **title only**; `genres` are returned for display but are not
   matched against. Titles are matched with the leading article reordered

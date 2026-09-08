@@ -9,6 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from fastapi import Depends, Header
+from pydantic import BaseModel
+from . import pow as pow_gate
+
 from .config import METADATA_PATH
 from .search import MovieIndex, load_metadata
 from .tmdb import fetch_backdrop_url, fetch_poster_url
@@ -33,12 +37,42 @@ _index = MovieIndex(_records)
 _engine = build_engine()
 _titles = {r.item_id: r.title for r in _records}
 
+class PowSolveRequest(BaseModel):
+    challenge: str
+    nonce: str
 
-@app.get("/api/search")
+@app.get("/api/pow/challenge")
+def pow_challenge(scope: str = Query(...)):
+    try:
+        return pow_gate.issue_challenge(scope)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/pow/solve")
+def pow_solve(body: PowSolveRequest):
+    result = pow_gate.redeem_challenge(body.challenge, body.nonce)
+    if result is None:
+        raise HTTPException(status_code=400, detail="Invalid, expired, or already-used proof")
+    return result
+
+
+def require_pow(scope: str):
+    """FastAPI dependency factory: rejects the request unless it carries a
+    ticket (see pow.py) with at least one remaining use in `scope`."""
+    def _dependency(x_pow_ticket: str | None = Header(default=None, alias="X-Pow-Ticket")):
+        if not pow_gate.consume_ticket(x_pow_ticket, scope):
+            raise HTTPException(
+                status_code=429,
+                detail="Proof-of-work required: fetch /api/pow/challenge and solve it first",
+            )
+    return _dependency
+
+@app.get("/api/search", dependencies=[Depends(require_pow("light"))])
 def search(q: str = Query(..., min_length=1), limit: int = 8):
     return {"results": _index.search(q, limit=limit)}
 
-@app.get("/api/movie/random")
+@app.get("/api/movie/random", dependencies=[Depends(require_pow("light"))])
 def get_random_movie():
     item_id = random.choice(list(_records_by_id.keys()))
     record = _records_by_id.get(item_id)
@@ -55,7 +89,7 @@ def get_random_movie():
     }
 
 
-@app.get("/api/movie/{item_id}")
+@app.get("/api/movie/{item_id}", dependencies=[Depends(require_pow("light"))])
 def movie_metadata(item_id: int):
     """Basic metadata (title, genres, external ids) for one movie - used
     to resolve a reference item passed via URL (e.g. /567) or clicked
@@ -76,7 +110,7 @@ def movie_metadata(item_id: int):
     }
 
 
-@app.get("/api/movie/{item_id}/backdrop")
+@app.get("/api/movie/{item_id}/backdrop", dependencies=[Depends(require_pow("light"))])
 async def movie_backdrop(item_id: int):
     """Backdrop image URL for the hero background (see
     frontend/src/components/HeroBackdrop.tsx), resolved from TMDB via
@@ -91,7 +125,7 @@ async def movie_backdrop(item_id: int):
     return {"item_id": item_id, "backdrop_url": backdrop_url}
 
 
-@app.get("/api/movie/{item_id}/poster")
+@app.get("/api/movie/{item_id}/poster", dependencies=[Depends(require_pow("light"))])
 async def movie_poster(item_id: int):
     """Small poster image URL for the Recommendations panel's hover/tap
     info card (see frontend/src/components/RecommendationsPanel.tsx),
@@ -107,7 +141,7 @@ async def movie_poster(item_id: int):
     return {"item_id": item_id, "poster_url": poster_url}
 
 
-@app.get("/api/movie/{item_id}/wheel")
+@app.get("/api/movie/{item_id}/wheel", dependencies=[Depends(require_pow("light"))])
 def wheel(item_id: int):
     try:
         circles = _engine.circles_for(item_id)
@@ -202,7 +236,7 @@ def _combined_order(circles_out: list[dict], z_weight: float = 0.3) -> list[dict
     return ordered
 
 
-@app.get("/api/movie/{item_id}/recommend")
+@app.get("/api/movie/{item_id}/recommend", dependencies=[Depends(require_pow("heavy"))])
 def recommend(item_id: int, scheme: str = Query("complementary")):
     """Color-wheel recommendations, computed INDEPENDENTLY per circle.
 

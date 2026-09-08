@@ -1,3 +1,5 @@
+import { powFetch } from "./pow/powFetch";
+
 export type Span = [number, number];
 
 export interface MovieHit {
@@ -41,10 +43,9 @@ export interface WheelResponse {
 }
 
 export async function searchMovies(q: string): Promise<MovieHit[]> {
-  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  const res = await powFetch("light", `/api/search?q=${encodeURIComponent(q)}`);
   if (!res.ok) throw new Error("search failed");
-  const data = await res.json();
-  return data.results;
+  return (await res.json()).results;
 }
 
 export interface RecItem {
@@ -115,19 +116,19 @@ export function toWheelCircle(rc: RecommendCircle): WheelCircle | null {
 }
 
 export async function getRecommendations(itemId: number, scheme: string): Promise<RecommendResponse> {
-  const res = await fetch(`/api/movie/${itemId}/recommend?scheme=${encodeURIComponent(scheme)}`);
+  const res = await powFetch("heavy", `/api/movie/${itemId}/recommend?scheme=${encodeURIComponent(scheme)}`);
   if (!res.ok) throw new Error("recommend lookup failed");
   return res.json();
 }
 
 export async function getWheelCircles(itemId: number): Promise<WheelResponse> {
-  const res = await fetch(`/api/movie/${itemId}/wheel`);
+  const res = await powFetch("light", `/api/movie/${itemId}/wheel`);
   if (!res.ok) throw new Error("wheel lookup failed");
   return res.json();
 }
 
 export async function getMovieById(itemId: number): Promise<MovieHit> {
-  const res = await fetch(`/api/movie/${itemId}`);
+  const res = await powFetch("light", `/api/movie/${itemId}`);
   if (!res.ok) throw new Error("movie lookup failed");
   const data = await res.json();
   return {
@@ -146,7 +147,7 @@ export async function getMovieById(itemId: number): Promise<MovieHit> {
  * SearchBar.tsx. Same response shape as getMovieById().
  */
 export async function getRandomMovie(): Promise<MovieHit> {
-  const res = await fetch(`/api/movie/random`);
+  const res = await powFetch("light", `/api/movie/random`);
   if (!res.ok) throw new Error("random movie lookup failed");
   const data = await res.json();
   return {
@@ -165,7 +166,7 @@ export interface BackdropResponse {
 }
 
 export async function getBackdrop(itemId: number): Promise<BackdropResponse> {
-  const res = await fetch(`/api/movie/${itemId}/backdrop`);
+  const res = await powFetch("light", `/api/movie/${itemId}/backdrop`);
   if (!res.ok) throw new Error("backdrop lookup failed");
   return res.json();
 }
@@ -178,7 +179,7 @@ export interface PosterResponse {
 }
 
 export async function getPoster(itemId: number): Promise<PosterResponse> {
-  const res = await fetch(`/api/movie/${itemId}/poster`);
+  const res = await powFetch("light", `/api/movie/${itemId}/poster`);
   if (!res.ok) throw new Error("poster lookup failed");
   return res.json();
 }

@@ -45,19 +45,6 @@ export default function AboutModal({ open, onClose }: Props) {
           <h3 className="about__heading">{t("about.project.heading")}</h3>
           <p>{t("about.project.text")}</p>
         </section>
- 
-        <section className="about__section">
-          <h3 className="about__heading">{t("about.disclaimer.heading")}</h3>
-          <p>{t("about.disclaimer.recommendations")}</p>
-          <p>{t("about.disclaimer.schemes")}</p>
-          <p className="about__fine">{t("about.disclaimer.warranty")}</p>
-        </section>
-
-        <section className="about__section">
-          <h3 className="about__heading">{t("about.license.heading")}</h3>
-          <p>{t("about.license.text")}</p>
-          <p className="about__fine">{t("about.license.copyright")}</p>
-        </section>
 
         {(GITHUB_URL || AUTHOR_URL) && (
           <section className="about__section about__links">
@@ -94,6 +81,35 @@ export default function AboutModal({ open, onClose }: Props) {
             )}
           </section >
         )}
+ 
+        <section className="about__section">
+          <h3 className="about__heading">{t("about.disclaimer.heading")}</h3>
+          <p>{t("about.disclaimer.recommendations")}</p>
+          <p>{t("about.disclaimer.legality")}</p>
+          <p>{t("about.disclaimer.schemes")}</p>
+          <p className="about__fine">{t("about.disclaimer.warranty")}</p>
+        </section>
+ 
+        <section className="about__section">
+          <h3 className="about__heading">{t("about.privacy.heading")}</h3>
+          <p>{t("about.privacy.noAccount")}</p>
+          <p>{t("about.privacy.images")}</p>
+          <p className="about__fine">{t("about.privacy.hosting")}</p>
+        </section>
+
+        <section className="about__section">
+          <h3 className="about__heading">{t("about.terms.heading")}</h3>
+          <p>{t("about.terms.audience")}</p>
+          <p>{t("about.terms.use")}</p>
+          <p>{t("about.terms.availability")}</p>
+          <p>{t("about.terms.removal")}</p>
+        </section>
+
+        <section className="about__section">
+          <h3 className="about__heading">{t("about.license.heading")}</h3>
+          <p>{t("about.license.text")}</p>
+          <p className="about__fine">{t("about.license.copyright")}</p>
+        </section>
 
         <section className="about__section about__credits">
           <button

@@ -60,8 +60,22 @@
     "disclaimer": {
       "heading": "Disclaimer",
       "recommendations": "\"Recommendations\" here are not editorial picks - each one comes from a purely geometric, mathematical procedure (a PCA-based rotation followed by a nearest-neighbor search), not a judgment about a movie's quality, and not a claim that the author has seen or actually recommends watching it.",
+      "legality": "Movie titles surfaced by this project are drawn from a public dataset and are not vetted for legality, availability, or appropriateness in any specific jurisdiction; it is your own responsibility to comply with local laws regarding any title you choose to seek out.",
       "schemes": "Schemes with a large angular offset - triadic and tetradic in particular - can surface movies that share little with the reference beyond an abstract geometric relationship, and results may be surprising. Complementary rotates a full 180° and can be especially jarring. Use these schemes with that in mind.",
       "warranty": "This project is provided for entertainment and experimentation only, \"as is\", with no warranty of any kind and no liability accepted for any damages arising from its use."
+    },
+    "privacy": {
+      "heading": "Privacy",
+      "noAccount": "This application has no accounts and does not knowingly collect personal information for its own purposes. Your search queries and selected movie are used only to answer that request and are not stored beyond it; your interface language is saved locally in your browser and never sent to the server.",
+      "images": "Poster and backdrop images are loaded directly by your browser from TMDB's own image servers, and the IMDb/TMDB links open those sites directly - both are outside this project's control and are covered by their own privacy policies.",
+      "hosting": "Like any website, the server this instance runs on may log standard technical request data (such as IP address and timestamps) as part of normal operation. This application itself uses no cookies, analytics, or advertising trackers."
+    },
+    "terms": {
+      "heading": "Terms of use",
+      "audience": "This service is intended for adult users (the age of majority in your jurisdiction) and is not directed at children.",
+      "use": "You may use this service for personal, non-commercial purposes. Automated bulk scraping or attempts to bypass its request-verification mechanism are not permitted.",
+      "availability": "This service may be changed, interrupted, or discontinued at any time without notice; no uptime or availability is guaranteed.",
+      "removal": "Recommendations link out to third-party sites (IMDb, TMDB) not controlled by this project. If you believe a specific title shouldn't be listed here for a legal or rights-related reason in your jurisdiction, reach out via the links above or the project's repository and it will be reviewed."
     },
     "license": {
       "heading": "License",

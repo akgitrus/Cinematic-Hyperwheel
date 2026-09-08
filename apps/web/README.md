@@ -373,6 +373,37 @@ platform - point it at a personal site, any social profile, etc. Each
 button only renders when its URL is set; leaving one (or both) unset
 simply omits it.
 
+## Privacy notes (for operators)
+
+A factual summary of what data flows through the code as shipped -
+useful as a starting point if you're deploying your own instance and
+need to write your own privacy notice for it. This is not itself a
+privacy policy.
+
+- **No accounts, no first-party data collection.** There is no login;
+  the app does not store search queries, selections, or any other
+  per-user data server-side beyond the lifetime of a single request.
+- **Interface language** is stored in the browser's `localStorage` by
+  `i18next-browser-languagedetector` and never leaves the client.
+- **TMDB metadata lookups** (`/backdrop`, `/poster`) happen server-side
+  (see `tmdb.py`), so the TMDB API key never reaches the browser - TMDB
+  sees the deploying server's IP for these lookups, not the end user's.
+- **TMDB images themselves** (the resolved backdrop/poster URLs) are
+  loaded directly by the browser from `image.tmdb.org` - TMDB's CDN
+  does see the end user's IP for those specific requests, the same way
+  it would for any page embedding a third-party image.
+- **IMDb/TMDB links** in the UI navigate directly to those sites; their
+  own privacy policies apply once a user clicks through.
+- **Proof-of-work tickets** (`pow.py`) are opaque, ephemeral, in-memory
+  identifiers tied to a solved puzzle, not to any user identity - they
+  are never persisted and carry no personal data.
+- **No analytics, ads, or tracking cookies** are included in the
+  shipped code.
+- Whatever platform you deploy on (Render, your own server, etc.) will
+  likely log standard request metadata (IP, timestamps, user agent) as
+  part of normal operation - that's a property of the hosting platform,
+  not of this application, and isn't covered above.
+
 ## Next (stage 2, not in this build)
 
 - richer recommendation UI over the scheme-based overlays now implemented

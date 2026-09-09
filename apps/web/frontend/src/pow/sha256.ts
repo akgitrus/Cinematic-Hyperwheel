@@ -1,11 +1,6 @@
 /**
- * Minimal, dependency-free SHA-256 (FIPS 180-4).
- *
- * Used only for the proof-of-work mining loop (see worker.ts): that loop
- * needs a synchronous digest function, which the browser's built-in
- * `crypto.subtle.digest` cannot provide - it's Promise-based, and the
- * per-call await overhead dominates at the hash rates a puzzle like this
- * needs.
+ * Minimal, dependency-free SHA-256 (FIPS 180-4), specialized for the
+ * proof-of-work mining loop (see worker.ts).
  */
 
 const K = new Uint32Array([
@@ -23,70 +18,121 @@ function rotr(x: number, n: number): number {
   return (x >>> n) | (x << (32 - n));
 }
 
-/** Pads a byte message per the SHA-256 spec: append 0x80, zero-pad, then
- * the 64-bit big-endian bit length, rounding up to a whole 512-bit block. */
-function pad(message: Uint8Array): Uint8Array {
-  const bitLen = message.length * 8;
-  const paddedLen = ((message.length + 9 + 63) >> 6) << 6;
-  const out = new Uint8Array(paddedLen);
-  out.set(message);
-  out[message.length] = 0x80;
-  // 64-bit big-endian length - only the low 32 bits are ever non-zero,
-  // since this app never hashes messages anywhere near 2^32 bytes.
-  new DataView(out.buffer).setUint32(paddedLen - 4, bitLen >>> 0, false);
-  return out;
+// Leading zero BITS across the eight 32-bit digest words, matching the
+// server's bit-level check (see backend app/pow.py's
+// _leading_zero_bits) without ever serializing the digest to bytes -
+// h0 holds the digest's most significant 32 bits, h7 its least
+// significant. Math.clz32 already treats its argument as an unsigned
+// 32-bit integer, so the signed `| 0` results from the compression
+// rounds below don't need converting first.
+function leadingZeroBits256(
+  h0: number, h1: number, h2: number, h3: number,
+  h4: number, h5: number, h6: number, h7: number
+): number {
+  if (h0 !== 0) return Math.clz32(h0);
+  if (h1 !== 0) return 32 + Math.clz32(h1);
+  if (h2 !== 0) return 64 + Math.clz32(h2);
+  if (h3 !== 0) return 96 + Math.clz32(h3);
+  if (h4 !== 0) return 128 + Math.clz32(h4);
+  if (h5 !== 0) return 160 + Math.clz32(h5);
+  if (h6 !== 0) return 192 + Math.clz32(h6);
+  if (h7 !== 0) return 224 + Math.clz32(h7);
+  return 256;
 }
 
-/** Computes the raw 32-byte SHA-256 digest of `message`. */
-export function sha256(message: Uint8Array): Uint8Array {
-  const padded = pad(message);
-  const view = new DataView(padded.buffer);
+// Decimal digits a nonce can ever need before this loop would already
+// have run for an utterly unrealistic number of attempts (edging on
+// Number.MAX_SAFE_INTEGER) - sized generously since it only affects a
+// one-time buffer allocation, not the hot path.
+const MAX_NONCE_DIGITS = 20;
 
-  let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
-  let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
-  const w = new Uint32Array(64);
+/**
+ * Finds the smallest nonce >= 0 such that
+ * SHA-256(`${challengePrefix}:${nonce}`) has at least `difficulty`
+ * leading zero bits, and returns it as a decimal string (matching what
+ * the server's redeem_challenge expects - see backend app/pow.py).
+ */
+export function minePow(challengePrefix: string, difficulty: number): string {
+  const prefixBytes = new TextEncoder().encode(`${challengePrefix}:`);
+  const prefixLen = prefixBytes.length;
 
-  for (let offset = 0; offset < padded.length; offset += 64) {
-    for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4, false);
-    for (let i = 16; i < 64; i++) {
-      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+  // Padded message buffer, sized for the worst-case nonce length and
+  // reused for every attempt - only the bytes that actually change
+  // (the nonce's digits, the 0x80 end-of-message marker, and the
+  // trailing bit-length) are rewritten per attempt below.
+  const maxMessageLen = prefixLen + MAX_NONCE_DIGITS;
+  const bufLen = ((maxMessageLen + 9 + 63) >> 6) << 6;
+  const buf = new Uint8Array(bufLen);
+  buf.set(prefixBytes, 0);
+  const view = new DataView(buf.buffer);
+  const w = new Uint32Array(64); // message schedule, reused every block/attempt
+  const digits = new Uint8Array(MAX_NONCE_DIGITS); // scratch, reused every attempt
+
+  let prevPaddedLen = -1; // forces a one-time full clear on the first attempt
+
+  for (let nonce = 0; ; nonce++) {
+    // Nonce's decimal digits, written MSB-first - no
+    // String(nonce)/TextEncoder round trip per attempt.
+    let n = nonce;
+    let digitCount = 0;
+    if (n === 0) {
+      digits[0] = 48; // '0'
+      digitCount = 1;
+    } else {
+      while (n > 0) {
+        digits[digitCount++] = 48 + (n % 10);
+        n = Math.floor(n / 10);
+      }
     }
 
-    let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
-    for (let i = 0; i < 64; i++) {
-      const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-      const ch = (e & f) ^ (~e & g);
-      const temp1 = (h + S1 + ch + K[i] + w[i]) | 0;
-      const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-      const maj = (a & b) ^ (a & c) ^ (b & c);
-      const temp2 = (S0 + maj) | 0;
-      h = g; g = f; f = e; e = (d + temp1) | 0;
-      d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+    const messageLen = prefixLen + digitCount;
+    const paddedLen = ((messageLen + 9 + 63) >> 6) << 6;
+
+    // digitCount only grows over the run, so paddedLen only grows too;
+    // on the rare attempt where it crosses into a fresh 64-byte block,
+    // that block's tail may still hold an earlier attempt's bit-length
+    // bytes in what is now supposed to be zero-padding - clear it once,
+    // here, before writing this attempt's content.
+    if (paddedLen !== prevPaddedLen) {
+      buf.fill(0, prefixLen, bufLen);
+      prevPaddedLen = paddedLen;
     }
 
-    h0 = (h0 + a) | 0; h1 = (h1 + b) | 0; h2 = (h2 + c) | 0; h3 = (h3 + d) | 0;
-    h4 = (h4 + e) | 0; h5 = (h5 + f) | 0; h6 = (h6 + g) | 0; h7 = (h7 + h) | 0;
+    for (let i = 0; i < digitCount; i++) {
+      buf[prefixLen + i] = digits[digitCount - 1 - i];
+    }
+    buf[messageLen] = 0x80;
+    view.setUint32(paddedLen - 4, (messageLen * 8) >>> 0, false);
+
+    let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+    let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+
+    for (let offset = 0; offset < paddedLen; offset += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4, false);
+      for (let i = 16; i < 64; i++) {
+        const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+        const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      }
+
+      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        const ch = (e & f) ^ (~e & g);
+        const temp1 = (h + S1 + ch + K[i] + w[i]) | 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        const maj = (a & b) ^ (a & c) ^ (b & c);
+        const temp2 = (S0 + maj) | 0;
+        h = g; g = f; f = e; e = (d + temp1) | 0;
+        d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+      }
+
+      h0 = (h0 + a) | 0; h1 = (h1 + b) | 0; h2 = (h2 + c) | 0; h3 = (h3 + d) | 0;
+      h4 = (h4 + e) | 0; h5 = (h5 + f) | 0; h6 = (h6 + g) | 0; h7 = (h7 + h) | 0;
+    }
+
+    if (leadingZeroBits256(h0, h1, h2, h3, h4, h5, h6, h7) >= difficulty) {
+      return String(nonce);
+    }
   }
-
-  const out = new Uint8Array(32);
-  const outView = new DataView(out.buffer);
-  [h0, h1, h2, h3, h4, h5, h6, h7].forEach((v, i) => outView.setUint32(i * 4, v >>> 0, false));
-  return out;
-}
-
-/** Leading zero BITS in a digest, matching the server's bit-level
- * difficulty check (see backend app/pow.py's _leading_zero_bits). */
-export function leadingZeroBits(digest: Uint8Array): number {
-  let bits = 0;
-  for (const byte of digest) {
-    if (byte === 0) {
-      bits += 8;
-      continue;
-    }
-    bits += Math.clz32(byte) - 24; // clz32 operates on 32 bits; byte is 8
-    break;
-  }
-  return bits;
 }

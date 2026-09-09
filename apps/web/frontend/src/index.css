@@ -952,14 +952,20 @@ body {
 .about__panel {
   position: relative;
   width: 100%;
-  max-width: 480px;
-  max-height: 86vh;
-  overflow-y: auto;
+  max-width: min(760px, calc(100vw - 40px));
+  max-height: min(680px, 86vh);
+  display: flex;
+  flex-direction: column;
   background: radial-gradient(circle at 30% -10%, #171f30, var(--panel) 60%);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 28px 26px 22px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(110, 231, 255, 0.05);
+  overflow: hidden;
+}
+
+.about__header {
+  flex: 0 0 auto;
+  padding: 26px 26px 16px;
 }
 
 .about__close {
@@ -975,7 +981,7 @@ body {
 .about__close:hover { color: var(--text); }
 
 .about__title {
-  margin: 0 0 18px;
+  margin: 0;
   font-size: 20px;
   background: linear-gradient(90deg, #6ee7ff, #b46bff);
   -webkit-background-clip: text;
@@ -983,12 +989,71 @@ body {
   color: transparent;
 }
 
-.about__section {
-  margin-bottom: 18px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+/* Sidebar + scrollable content pane, side by side - see the SECTIONS
+   list in AboutModal.tsx. Only one pane is mounted at a time, so a long
+   section (Disclaimer, Terms, etc.) no longer pushes every other
+   section further down a single shared scroll area. */
+.about__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  border-top: 1px solid var(--border);
 }
-.about__section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.about__nav {
+  flex: 0 0 24%;
+  overflow-y: auto;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+}
+
+.about__nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+.about__nav-item:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+/* Same "currently active" language as .rec-circle--primary elsewhere in
+   the app - an accent rule on the leading edge rather than a boxed
+   background, kept consistent across the codebase. */
+.about__nav-item--active {
+  color: var(--text);
+  background: rgba(110, 231, 255, 0.08);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+
+.about__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 26px 26px;
+}
+
+.about__pane p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.about__pane a { color: var(--accent); text-decoration: none; }
+.about__pane a:hover { text-decoration: underline; }
 
 .about__heading {
   margin: 0 0 6px;
@@ -997,15 +1062,6 @@ body {
   text-transform: uppercase;
   color: var(--accent);
 }
-
-.about__section p {
-  margin: 0 0 6px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text);
-}
-.about__section a { color: var(--accent); text-decoration: none; }
-.about__section a:hover { text-decoration: underline; }
 
 .about__fine {
   font-size: 11px !important;
@@ -1016,6 +1072,7 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 14px;
 }
 
 .about__linkbtn {
@@ -1033,6 +1090,29 @@ body {
 .about__linkbtn:hover {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(110, 231, 255, 0.12);
+}
+
+.about__credits-item + .about__credits-item {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.about__credits-item-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .about__nav {
+    flex: 0 0 40%;
+  }
+  .about__nav {
+    padding: 10px 6px;
+  }
+  .about__content {
+    padding: 16px 16px 16px;
+  }
 }
 
 /* slimmed-down footer */

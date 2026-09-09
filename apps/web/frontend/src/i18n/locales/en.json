@@ -53,8 +53,11 @@
   "about": {
     "title": "About",
     "close": "Close",
+    "nav": {
+      "label": "Sections"
+    },
     "project": {
-      "heading": "",
+      "heading": "Overview",
       "text": "Cinematic Hyperwheel is an experimental project exploring \"harmony beyond similarity\" in movie recommendations — using PCA and geometric rotation to suggest movies that are deliberately different from a reference, yet resonate with it in spirit, the way complementary or triadic colors relate on a color wheel."
     },
     "disclaimer": {
@@ -97,7 +100,7 @@
         "text": "Movie data provided by the MovieLens Latest Dataset, GroupLens Research, University of Minnesota. This project is not endorsed by and is not affiliated with GroupLens or the University of Minnesota."
       },
       "tmdb": {
-        "heading": "Images",
+        "heading": "Media (posters, backdrops)",
         "text": "This product uses the TMDB API but is not endorsed or certified by TMDB."
       }
     }

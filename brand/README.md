@@ -53,7 +53,7 @@ second source of truth to keep in sync by hand. They're referenced from
 | `favicon.svg` | vector | Modern browsers; crisp at any zoom |
 | `favicon.ico` | 16/32/48 px, multi-resolution | Fallback for browsers without SVG favicon support |
 | `apple-touch-icon-180.png` | 180×180 | iOS home-screen icon |
-| `icon-512.png` | 512×512 | PWA manifest / large app icon |
+| `icon-512.png` | 512×512 | PWA manifest (`apps/web/frontend/public/manifest.webmanifest`) / large app icon |
 
 ## Palette
 

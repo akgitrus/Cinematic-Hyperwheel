@@ -1,3 +1,26 @@
+# Render Blueprint for a single free Web Service: FastAPI serves the
+# built frontend static files from the same origin (see
+# apps/web/backend/app/main.py's StaticFiles mount).
+#
+# The PCA artifact (artifact.npz) and the filtered movie catalog
+# (movies.csv) are NOT rebuilt on deploy - they are downloaded
+# pre-built from ARTIFACT_URL/METADATA_URL. This is required, not just
+# faster: apps/web/backend/app/pc_config.json is a hand-curated
+# interpretation of specific PCA components (criteria weights, pole
+# labels, colors - see apps/web/README.md, "PCA component config"),
+# valid only for the exact dataset snapshot and PCA settings used to
+# produce it. Rebuilding the PCA basis on every deploy (e.g. after
+# GroupLens updates ml-latest) could silently change what each PCx
+# represents, desyncing it from pc_config.json without any error.
+#
+# To refresh the data:
+#   1. Run `hyperwheel_recommender build` and
+#      `tools/filter_metadata_to_artifact.py` locally against the new
+#      source CSVs (see apps/web/README.md, "Data").
+#   2. Review/update pc_config.json against the new PCA basis
+#      (re-run `diagnose`, re-check criteria weights and pole items).
+#   3. Upload the new artifact.npz/movies.csv and point
+#      ARTIFACT_URL/METADATA_URL at them.
 services:
   - type: web
     name: cinematic-hyperwheel
@@ -6,8 +29,37 @@ services:
     buildCommand: |
       pip install -r apps/web/backend/requirements.txt
       pip install -e packages/hyperwheel-recommender
-      cd apps/web/frontend && npm install && npm run build
+
+      cd apps/web/frontend
+      npm install
+      npm run build
+      cd ../../..
+
+      mkdir -p data/ml-latest
+      curl -fL -o data/ml-latest/artifact.npz "$ARTIFACT_URL"
+      curl -fL -o data/ml-latest/movies.csv "$METADATA_URL"
     startCommand: cd apps/web/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: HYPERWHEEL_N_COMPONENTS
+        value: "20"
+      # Direct-download URLs for the pre-built artifact and filtered
+      # catalog (see the top-of-file comment) - e.g. a GitHub Release
+      # asset URL. Set per-deploy in the Render dashboard.
+      - key: ARTIFACT_URL
+        sync: false
+      - key: METADATA_URL
+        sync: false
+      - key: POW_SECRET
+        generateValue: true
+      - key: TMDB_API_KEY
+        sync: false
+      - key: TMDB_BACKDROP_SIZE
+        value: w1280
+      - key: TMDB_POSTER_SIZE
+        value: w185
+      - key: VITE_GITHUB_URL
+        sync: false
+      - key: VITE_AUTHOR_URL
+        sync: false

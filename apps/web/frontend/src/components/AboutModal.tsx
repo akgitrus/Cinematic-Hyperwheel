@@ -47,7 +47,10 @@ export default function AboutModal({ open, onClose }: Props) {
           <button className="about__close" onClick={onClose} aria-label={t("about.close")}>
             ✕
           </button>
-          <h2 className="about__title">{t("about.title")}</h2>
+          <div className="about__header-brand">
+            <img className="about__logo" src="/logo-mark.svg" alt="" aria-hidden="true" />
+            <h2 className="about__title">{t("about.title")}</h2>
+          </div>
         </div>
 
         <div className="about__body">

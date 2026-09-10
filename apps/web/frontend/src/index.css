@@ -325,6 +325,27 @@ body {
   display: flex;
   justify-content: center;
 }
+.wheel-empty-state {
+  /* Fixed to the viewport, entirely out of document flow - a purely
+     decorative placeholder has no business affecting layout (pushing
+     the footer, competing with column widths, etc.), and this also
+     centers it on the whole screen rather than within whichever column
+     happens to render it. */
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* Stays behind the sticky header/controls (z-index 30/20 - see
+     header.css/sticky-layout.css) in case they ever overlap. */
+  z-index: 0;
+  opacity: 0.16;
+}
+.wheel-empty-state__logo {
+  width: min(220px, 60%);
+  height: auto;
+}
 
 /* Crossfade container for the big central wheel - see WheelStack.tsx.
    Grid stacking (every layer in the same single cell) instead of
@@ -1002,6 +1023,17 @@ body {
 }
 .about__close:hover { color: var(--text); }
 
+.about__header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.about__logo {
+  flex: 0 0 auto;
+  display: block;
+  width: 28px;
+  height: 28px;
+}
 .about__title {
   margin: 0;
   font-size: 20px;

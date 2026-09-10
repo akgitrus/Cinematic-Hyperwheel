@@ -411,22 +411,24 @@ export default function App() {
             {recError && <div className="app__error">{recError}</div>}
 
             <div className="layout3" ref={contentRef} style={{ paddingTop: spacerHeight }}>
-              <aside className="layout3__left">
-                {recs && !recError && (
+              {recs && !recError && (
+                <aside className="layout3__left">
                   <RecommendationsPanel circles={recs.circles} onActiveCircleChange={setActiveCircle} />
-                )}
-              </aside>
+                </aside>
+              )}
 
               <main className="layout3__center" ref={wheelColumnRef}>
                 {!isWheelWrapHidden && (
                   <div className="layout3__wheel-wrap" ref={wheelWrapRef}>
-                    <WheelStack
-                      circle={primary}
-                      size={wheelSize}
-                      title={selected?.title}
-                      overlays={primaryOverlays}
-                      onReadoutHeight={setReadoutHeight}
-                    />
+                    {primary && (
+                      <WheelStack
+                        circle={primary}
+                        size={wheelSize}
+                        title={selected?.title}
+                        overlays={primaryOverlays}
+                        onReadoutHeight={setReadoutHeight}
+                      />
+                    )}
                   </div>
                 )}
               </main>
@@ -442,6 +444,14 @@ export default function App() {
 
             <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
           </div>
+          {/* Fixed to the viewport (see .wheel-empty-state in index.css) -
+              independent of the desktop/mobile layout split above, shown
+              on both until a reference movie is selected. */}
+          {!primary && (
+            <div className="wheel-empty-state" aria-hidden="true">
+              <img className="wheel-empty-state__logo" src="/logo-mark.svg" alt="" />
+            </div>
+          )}
           <ActiveRecommendationCard />
         </ActiveCardProvider>
       </HighlightProvider>

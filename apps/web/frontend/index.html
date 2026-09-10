@@ -10,6 +10,14 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-180.png">
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#0a0d14">
+
+    <!-- iOS home-screen behavior: Safari ignores manifest.webmanifest's
+         display/theme_color fields, so these are needed separately for
+         the app to open standalone (no browser chrome) with a matching
+         status bar when launched from the home screen. -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hyperwheel">
   </head>
   <body>
     <div id="root"></div>

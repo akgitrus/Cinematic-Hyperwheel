@@ -10,7 +10,7 @@ recommended points).
 ### `logo-mark.svg`
 Primary icon mark. Transparent background, fully vector. Use wherever the
 surrounding surface is already dark (site header, docs, slide decks) —
-icon only, no name attached.
+icon only, no name attached.  
 `logo-mark.svg` is duplicated into
 `apps/web/frontend/public/logo-mark.svg` for the app header
 (`AppHeader.tsx`, `App.tsx`'s mobile header).
@@ -25,7 +25,10 @@ background as-is.
 Flattened PNG preview of `logo-lockup.svg`, composited on the site's
 actual background color. Use this wherever live SVG text isn't practical
 (a GitHub README header, a social share preview), or just to check how
-the lockup reads before embedding the SVG.
+the lockup reads before embedding the SVG.  
+`logo-lockup-on-dark.png` is duplicated into
+`apps/web/frontend/public/logo-lockup-on-dark.png` for the OG/Twitter meta
+tags (`index.html`).
 
 ### `logo-mark-512.png` (512×512, transparent)
 Flattened PNG render of the mark alone, for the same "no live SVG" cases

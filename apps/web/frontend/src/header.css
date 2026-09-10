@@ -40,6 +40,17 @@
 }
 
 .appheader__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.appheader__logo {
+  flex: 0 0 auto;
+  width: 57px;
+  height: 57px;
+  display: block;
+}
+.appheader__brand-text {
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -139,6 +150,13 @@
   }
   .appheader--compact .appheader__brand {
     flex: 0 0 auto;
+    gap: 8px;
+  }
+  .appheader--compact .appheader__logo {
+    width: 30px;
+    height: 30px;
+  }
+  .appheader--compact .appheader__brand-text {
     text-align: left;
     align-items: flex-start;
     gap: 0;

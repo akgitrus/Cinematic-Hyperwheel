@@ -53,8 +53,11 @@ export default function AppHeader({ mode, searchSlot, schemeSlot, onAboutClick, 
       className={"appheader" + (mode === "compact" ? " appheader--compact" : "")}
     >
       <div className="appheader__brand vt-brand">
-        <h1 className="appheader__title">{t("app.title")}</h1>
-        <p className="appheader__tagline">{t("app.tagline")}</p>
+        <img className="appheader__logo" src="/logo-mark.svg" alt="" aria-hidden="true" />
+        <div className="appheader__brand-text">
+          <h1 className="appheader__title">{t("app.title")}</h1>
+          <p className="appheader__tagline">{t("app.tagline")}</p>
+        </div>
       </div>
 
       <div className="appheader__search vt-search">{searchSlot}</div>

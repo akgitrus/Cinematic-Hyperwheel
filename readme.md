@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/logo-lockup-on-dark.png" alt="Cinematic Hyperwheel" width="480">
+</p>
+
 # Cinematic-Hyperwheel
 
 Experimental open-source project exploring **harmony beyond similarity** in movie recommendations.

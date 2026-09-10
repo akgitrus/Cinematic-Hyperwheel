@@ -112,17 +112,39 @@ body {
   color: var(--accent);
 }
 
-.app__header { text-align: center; }
-.app__header h1 {
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.app__header-logo {
+  flex: 0 0 auto;
+  display: block;
+  width: 51px;
+  height: 51px;
+}
+.app__header-text {
+  /* min-width: 0 lets the title shrink below its content width instead
+     of forcing the flex row (and the logo with it) wider than the
+     viewport. */
+  min-width: 0;
+  text-align: center;
+}
+.app__header-text h1 {
   margin: 0;
-  font-size: 28px;
+  /* Scales with viewport width so the title stays on a single line
+     next to the logo across phone sizes, instead of wrapping to two
+     lines and visually detaching from the logo above it. */
+  font-size: clamp(16px, 5.8vw, 28px);
+  white-space: nowrap;
   letter-spacing: 0.02em;
   background: linear-gradient(90deg, #6ee7ff, #b46bff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-.app__header p {
+.app__header-text p {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 12px;

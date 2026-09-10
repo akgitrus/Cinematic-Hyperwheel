@@ -374,8 +374,11 @@ export default function App() {
                 </div>
 
                 <header className="app__header">
-                  <h1>{t("app.title")}</h1>
-                  <p>{t("app.tagline")}</p>
+                  <img className="app__header-logo" src="/logo-mark.svg" alt="" aria-hidden="true" />
+                  <div className="app__header-text">
+                    <h1>{t("app.title")}</h1>
+                    <p>{t("app.tagline")}</p>
+                  </div>
                 </header>
 
                 <div className="sticky-controls" ref={stickyControlsRef}>

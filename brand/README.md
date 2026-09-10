@@ -11,6 +11,9 @@ recommended points).
 Primary icon mark. Transparent background, fully vector. Use wherever the
 surrounding surface is already dark (site header, docs, slide decks) —
 icon only, no name attached.
+`logo-mark.svg` is duplicated into
+`apps/web/frontend/public/logo-mark.svg` for the app header
+(`AppHeader.tsx`, `App.tsx`'s mobile header).
 
 ### `logo-lockup.svg`
 Icon + "Cinematic Hyperwheel" + tagline, laid out for a header or footer.

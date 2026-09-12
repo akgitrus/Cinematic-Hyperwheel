@@ -378,6 +378,7 @@ export default function App() {
                   <div className="app__header-text">
                     <h1>{t("app.title")}</h1>
                     <p>{t("app.tagline")}</p>
+                    <p className="app__header-poweredby">{t("app.poweredBy")}</p>
                   </div>
                 </header>
 

@@ -1,7 +1,8 @@
 {
   "app": {
-    "title": "Cinematic Hyperwheel",
-    "tagline": "harmony beyond similarity"
+  "title": "One More Like This, Please",
+  "tagline": "harmony beyond similarity",
+  "poweredBy": "powered by Cinematic Hyperwheel"
   },
   "search": {
     "placeholder": "Title, year... e.g. \"The Matrix 1999\"",

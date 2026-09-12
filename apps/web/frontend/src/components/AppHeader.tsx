@@ -57,6 +57,7 @@ export default function AppHeader({ mode, searchSlot, schemeSlot, onAboutClick, 
         <div className="appheader__brand-text">
           <h1 className="appheader__title">{t("app.title")}</h1>
           <p className="appheader__tagline">{t("app.tagline")}</p>
+          <p className="appheader__poweredby">{t("app.poweredBy")}</p>
         </div>
       </div>
 

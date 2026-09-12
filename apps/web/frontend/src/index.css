@@ -116,13 +116,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  /* no need a gap since logo is tall shape in square box */
+  gap: 0px;
 }
 .app__header-logo {
   flex: 0 0 auto;
   display: block;
-  width: 51px;
-  height: 51px;
+  width: 68px;
+  height: 68px;
 }
 .app__header-text {
   /* min-width: 0 lets the title shrink below its content width instead
@@ -150,6 +151,14 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
+}
+/* Overrides the generic .app__header-text p styling (uppercase,
+   larger tracking) for this specific attribution line only. */
+.app__header-poweredby {
+  text-transform: none !important;
+  font-size: 9px !important;
+  letter-spacing: 0.06em !important;
+  opacity: 0.6 !important;
 }
 
 .app__error { color: #ff7a7a; font-size: 13px; }

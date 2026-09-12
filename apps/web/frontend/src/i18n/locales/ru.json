@@ -1,7 +1,8 @@
 {
   "app": {
-    "title": "Cinematic Hyperwheel",
-    "tagline": "гармония за пределами схожести"
+  "title": "One More Like This, Please",
+  "tagline": "гармония за пределами схожести",
+  "poweredBy": "работает на Cinematic Hyperwheel"
   },
   "search": {
     "placeholder": "Название, год... например «Матрица 1999»",

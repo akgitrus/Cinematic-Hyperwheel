@@ -596,6 +596,8 @@ The project investigates whether different angular relationships consistently pr
 ## Web application
 
 The project also includes a web application intended as a practical interface for the experimental model.
+A reference instance is deployed at [omltp.com](https://omltp.com) under the name "One More Like This" -
+see `apps/web/README.md` for setup and architecture.
 
 The basic interaction is:
 
@@ -718,7 +720,7 @@ Cinematic-Hyperwheel/
 │       └── tests/
 │
 ├── apps/                       
-│   └── web/                    ← reccomendation app
+│   └── web/                    ← recommendation web app (reference instance: omltp.com)
 │       ├── backend/
 │       ├── frontend/
 │       └── tests/

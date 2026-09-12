@@ -1,5 +1,7 @@
 # Cinematic Hyperwheel — web UI (stage 1)
 
+Reference deployment: **One More Like This, Please** ([omltp.com](https://omltp.com)).
+
 Reference-movie search (literal, title-only) plus a visualization of the
 movie as one or more points on PCA-component planes ("circles"), each
 labeled by a human-curated config.
@@ -110,7 +112,8 @@ usage rules).
 ## Production build / deploying to Render
 
 A single free Web Service: FastAPI serves the built frontend static
-files from the same origin (see `render.yaml` at the repo root). Build:
+files from the same origin (see `render.yaml` at the repo root). The
+reference deployment is served at [omltp.com](https://omltp.com). Build:
 
 ```bash
 pip install -r apps/web/backend/requirements.txt
@@ -232,8 +235,8 @@ API call.
 
 ## Linking directly to a reference movie
 
-Visiting `/{item_id}` (e.g. `http://localhost:8000/567` in production,
-or `http://localhost:5173/567` in dev) loads that movie as the reference
+Visiting `/{item_id}` (e.g. `https://omltp.com/567` in production, or
+`http://localhost:5173/567` in dev) loads that movie as the reference
 on page load, the same as picking it via search. Selecting a movie -
 via search, or by clicking a title in the Recommendations panel - keeps
 the URL in sync (`window.history.pushState`), so the current reference
